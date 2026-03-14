@@ -1,0 +1,118 @@
+<?php
+
+namespace Atwx\SilverstripeFrontdeskKit;
+
+use SilverStripe\View\ViewableData;
+
+class RowAction extends ViewableData
+{
+    protected string $label;
+    protected string $url;
+    protected string $method = 'get';
+    protected string $icon = '';
+    protected ?string $confirmMessage = null;
+    protected bool $isDelete = false;
+    protected bool $isHtmx = false;
+    protected $enabledCondition = true;
+
+    public function __construct(string $label, string $url)
+    {
+        parent::__construct();
+        $this->label = $label;
+        $this->url = $url;
+    }
+
+    public static function link(string $label, string $url): static
+    {
+        return new static($label, $url);
+    }
+
+    public static function delete(string $url): static
+    {
+        $action = new static('Löschen', $url);
+        $action->isDelete = true;
+        $action->confirmMessage = 'Sind Sie sicher?';
+        $action->icon = 'trash';
+        return $action;
+    }
+
+    public static function htmx(string $label, string $url, string $method = 'get'): static
+    {
+        $action = new static($label, $url);
+        $action->isHtmx = true;
+        $action->method = $method;
+        return $action;
+    }
+
+    public function icon(string $icon): static
+    {
+        $this->icon = $icon;
+        return $this;
+    }
+
+    public function enabled(callable|bool $condition): static
+    {
+        $this->enabledCondition = $condition;
+        return $this;
+    }
+
+    public function confirm(string $message): static
+    {
+        $this->confirmMessage = $message;
+        return $this;
+    }
+
+    public function isEnabled(): bool
+    {
+        if (is_callable($this->enabledCondition)) {
+            return (bool) ($this->enabledCondition)();
+        }
+        return (bool) $this->enabledCondition;
+    }
+
+    public function getLabel(): string
+    {
+        return $this->label;
+    }
+
+    public function getUrl(): string
+    {
+        return $this->url;
+    }
+
+    public function getIcon(): string
+    {
+        return $this->icon;
+    }
+
+    public function getConfirmMessage(): ?string
+    {
+        return $this->confirmMessage;
+    }
+
+    public function isDeleteAction(): bool
+    {
+        return $this->isDelete;
+    }
+
+    public function isHtmxAction(): bool
+    {
+        return $this->isHtmx;
+    }
+
+    public function getMethod(): string
+    {
+        return $this->method;
+    }
+
+    // Template accessors
+    public function Label(): string { return $this->label; }
+    public function Url(): string { return $this->url; }
+    public function Icon(): string { return $this->icon; }
+    public function ConfirmMessage(): ?string { return $this->confirmMessage; }
+    public function IsDelete(): bool { return $this->isDelete; }
+    public function IsHtmx(): bool { return $this->isHtmx; }
+    public function Method(): string { return $this->method; }
+    public function HasConfirm(): bool { return $this->confirmMessage !== null; }
+    public function HasIcon(): bool { return $this->icon !== ''; }
+}
