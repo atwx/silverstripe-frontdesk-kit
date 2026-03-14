@@ -75,11 +75,11 @@ abstract class FrontdeskController extends Controller implements PermissionProvi
         $response = parent::handleRequest($request);
         if (!$this->canView()) {
             $this->pushCurrent();
-            return Security::permissionFailure($this, 'Bitte loggen Sie sich ein.');
+            return Security::permissionFailure($this, _t(self::class . '.PERMISSION_FAILURE_LOGIN', 'Please log in to access this area.'));
         }
         if ($response->getStatusCode() == 403) {
             $this->pushCurrent();
-            $response = Security::permissionFailure($this, 'Diese Aktion ist nicht erlaubt.');
+            $response = Security::permissionFailure($this, _t(self::class . '.PERMISSION_FAILURE_ACCESS', 'You do not have permission to perform this action.'));
             $response->addHeader('Content-Type', 'text/html');
             return $response;
         }
@@ -88,12 +88,17 @@ abstract class FrontdeskController extends Controller implements PermissionProvi
 
     // ─── Override in subclass ─────────────────────────────────────────────────
 
-    protected function columns(): ColumnCollection
+    protected function defineColumns(): ColumnCollection
     {
-        return ColumnCollection::fromSummaryFields($this->getManagedModel());
+        $collection = ColumnCollection::fromSummaryFields($this->getManagedModel());
+        // Auto-link the first column to the view action
+        if ($collection->count() > 0) {
+            $collection->first()->link('view/{ID}');
+        }
+        return $collection;
     }
 
-    protected function filters(): FilterCollection
+    protected function defineFilters(): FilterCollection
     {
         return FilterCollection::create();
     }
@@ -102,14 +107,79 @@ abstract class FrontdeskController extends Controller implements PermissionProvi
      * @param DataObject $record
      * @return RowAction[]
      */
-    protected function rowActions(DataObject $record): array
+    protected function defineRowActions(DataObject $record): array
     {
         $actions = [];
+        $actions[] = RowAction::link(_t(self::class . '.ACTION_VIEW', 'View'), $this->Link('view/' . $record->ID));
         if ($this->canEdit()) {
-            $actions[] = RowAction::link('Bearbeiten', $this->Link('edit/' . $record->ID));
+            $actions[] = RowAction::link(_t(self::class . '.ACTION_EDIT', 'Edit'), $this->Link('edit/' . $record->ID));
             $actions[] = RowAction::delete($this->Link('delete/' . $record->ID));
         }
         return $actions;
+    }
+
+    /**
+     * Return an ArrayList of field name/value pairs for the detail view.
+     * Override to customise which fields are shown and in what order.
+     */
+    protected function defineViewFields(DataObject $record): ArrayList
+    {
+        $rows = ArrayList::create();
+
+        // DB fields (respects field_labels)
+        $labels = $record->fieldLabels(false);
+        foreach ($record->config()->get('db') ?? [] as $name => $type) {
+            $label = $labels[$name] ?? $name;
+            $dbField = $record->dbObject($name);
+            $value = $dbField ? $dbField->Nice() : (string) $record->$name;
+            $rows->push(ArrayData::create([
+                'Label' => $label,
+                'Value' => $value,
+                'Type'  => 'text',
+            ]));
+        }
+
+        // has_one relations
+        foreach ($record->config()->get('has_one') ?? [] as $name => $class) {
+            $label = $labels[$name] ?? $name;
+            $related = $record->$name();
+            if (!$related || !$related->exists()) {
+                continue;
+            }
+            // Image / File: render thumbnail or filename
+            if (is_a($related, 'SilverStripe\Assets\Image', true)) {
+                $rows->push(ArrayData::create([
+                    'Label' => $label,
+                    'Value' => $related->ScaleWidth(200)->forTemplate(),
+                    'Type'  => 'html',
+                ]));
+            } elseif (is_a($related, 'SilverStripe\Assets\File', true)) {
+                $rows->push(ArrayData::create([
+                    'Label' => $label,
+                    'Value' => $related->Name,
+                    'Type'  => 'text',
+                ]));
+            } else {
+                $rows->push(ArrayData::create([
+                    'Label' => $label,
+                    'Value' => method_exists($related, 'Title') ? $related->Title() : (string) $related->ID,
+                    'Type'  => 'text',
+                ]));
+            }
+        }
+
+        // has_many relations: show count + class name
+        foreach ($record->config()->get('has_many') ?? [] as $name => $class) {
+            $label = $labels[$name] ?? $name;
+            $count = $record->$name()->count();
+            $rows->push(ArrayData::create([
+                'Label' => $label,
+                'Value' => $count . ' ' . $name,
+                'Type'  => 'text',
+            ]));
+        }
+
+        return $rows;
     }
 
     protected function formFields(FieldList $fields): FieldList
@@ -124,7 +194,7 @@ abstract class FrontdeskController extends Controller implements PermissionProvi
         if ($this->isHtmxRequest()) {
             return $this->renderPartial(
                 'Atwx\\SilverstripeFrontdeskKit\\Includes\\ListTable',
-                ['Items' => $this->getItems(), 'Columns' => $this->columns()]
+                ['Items' => $this->getItems(), 'Columns' => $this->defineColumns()]
             );
         }
 
@@ -142,9 +212,11 @@ abstract class FrontdeskController extends Controller implements PermissionProvi
         if (!$item) {
             return $this->httpError(404);
         }
+        $title = $item->hasMethod('Title') ? $item->Title() : ($item->getTitle() ?: $item->singular_name() . ' #' . $item->ID);
         return [
-            'Item' => $item,
-            'Title' => $item->Title(),
+            'Item'       => $item,
+            'Title'      => $title,
+            'ViewFields' => $this->defineViewFields($item),
         ];
     }
 
@@ -165,7 +237,7 @@ abstract class FrontdeskController extends Controller implements PermissionProvi
         return [
             'Form' => $form,
             'Item' => $item,
-            'Title' => singleton($class)->singular_name() . ' bearbeiten',
+            'Title' => _t(self::class . '.TITLE_EDIT', 'Edit {name}', ['name' => singleton($class)->singular_name()]),
             'Actions' => false,
         ];
     }
@@ -176,7 +248,7 @@ abstract class FrontdeskController extends Controller implements PermissionProvi
         $form->loadDataFrom($request->getVars());
         $form->loadDataFrom(['BackURL' => $request->getVar('BackURL')]);
         $class = $this->getManagedModel();
-        $title = 'Neu: ' . singleton($class)->singular_name();
+        $title = _t(self::class . '.TITLE_NEW', 'New {name}', ['name' => singleton($class)->singular_name()]);
         return [
             'Title' => $title,
             'Form' => $form,
@@ -233,7 +305,7 @@ abstract class FrontdeskController extends Controller implements PermissionProvi
         $row = 2;
 
         $items = $this->getQuery();
-        $columns = $this->columns()->forExport();
+        $columns = $this->defineColumns()->forExport();
 
         $col = 'A';
         foreach ($columns as $column) {
@@ -279,8 +351,8 @@ abstract class FrontdeskController extends Controller implements PermissionProvi
         $fields->push(HiddenField::create('BackURL', 'BackURL'));
 
         return Form::create($this, 'EditForm', $fields, FieldList::create(
-            FormAction::create('save', 'Speichern'),
-            LiteralField::create('Cancel', '<a href="javascript:history.back();" class="btn">Abbrechen</a>')
+            FormAction::create('save', _t(self::class . '.ACTION_SAVE', 'Save')),
+            LiteralField::create('Cancel', '<a href="javascript:history.back();" class="btn">' . _t(self::class . '.ACTION_CANCEL', 'Cancel') . '</a>')
         ));
     }
 
@@ -293,15 +365,15 @@ abstract class FrontdeskController extends Controller implements PermissionProvi
 
     public function Columns(): ColumnCollection
     {
-        return $this->columns();
+        return $this->defineColumns();
     }
 
     public function FilterBar(): \SilverStripe\ORM\FieldType\DBHTMLText
     {
-        $filterCollection = $this->filters();
+        $filterCollection = $this->defineFilters();
         $fields = $filterCollection->toFieldList();
         $actions = FieldList::create(
-            FormAction::create('search', 'Filtern')->addExtraClass('btn btn-sm')
+            FormAction::create('search', _t(self::class . '.ACTION_FILTER', 'Filter'))->addExtraClass('btn btn-sm')
         );
         $form = Form::create($this, 'FilterForm', $fields, $actions)
             ->setFormAction($this->Link())
@@ -312,10 +384,10 @@ abstract class FrontdeskController extends Controller implements PermissionProvi
 
     public function FilterForm(): Form
     {
-        $filterCollection = $this->filters();
+        $filterCollection = $this->defineFilters();
         $fields = $filterCollection->toFieldList();
         $actions = FieldList::create(
-            FormAction::create('search', 'Filtern')->addExtraClass('btn btn-sm')
+            FormAction::create('search', _t(self::class . '.ACTION_FILTER', 'Filter'))->addExtraClass('btn btn-sm')
         );
         $form = Form::create($this, 'FilterForm', $fields, $actions)
             ->setFormAction($this->Link())
@@ -334,13 +406,13 @@ abstract class FrontdeskController extends Controller implements PermissionProvi
         $actions = ArrayList::create();
         if ($this->canEdit()) {
             $actions->push(ArrayData::create([
-                'Title' => 'Neu',
+                'Title' => _t(self::class . '.ACTION_NEW', 'New'),
                 'Primary' => true,
                 'Link' => $this->Link('add') . '?BackURL=' . urlencode($this->Link()),
             ]));
         }
         $actions->push(ArrayData::create([
-            'Title' => 'Export',
+            'Title' => _t(self::class . '.ACTION_EXPORT', 'Export'),
             'Primary' => false,
             'Link' => $this->Link('export') . '?' . $this->CurrentQuery(),
             'Target' => '_blank',
@@ -351,8 +423,19 @@ abstract class FrontdeskController extends Controller implements PermissionProvi
     public function RowActionsFor(DataObject $record): ArrayList
     {
         $list = ArrayList::create();
-        foreach ($this->rowActions($record) as $action) {
-            $list->push($action);
+        foreach ($this->defineRowActions($record) as $action) {
+            // Wrap in ArrayData so Silverstripe templates can access properties
+            $list->push(ArrayData::create([
+                'Label'          => $action->getLabel(),
+                'Url'            => $action->getUrl(),
+                'IsDelete'       => $action->isDeleteAction(),
+                'IsHtmx'         => $action->isHtmxAction(),
+                'Method'         => $action->getMethod(),
+                'HasConfirm'     => $action->getConfirmMessage() !== null,
+                'ConfirmMessage' => (string) $action->getConfirmMessage(),
+                'HasIcon'        => $action->getIcon() !== '',
+                'Icon'           => $action->getIcon(),
+            ]));
         }
         return $list;
     }
@@ -364,13 +447,14 @@ abstract class FrontdeskController extends Controller implements PermissionProvi
     public function ItemRows(): ArrayList
     {
         $rows = ArrayList::create();
-        $columns = $this->columns();
+        $columns = $this->defineColumns();
+        $baseUrl = $this->Link();
         foreach ($this->getItems() as $record) {
             $rows->push(ArrayData::create([
-                'Record' => $record,
-                'Cells' => $columns->renderFor($record),
+                'Record'     => $record,
+                'Cells'      => $columns->renderFor($record, $baseUrl),
                 'RowActions' => $this->RowActionsFor($record),
-                'ID' => $record->ID,
+                'ID'         => $record->ID,
             ]));
         }
         return $rows;
@@ -378,7 +462,7 @@ abstract class FrontdeskController extends Controller implements PermissionProvi
 
     public function FilterIsActive(): bool
     {
-        return $this->filters()->isActive($this->getRequest());
+        return $this->defineFilters()->isActive($this->getRequest());
     }
 
     public function CurrentQuery(): string
@@ -425,8 +509,8 @@ abstract class FrontdeskController extends Controller implements PermissionProvi
             $simpleClass = array_pop($parts);
             $code = 'FRONTDESK_ACCESS_' . strtoupper($simpleClass);
             $perms[$code] = [
-                'name' => "Zugriff auf '{$simpleClass}'",
-                'category' => 'Frontdesk-Zugriff',
+                'name' => _t(self::class . '.PERMISSION_ACCESS', "Access to '{name}'", ['name' => $simpleClass]),
+                'category' => _t(self::class . '.PERMISSION_CATEGORY', 'Frontdesk Access'),
             ];
         }
         return $perms;
@@ -456,7 +540,7 @@ abstract class FrontdeskController extends Controller implements PermissionProvi
     {
         $class = $this->getManagedModel();
         $list = DataObject::get($class);
-        $list = $this->filters()->applyAll($list, $this->getRequest());
+        $list = $this->defineFilters()->applyAll($list, $this->getRequest());
         return $list;
     }
 

@@ -2,9 +2,7 @@
 
 namespace Atwx\SilverstripeFrontdeskKit;
 
-use SilverStripe\View\ViewableData;
-
-class RowAction extends ViewableData
+class RowAction
 {
     protected string $label;
     protected string $url;
@@ -17,7 +15,6 @@ class RowAction extends ViewableData
 
     public function __construct(string $label, string $url)
     {
-        parent::__construct();
         $this->label = $label;
         $this->url = $url;
     }
@@ -29,9 +26,12 @@ class RowAction extends ViewableData
 
     public static function delete(string $url): static
     {
-        $action = new static('Löschen', $url);
+        $action = new static(
+            _t('Atwx\\SilverstripeFrontdeskKit\\FrontdeskController.ACTION_DELETE', 'Delete'),
+            $url
+        );
         $action->isDelete = true;
-        $action->confirmMessage = 'Sind Sie sicher?';
+        $action->confirmMessage = _t('Atwx\\SilverstripeFrontdeskKit\\FrontdeskController.CONFIRM_DELETE', 'Are you sure you want to delete this record?');
         $action->icon = 'trash';
         return $action;
     }
@@ -44,7 +44,7 @@ class RowAction extends ViewableData
         return $action;
     }
 
-    public function icon(string $icon): static
+    public function withIcon(string $icon): static
     {
         $this->icon = $icon;
         return $this;
@@ -56,7 +56,7 @@ class RowAction extends ViewableData
         return $this;
     }
 
-    public function confirm(string $message): static
+    public function withConfirm(string $message): static
     {
         $this->confirmMessage = $message;
         return $this;

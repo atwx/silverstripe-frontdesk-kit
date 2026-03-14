@@ -2,7 +2,7 @@
     <div class="fdk-page-header">
         <h1 class="fdk-page-title">$Title</h1>
         <div class="fdk-page-actions">
-            <a href="javascript:history.back();" class="btn btn-ghost btn-sm">← Zurück</a>
+            <a href="javascript:history.back();" class="btn btn-ghost btn-sm"><%t Atwx\SilverstripeFrontdeskKit\FrontdeskController.ACTION_BACK '← Back' %></a>
         </div>
     </div>
 

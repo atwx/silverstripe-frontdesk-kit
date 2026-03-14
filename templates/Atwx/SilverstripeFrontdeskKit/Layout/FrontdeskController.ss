@@ -24,17 +24,17 @@
             </div>
         <% end_loop %>
         <% if $FilterIsActive %>
-            <a href="$Link" class="btn btn-ghost btn-sm">Zurücksetzen</a>
+            <a href="$Link" class="btn btn-ghost btn-sm"><%t Atwx\SilverstripeFrontdeskKit\FrontdeskController.ACTION_RESET 'Reset' %></a>
         <% end_if %>
     </form>
     <% end_if %>
 
     <p class="fdk-count">
         <% if $FilterIsActive %>
-            $Items.TotalItems Einträge gefunden –
-            <a href="$Link" class="link link-primary">Filter zurücksetzen</a>
+            $Items.TotalItems <%t Atwx\SilverstripeFrontdeskKit\FrontdeskController.LABEL_RECORDS_FOUND 'records found' %> –
+            <a href="$Link" class="link link-primary"><%t Atwx\SilverstripeFrontdeskKit\FrontdeskController.ACTION_CLEAR_FILTERS 'Clear filters' %></a>
         <% else %>
-            $Items.TotalItems Einträge
+            $Items.TotalItems <%t Atwx\SilverstripeFrontdeskKit\FrontdeskController.LABEL_RECORDS 'records' %>
         <% end_if %>
     </p>
 

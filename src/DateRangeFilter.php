@@ -18,8 +18,8 @@ class DateRangeFilter extends Filter
     {
         return FieldGroup::create(
             $this->label,
-            DateField::create($this->name . '_From', 'Von'),
-            DateField::create($this->name . '_To', 'Bis')
+            DateField::create($this->name . '_From', 'From'),
+            DateField::create($this->name . '_To', 'To')
         )->setName($this->name);
     }
 

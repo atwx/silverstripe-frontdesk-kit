@@ -1,0 +1,88 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ── Theming via CSS Custom Properties ───────────────────────────────────── */
+:root {
+    --fdk-primary: oklch(var(--p));
+    --fdk-secondary: oklch(var(--s));
+}
+
+/* ── Layout ───────────────────────────────────────────────────────────────── */
+.fdk-page-header {
+    @apply flex items-center justify-between mb-6;
+}
+
+.fdk-page-title {
+    @apply text-2xl font-bold;
+}
+
+.fdk-page-actions {
+    @apply flex gap-2;
+}
+
+/* ── Filter bar ───────────────────────────────────────────────────────────── */
+.fdk-filter-bar {
+    @apply flex flex-wrap gap-3 items-end mb-4 p-4 bg-base-100 rounded-box shadow-sm;
+}
+
+.fdk-filter-field {
+    @apply flex flex-col gap-1;
+}
+
+.fdk-filter-field label {
+    @apply text-sm font-medium;
+}
+
+.fdk-filter-field input,
+.fdk-filter-field select {
+    @apply input input-bordered input-sm;
+}
+
+/* ── Count ────────────────────────────────────────────────────────────────── */
+.fdk-count {
+    @apply text-sm text-base-content/60 mb-2;
+}
+
+/* ── Table ────────────────────────────────────────────────────────────────── */
+.fdk-table-wrapper {
+    @apply bg-base-100 rounded-box shadow-sm;
+}
+
+.fdk-row-actions {
+    @apply w-10 text-right;
+}
+
+/* ── Form ─────────────────────────────────────────────────────────────────── */
+.fdk-form-wrap {
+    @apply bg-base-100 rounded-box shadow-sm p-6 max-w-3xl;
+}
+
+.fdk-form-wrap .field {
+    @apply form-control mb-4;
+}
+
+.fdk-form-wrap label {
+    @apply label;
+}
+
+.fdk-form-wrap label span {
+    @apply label-text;
+}
+
+.fdk-form-wrap input[type="text"],
+.fdk-form-wrap input[type="email"],
+.fdk-form-wrap input[type="tel"],
+.fdk-form-wrap input[type="date"],
+.fdk-form-wrap select,
+.fdk-form-wrap textarea {
+    @apply input input-bordered w-full;
+}
+
+.fdk-form-wrap textarea {
+    @apply textarea textarea-bordered;
+}
+
+.fdk-form-wrap .Actions {
+    @apply flex gap-3 mt-6;
+}

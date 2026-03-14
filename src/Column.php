@@ -3,9 +3,8 @@
 namespace Atwx\SilverstripeFrontdeskKit;
 
 use SilverStripe\ORM\DataObject;
-use SilverStripe\View\ViewableData;
 
-class Column extends ViewableData
+class Column
 {
     protected string $name;
     protected string $label = '';
@@ -17,7 +16,6 @@ class Column extends ViewableData
 
     public function __construct(string $name, string $label = '')
     {
-        parent::__construct();
         $this->name = $name;
         $this->label = $label ?: $name;
     }

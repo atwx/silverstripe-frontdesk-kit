@@ -1,0 +1,31 @@
+en:
+  Atwx\SilverstripeFrontdeskKit\FrontdeskController:
+    # Permissions / security
+    PERMISSION_FAILURE_LOGIN: 'Please log in to access this area.'
+    PERMISSION_FAILURE_ACCESS: 'You do not have permission to perform this action.'
+    PERMISSION_CATEGORY: 'Frontdesk Access'
+    PERMISSION_ACCESS: "Access to '{name}'"
+    # Page header actions
+    ACTION_NEW: 'New'
+    ACTION_EXPORT: 'Export'
+    # Filter bar
+    ACTION_FILTER: 'Filter'
+    ACTION_RESET: 'Reset'
+    ACTION_CLEAR_FILTERS: 'Clear filters'
+    # Row actions (defaults)
+    ACTION_VIEW: 'View'
+    ACTION_EDIT: 'Edit'
+    ACTION_DELETE: 'Delete'
+    # Form actions
+    ACTION_SAVE: 'Save'
+    ACTION_CANCEL: 'Cancel'
+    ACTION_BACK: '← Back'
+    # Page titles
+    TITLE_EDIT: 'Edit {name}'
+    TITLE_NEW: 'New {name}'
+    # Delete confirmation
+    CONFIRM_DELETE: 'Are you sure you want to delete this record?'
+    # List
+    NO_RECORDS: 'No records found.'
+    LABEL_RECORDS_FOUND: 'records found'
+    LABEL_RECORDS: 'records'

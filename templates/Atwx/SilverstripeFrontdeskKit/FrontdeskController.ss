@@ -6,7 +6,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta charset="utf-8">
     <title>$Title</title>
-    <link rel="stylesheet" href="$resourceURL('atwx/silverstripe-frontdesk-kit:dist/frontdesk.css')">
+    <link rel="stylesheet" href="$resourceURL('atwx/silverstripe-frontdesk-kit:client/dist/frontdesk.css')">
 </head>
 <body class="fdk-app bg-base-200 min-h-screen">
     <header class="fdk-header navbar bg-base-100 shadow-sm">
@@ -34,6 +34,6 @@
         $Layout
     </main>
 
-    <script src="$resourceURL('atwx/silverstripe-frontdesk-kit:dist/frontdesk.js')" defer></script>
+    <script src="$resourceURL('atwx/silverstripe-frontdesk-kit:client/dist/frontdesk.js')" defer></script>
 </body>
 </html>

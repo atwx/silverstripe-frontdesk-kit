@@ -7,7 +7,7 @@ use SilverStripe\Forms\FormField;
 
 class SelectFilter extends Filter
 {
-    protected array|callable $optionSource = [];
+    protected mixed $optionSource = [];
 
     public static function create(string $name, string $label): static
     {

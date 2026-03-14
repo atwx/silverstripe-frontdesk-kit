@@ -13,6 +13,6 @@
     <% end_loop %>
 <% else %>
     <tr>
-        <td colspan="99" class="text-center text-base-content/50 py-8">Keine Einträge gefunden</td>
+        <td colspan="99" class="text-center text-base-content/50 py-8"><%t Atwx\SilverstripeFrontdeskKit\FrontdeskController.NO_RECORDS 'No records found.' %></td>
     </tr>
 <% end_if %>

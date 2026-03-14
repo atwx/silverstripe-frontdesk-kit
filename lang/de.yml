@@ -1,0 +1,31 @@
+de:
+  Atwx\SilverstripeFrontdeskKit\FrontdeskController:
+    # Berechtigungen / Sicherheit
+    PERMISSION_FAILURE_LOGIN: 'Bitte melden Sie sich an, um auf diesen Bereich zuzugreifen.'
+    PERMISSION_FAILURE_ACCESS: 'Sie haben keine Berechtigung, diese Aktion auszuführen.'
+    PERMISSION_CATEGORY: 'Frontdesk-Zugriff'
+    PERMISSION_ACCESS: "Zugriff auf '{name}'"
+    # Seitenkopf-Aktionen
+    ACTION_NEW: 'Neu'
+    ACTION_EXPORT: 'Exportieren'
+    # Filterleiste
+    ACTION_FILTER: 'Filtern'
+    ACTION_RESET: 'Zurücksetzen'
+    ACTION_CLEAR_FILTERS: 'Filter zurücksetzen'
+    # Zeilenaktionen (Standards)
+    ACTION_VIEW: 'Anzeigen'
+    ACTION_EDIT: 'Bearbeiten'
+    ACTION_DELETE: 'Löschen'
+    # Formularaktionen
+    ACTION_SAVE: 'Speichern'
+    ACTION_CANCEL: 'Abbrechen'
+    ACTION_BACK: '← Zurück'
+    # Seitentitel
+    TITLE_EDIT: '{name} bearbeiten'
+    TITLE_NEW: 'Neues {name}'
+    # Löschbestätigung
+    CONFIRM_DELETE: 'Sind Sie sicher, dass Sie diesen Datensatz löschen möchten?'
+    # Liste
+    NO_RECORDS: 'Keine Einträge gefunden.'
+    LABEL_RECORDS_FOUND: 'Einträge gefunden'
+    LABEL_RECORDS: 'Einträge'

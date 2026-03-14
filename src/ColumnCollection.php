@@ -2,9 +2,10 @@
 
 namespace Atwx\SilverstripeFrontdeskKit;
 
+use SilverStripe\Control\Controller;
+use SilverStripe\Model\ArrayData;
 use SilverStripe\Model\List\ArrayList;
 use SilverStripe\ORM\DataObject;
-use SilverStripe\View\ArrayData;
 
 class ColumnCollection extends ArrayList
 {
@@ -16,7 +17,7 @@ class ColumnCollection extends ArrayList
         $collection = new static();
         $summaryFields = DataObject::singleton($modelClass)->summaryFields();
         foreach ($summaryFields as $name => $label) {
-            $collection->add(Column::create($name, $label));
+            $collection->addColumn(Column::create($name, $label));
         }
         return $collection;
     }
@@ -28,11 +29,11 @@ class ColumnCollection extends ArrayList
     public function make(string $name, string $label = ''): ColumnBuilder
     {
         $column = Column::create($name, $label);
-        $this->add($column);
+        $this->addColumn($column);
         return new ColumnBuilder($column, $this);
     }
 
-    public function add(Column $col): static
+    public function addColumn(Column $col): static
     {
         parent::push($col);
         return $this;
@@ -40,19 +41,28 @@ class ColumnCollection extends ArrayList
 
     /**
      * Render all column values for a given record as an ArrayList of ArrayData.
+     *
+     * @param string $baseUrl Controller base URL, prepended to relative link patterns.
      */
-    public function renderFor(DataObject $record): ArrayList
+    public function renderFor(DataObject $record, string $baseUrl = ''): ArrayList
     {
         $rows = ArrayList::create();
         $isFirst = true;
         foreach ($this->items as $col) {
+            $rawLink = $col->renderLink($record);
+            // Prepend the controller base URL to relative link patterns
+            if ($rawLink && $baseUrl && !str_starts_with($rawLink, '/') && !str_starts_with($rawLink, 'http')) {
+                $link = Controller::join_links($baseUrl, $rawLink);
+            } else {
+                $link = $rawLink;
+            }
             $rows->push(ArrayData::create([
-                'Column' => $col,
-                'Value' => $col->renderValue($record),
-                'Link' => $col->renderLink($record),
-                'HasLink' => (bool) $col->getLinkPattern(),
+                'Column'  => $col,
+                'Value'   => $col->renderValue($record),
+                'Link'    => $link,
+                'HasLink' => (bool) $rawLink,
                 'IsFirst' => $isFirst,
-                'Type' => $col->getType(),
+                'Type'    => $col->getType(),
             ]));
             $isFirst = false;
         }
@@ -67,7 +77,7 @@ class ColumnCollection extends ArrayList
         $collection = new static();
         foreach ($this->items as $col) {
             if ($col->isVisibleInExport()) {
-                $collection->add($col);
+                $collection->addColumn($col);
             }
         }
         return $collection;
