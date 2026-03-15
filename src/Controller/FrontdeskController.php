@@ -21,6 +21,7 @@ use SilverStripe\Model\List\ArrayList;
 use SilverStripe\Model\ArrayData;
 use SilverStripe\Model\List\PaginatedList;
 use SilverStripe\ORM\DataObject;
+use SilverStripe\ORM\FieldType\DBHTMLText;
 use SilverStripe\Security\Permission;
 use SilverStripe\Security\PermissionProvider;
 use SilverStripe\Security\Security;
@@ -117,7 +118,7 @@ abstract class FrontdeskController extends Controller implements PermissionProvi
         $actions = [];
         $actions[] = RowAction::link(_t(self::class . '.ACTION_VIEW', 'View'), $this->Link('view/' . $record->ID));
         if ($this->canEdit()) {
-            $actions[] = RowAction::htmx(_t(self::class . '.ACTION_EDIT', 'Edit'), $this->Link('edit/' . $record->ID), 'get');
+            $actions[] = RowAction::edit($this->Link('edit/' . $record->ID));
             $actions[] = RowAction::delete($this->Link('delete/' . $record->ID));
         }
         return $actions;
@@ -189,6 +190,35 @@ abstract class FrontdeskController extends Controller implements PermissionProvi
         return $rows;
     }
 
+    protected function defineViewActions(DataObject $record): ArrayList
+    {
+        $actions = ArrayList::create();
+        $currentAction = $this->getAction();
+        if ($this->canEdit()) {
+            $actions->push(ArrayData::create([
+                'Title'   => _t(self::class . '.ACTION_EDIT', 'Edit'),
+                'Link'    => $this->Link('edit/' . $record->ID),
+                'Primary' => true,
+                'Active'  => $currentAction === 'edit',
+            ]));
+        }
+        $actions->push(ArrayData::create([
+            'Title'   => _t(self::class . '.ACTION_BACK', '← Back'),
+            'Link'    => $this->Link(),
+            'Primary' => false,
+            'Active'  => false,
+        ]));
+        return $actions;
+    }
+
+    protected function defineViewContent(DataObject $record): DBHTMLText
+    {
+        return $this->renderWith(
+            'Atwx\\SilverstripeFrontdeskKit\\Includes\\ViewDetail',
+            ['ViewFields' => $this->defineViewFields($record)]
+        );
+    }
+
     protected function formFields(FieldList $fields): FieldList
     {
         return $fields;
@@ -224,6 +254,8 @@ abstract class FrontdeskController extends Controller implements PermissionProvi
             'Item'              => $item,
             'Title'             => $title,
             'ViewFields'        => $this->defineViewFields($item),
+            'ViewActions'       => $this->defineViewActions($item),
+            'ViewContent'       => $this->defineViewContent($item),
             'SubControllerData' => $this->getSubControllerData($item),
         ];
     }
@@ -441,12 +473,12 @@ abstract class FrontdeskController extends Controller implements PermissionProvi
         return $actions;
     }
 
-    public function RowActionsFor(DataObject $record): ArrayList
+    public function RowActionsFor(DataObject $record): ArrayData
     {
-        $list = ArrayList::create();
+        $direct   = ArrayList::create();
+        $dropdown = ArrayList::create();
         foreach ($this->defineRowActions($record) as $action) {
-            // Wrap in ArrayData so Silverstripe templates can access properties
-            $list->push(ArrayData::create([
+            $data = ArrayData::create([
                 'Label'          => $action->getLabel(),
                 'Url'            => $action->getUrl(),
                 'IsDelete'       => $action->isDeleteAction(),
@@ -459,9 +491,18 @@ abstract class FrontdeskController extends Controller implements PermissionProvi
                 'Target'         => $action->getTarget(),
                 'HasTarget'      => $action->getTarget() !== '',
                 'RowId'          => $record->ID,
-            ]));
+            ]);
+            if ($action->isDirectAction()) {
+                $direct->push($data);
+            } else {
+                $dropdown->push($data);
+            }
         }
-        return $list;
+        return ArrayData::create([
+            'DirectActions'      => $direct,
+            'DropdownActions'    => $dropdown,
+            'HasDropdownActions' => $dropdown->count() > 0,
+        ]);
     }
 
     /**

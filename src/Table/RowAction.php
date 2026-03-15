@@ -11,6 +11,7 @@ class RowAction
     protected ?string $confirmMessage = null;
     protected bool $isDelete = false;
     protected bool $isHtmx = false;
+    protected bool $isDirect = false;
     protected string $target = '';
     protected $enabledCondition = true;
 
@@ -43,6 +44,22 @@ class RowAction
         $action->isHtmx = true;
         $action->method = $method;
         return $action;
+    }
+
+    public static function edit(string $url): static
+    {
+        $action = new static(_t('Atwx\\SilverstripeFrontdeskKit\\Controller\\FrontdeskController.ACTION_EDIT', 'Edit'), $url);
+        $action->isHtmx = true;
+        $action->method = 'get';
+        $action->icon = 'pencil';
+        $action->isDirect = true;
+        return $action;
+    }
+
+    public function direct(): static
+    {
+        $this->isDirect = true;
+        return $this;
     }
 
     public function withIcon(string $icon): static
@@ -110,6 +127,11 @@ class RowAction
     public function isHtmxAction(): bool
     {
         return $this->isHtmx;
+    }
+
+    public function isDirectAction(): bool
+    {
+        return $this->isDirect;
     }
 
     public function getMethod(): string

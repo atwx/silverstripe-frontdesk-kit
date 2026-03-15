@@ -5,6 +5,10 @@
     </div>
     <% end_if %>
 
+    <% if $Description %>
+    <div class="prose mb-4">$Description</div>
+    <% end_if %>
+
     <% if $Content %>
     <div class="prose mb-4">$Content</div>
     <% end_if %>
