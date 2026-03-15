@@ -8,7 +8,6 @@ use SilverStripe\Control\Controller;
 use SilverStripe\Control\HTTPRequest;
 use SilverStripe\Control\HTTPResponse;
 use SilverStripe\Core\ClassInfo;
-use SilverStripe\Core\Manifest\ModuleResourceLoader;
 use SilverStripe\Forms\FieldList;
 use SilverStripe\Forms\Form;
 use SilverStripe\Forms\FormAction;
@@ -22,14 +21,13 @@ use SilverStripe\ORM\DataObject;
 use SilverStripe\Security\Permission;
 use SilverStripe\Security\PermissionProvider;
 use SilverStripe\Security\Security;
-use SilverStripe\View\Requirements;
 
 abstract class FrontdeskController extends Controller implements PermissionProvider
 {
     private static $managed_model = null;
     private static $url_segment = null;
     private static $title = '';
-    private static $logo = null;
+    private static $logo = null; // Configured via YAML; read by FrontdeskTemplateProvider
     private static $page_length = 30;
 
     private static $allowed_actions = [
@@ -46,9 +44,6 @@ abstract class FrontdeskController extends Controller implements PermissionProvi
     public function init()
     {
         parent::init();
-
-        Requirements::css('atwx/silverstripe-frontdesk-kit: client/dist/frontdesk.css');
-        Requirements::javascript('atwx/silverstripe-frontdesk-kit: client/dist/frontdesk.js');
 
         $this->templates['index'] = [
             static::class,
@@ -489,15 +484,6 @@ abstract class FrontdeskController extends Controller implements PermissionProvi
         $vars = $this->getRequest()->getVars();
         unset($vars['SecurityID'], $vars['action_search']);
         return http_build_query($vars);
-    }
-
-    public function getLogo(): ?string
-    {
-        $logo = self::config()->get('logo');
-        if ($logo) {
-            return ModuleResourceLoader::resourceURL($logo);
-        }
-        return null;
     }
 
     public function ContentLocale(): string
