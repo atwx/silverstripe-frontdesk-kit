@@ -71,6 +71,11 @@
     @apply w-10 text-right;
 }
 
+/* ── Sublist ──────────────────────────────────────────────────────────────── */
+.fdk-sublist-title {
+    @apply text-lg font-semibold mb-3;
+}
+
 /* ── Form ─────────────────────────────────────────────────────────────────── */
 .fdk-form-wrap {
     @apply bg-base-100 rounded-box shadow-sm p-6 max-w-3xl;

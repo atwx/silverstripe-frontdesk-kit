@@ -26,7 +26,7 @@
                 </button>
             </li>
             <% else %>
-            <li><a href="$Url">$Label</a></li>
+            <li><a href="$Url"<% if $HasTarget %> target="$Target"<% end_if %>>$Label</a></li>
             <% end_if %>
         <% end_loop %>
     </ul>

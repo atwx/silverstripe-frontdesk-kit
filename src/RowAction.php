@@ -11,6 +11,7 @@ class RowAction
     protected ?string $confirmMessage = null;
     protected bool $isDelete = false;
     protected bool $isHtmx = false;
+    protected string $target = '';
     protected $enabledCondition = true;
 
     public function __construct(string $label, string $url)
@@ -54,6 +55,17 @@ class RowAction
     {
         $this->enabledCondition = $condition;
         return $this;
+    }
+
+    public function withTarget(string $target): static
+    {
+        $this->target = $target;
+        return $this;
+    }
+
+    public function getTarget(): string
+    {
+        return $this->target;
     }
 
     public function withConfirm(string $message): static
@@ -115,4 +127,6 @@ class RowAction
     public function Method(): string { return $this->method; }
     public function HasConfirm(): bool { return $this->confirmMessage !== null; }
     public function HasIcon(): bool { return $this->icon !== ''; }
+    public function Target(): string { return $this->target; }
+    public function HasTarget(): bool { return $this->target !== ''; }
 }

@@ -218,10 +218,26 @@ abstract class FrontdeskController extends Controller implements PermissionProvi
         }
         $title = $item->hasMethod('Title') ? $item->Title() : ($item->getTitle() ?: $item->singular_name() . ' #' . $item->ID);
         return [
-            'Item'       => $item,
-            'Title'      => $title,
-            'ViewFields' => $this->defineViewFields($item),
+            'Item'              => $item,
+            'Title'             => $title,
+            'ViewFields'        => $this->defineViewFields($item),
+            'SubControllerData' => $this->getSubControllerData($item),
         ];
+    }
+
+    protected function getSubControllerData(DataObject $record): ArrayList
+    {
+        $result = ArrayList::create();
+        foreach (static::config()->get('sub_controllers') ?? [] as $class) {
+            $segment = singleton($class)->config()->get('url_segment');
+            $title   = singleton($class)->config()->get('title');
+            $result->push(ArrayData::create([
+                'Title'   => $title,
+                'Segment' => $segment,
+                'Url'     => $this->Link($segment . '/' . $record->ID),
+            ]));
+        }
+        return $result;
     }
 
     public function edit(HTTPRequest $request)
@@ -437,6 +453,8 @@ abstract class FrontdeskController extends Controller implements PermissionProvi
                 'ConfirmMessage' => (string) $action->getConfirmMessage(),
                 'HasIcon'        => $action->getIcon() !== '',
                 'Icon'           => $action->getIcon(),
+                'Target'         => $action->getTarget(),
+                'HasTarget'      => $action->getTarget() !== '',
                 'RowId'          => $record->ID,
             ]));
         }
