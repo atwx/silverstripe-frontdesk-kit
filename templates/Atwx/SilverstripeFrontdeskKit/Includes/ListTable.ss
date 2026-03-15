@@ -1,6 +1,6 @@
 <% if $ItemRows.Count %>
     <% loop $ItemRows %>
-        <tr>
+        <tr id="fdk-row-$ID">
             <% loop $Cells %>
                 <td>
                     <% if $HasLink %><a href="$Link">$Value</a><% else %>$Value<% end_if %>

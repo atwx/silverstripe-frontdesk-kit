@@ -22,8 +22,8 @@
         <div class="navbar-end">
             <ul class="menu menu-horizontal px-1">
                 <% loop $MainNavigation %>
-                    <li<% if $Active %> class="active"<% end_if %>>
-                        <a href="$Link">$Title</a>
+                    <li>
+                        <a href="$Link"<% if $Active %> class="active"<% end_if %>>$Title</a>
                     </li>
                 <% end_loop %>
             </ul>

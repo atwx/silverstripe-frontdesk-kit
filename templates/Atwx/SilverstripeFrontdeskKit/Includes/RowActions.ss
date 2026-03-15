@@ -1,34 +1,34 @@
 <% if $Actions %>
-<div class="fdk-row-actions-wrap dropdown dropdown-end">
-    <label tabindex="0" class="btn btn-ghost btn-xs">···</label>
-    <ul tabindex="0" class="dropdown-content menu p-1 shadow bg-base-100 rounded-box w-40 z-10">
+<details class="fdk-row-actions-wrap dropdown dropdown-end">
+    <summary class="btn btn-ghost btn-xs list-none">···</summary>
+    <ul class="dropdown-content menu p-1 shadow bg-base-100 rounded-box w-44 z-10">
         <% loop $Actions %>
             <% if $IsDelete %>
             <li>
-                <a href="$Url"
-                   class="text-error"
-                   <% if $HasConfirm %>
-                   hx-delete="$Url"
-                   hx-target="closest tr"
-                   hx-swap="outerHTML"
-                   hx-confirm="$ConfirmMessage"
-                   <% end_if %>>
+                <button type="button"
+                        class="text-error w-full text-left"
+                        data-delete-url="$Url.ATT"
+                        data-row-id="$RowId"
+                        onclick="fdkOpenDelete(this)">
                     $Label
-                </a>
+                </button>
             </li>
             <% else_if $IsHtmx %>
             <li>
-                <a hx-$Method="$Url"
-                   hx-target="closest tr"
-                   hx-swap="outerHTML"
-                   <% if $HasConfirm %>hx-confirm="$ConfirmMessage"<% end_if %>>
+                <button type="button"
+                        class="w-full text-left"
+                        hx-get="$Url"
+                        hx-target="#fdk-modal-content"
+                        hx-swap="innerHTML"
+                        hx-indicator="#fdk-modal-spinner"
+                        onclick="document.getElementById('fdk-modal').showModal()">
                     $Label
-                </a>
+                </button>
             </li>
             <% else %>
             <li><a href="$Url">$Label</a></li>
             <% end_if %>
         <% end_loop %>
     </ul>
-</div>
+</details>
 <% end_if %>

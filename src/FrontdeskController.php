@@ -22,6 +22,7 @@ use SilverStripe\ORM\DataObject;
 use SilverStripe\Security\Permission;
 use SilverStripe\Security\PermissionProvider;
 use SilverStripe\Security\Security;
+use SilverStripe\View\Requirements;
 
 abstract class FrontdeskController extends Controller implements PermissionProvider
 {
@@ -46,6 +47,9 @@ abstract class FrontdeskController extends Controller implements PermissionProvi
     {
         parent::init();
 
+        Requirements::css('atwx/silverstripe-frontdesk-kit: client/dist/frontdesk.css');
+        Requirements::javascript('atwx/silverstripe-frontdesk-kit: client/dist/frontdesk.js');
+
         $this->templates['index'] = [
             static::class,
             FrontdeskController::class,
@@ -54,11 +58,13 @@ abstract class FrontdeskController extends Controller implements PermissionProvi
         $this->templates['view'] = [
             static::class . '_view',
             FrontdeskController::class . '_view',
+            FrontdeskController::class,
             'Page',
         ];
         $this->templates['edit'] = [
             static::class . '_edit',
             FrontdeskController::class . '_edit',
+            FrontdeskController::class,
             'Page',
         ];
         $this->templates['add'] = [
@@ -66,6 +72,7 @@ abstract class FrontdeskController extends Controller implements PermissionProvi
             static::class . '_edit',
             FrontdeskController::class . '_add',
             FrontdeskController::class . '_edit',
+            FrontdeskController::class,
             'Page',
         ];
     }
@@ -112,7 +119,7 @@ abstract class FrontdeskController extends Controller implements PermissionProvi
         $actions = [];
         $actions[] = RowAction::link(_t(self::class . '.ACTION_VIEW', 'View'), $this->Link('view/' . $record->ID));
         if ($this->canEdit()) {
-            $actions[] = RowAction::link(_t(self::class . '.ACTION_EDIT', 'Edit'), $this->Link('edit/' . $record->ID));
+            $actions[] = RowAction::htmx(_t(self::class . '.ACTION_EDIT', 'Edit'), $this->Link('edit/' . $record->ID), 'get');
             $actions[] = RowAction::delete($this->Link('delete/' . $record->ID));
         }
         return $actions;
@@ -131,7 +138,9 @@ abstract class FrontdeskController extends Controller implements PermissionProvi
         foreach ($record->config()->get('db') ?? [] as $name => $type) {
             $label = $labels[$name] ?? $name;
             $dbField = $record->dbObject($name);
-            $value = $dbField ? $dbField->Nice() : (string) $record->$name;
+            $value = $dbField
+                ? (method_exists($dbField, 'Nice') ? $dbField->Nice() : (string) $dbField)
+                : (string) $record->$name;
             $rows->push(ArrayData::create([
                 'Label' => $label,
                 'Value' => $value,
@@ -233,11 +242,20 @@ abstract class FrontdeskController extends Controller implements PermissionProvi
             }
             $form->loadDataFrom($item);
         }
-        $form->loadDataFrom(['BackURL' => $request->getVar('BackURL')]);
+        $form->loadDataFrom(['BackURL' => $request->getVar('BackURL') ?: $this->Link()]);
+        $title = _t(self::class . '.TITLE_EDIT', 'Edit {name}', ['name' => singleton($class)->singular_name()]);
+
+        if ($this->isHtmxRequest()) {
+            return $this->renderPartial(
+                'Atwx\\SilverstripeFrontdeskKit\\Includes\\EditFormModal',
+                ['Form' => $form, 'Title' => $title, 'Item' => $item]
+            );
+        }
+
         return [
             'Form' => $form,
             'Item' => $item,
-            'Title' => _t(self::class . '.TITLE_EDIT', 'Edit {name}', ['name' => singleton($class)->singular_name()]),
+            'Title' => $title,
             'Actions' => false,
         ];
     }
@@ -373,7 +391,7 @@ abstract class FrontdeskController extends Controller implements PermissionProvi
         $filterCollection = $this->defineFilters();
         $fields = $filterCollection->toFieldList();
         $actions = FieldList::create(
-            FormAction::create('search', _t(self::class . '.ACTION_FILTER', 'Filter'))->addExtraClass('btn btn-sm')
+            FormAction::create('search', _t(self::class . '.ACTION_FILTER', 'Filter'))->removeExtraClass('btn-primary')->addExtraClass('btn-ghost btn-sm')
         );
         $form = Form::create($this, 'FilterForm', $fields, $actions)
             ->setFormAction($this->Link())
@@ -387,7 +405,7 @@ abstract class FrontdeskController extends Controller implements PermissionProvi
         $filterCollection = $this->defineFilters();
         $fields = $filterCollection->toFieldList();
         $actions = FieldList::create(
-            FormAction::create('search', _t(self::class . '.ACTION_FILTER', 'Filter'))->addExtraClass('btn btn-sm')
+            FormAction::create('search', _t(self::class . '.ACTION_FILTER', 'Filter'))->removeExtraClass('btn-primary')->addExtraClass('btn-ghost btn-sm')
         );
         $form = Form::create($this, 'FilterForm', $fields, $actions)
             ->setFormAction($this->Link())
@@ -435,6 +453,7 @@ abstract class FrontdeskController extends Controller implements PermissionProvi
                 'ConfirmMessage' => (string) $action->getConfirmMessage(),
                 'HasIcon'        => $action->getIcon() !== '',
                 'Icon'           => $action->getIcon(),
+                'RowId'          => $record->ID,
             ]));
         }
         return $list;

@@ -56,3 +56,43 @@
 
     <% include Atwx\\SilverstripeFrontdeskKit\\Includes\\Pagination ItemList=$Items %>
 </div>
+
+<!-- Edit modal: content loaded via HTMX -->
+<dialog id="fdk-modal" class="modal">
+    <div class="modal-box w-11/12 max-w-3xl">
+        <span id="fdk-modal-spinner" class="htmx-indicator loading loading-spinner loading-md"></span>
+        <div id="fdk-modal-content"></div>
+    </div>
+    <form method="dialog" class="modal-backdrop"><button>close</button></form>
+</dialog>
+
+<!-- Delete confirm modal -->
+<dialog id="fdk-delete-modal" class="modal">
+    <div class="modal-box">
+        <h3 class="font-bold text-lg"><%t Atwx\SilverstripeFrontdeskKit\FrontdeskController.CONFIRM_DELETE 'Are you sure you want to delete this record?' %></h3>
+        <div class="modal-action">
+            <button id="fdk-delete-confirm"
+                    class="btn btn-error"
+                    hx-delete=""
+                    hx-target=""
+                    hx-swap="outerHTML"
+                    onclick="document.getElementById('fdk-delete-modal').close()">
+                <%t Atwx\SilverstripeFrontdeskKit\FrontdeskController.ACTION_DELETE 'Delete' %>
+            </button>
+            <form method="dialog"><button class="btn"><%t Atwx\SilverstripeFrontdeskKit\FrontdeskController.ACTION_CANCEL 'Cancel' %></button></form>
+        </div>
+    </div>
+</dialog>
+
+<script>
+function fdkOpenDelete(btn) {
+    var modal = document.getElementById('fdk-delete-modal');
+    var confirm = document.getElementById('fdk-delete-confirm');
+    var rowId = btn.dataset.rowId;
+    confirm.setAttribute('hx-delete', btn.dataset.deleteUrl);
+    confirm.setAttribute('hx-target', '#fdk-row-' + rowId);
+    // Re-process HTMX on the button after updating its attributes
+    if (window.htmx) { htmx.process(confirm); }
+    modal.showModal();
+}
+</script>
