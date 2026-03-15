@@ -1,7 +1,10 @@
 <?php
 
-namespace Atwx\SilverstripeFrontdeskKit;
+namespace Atwx\SilverstripeFrontdeskKit\Controller;
 
+use Atwx\SilverstripeFrontdeskKit\Filter\FilterCollection;
+use Atwx\SilverstripeFrontdeskKit\Table\ColumnCollection;
+use Atwx\SilverstripeFrontdeskKit\Table\RowAction;
 use PhpOffice\PhpSpreadsheet\Spreadsheet;
 use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
 use SilverStripe\Control\Controller;

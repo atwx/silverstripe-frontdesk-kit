@@ -3,9 +3,9 @@
         <h1 class="fdk-page-title">$Title</h1>
         <div class="fdk-page-actions">
             <% if $Top.canEdit %>
-                <a href="$Top.Link('edit')/$Item.ID" class="btn btn-primary btn-sm"><%t Atwx\SilverstripeFrontdeskKit\FrontdeskController.ACTION_EDIT 'Edit' %></a>
+                <a href="$Top.Link('edit')/$Item.ID" class="btn btn-primary btn-sm"><%t Atwx\SilverstripeFrontdeskKit\Controller\FrontdeskController.ACTION_EDIT 'Edit' %></a>
             <% end_if %>
-            <a href="$Top.Link" class="btn btn-ghost btn-sm"><%t Atwx\SilverstripeFrontdeskKit\FrontdeskController.ACTION_BACK '← Back' %></a>
+            <a href="$Top.Link" class="btn btn-ghost btn-sm"><%t Atwx\SilverstripeFrontdeskKit\Controller\FrontdeskController.ACTION_BACK '← Back' %></a>
         </div>
     </div>
 

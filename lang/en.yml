@@ -1,5 +1,5 @@
 en:
-  Atwx\SilverstripeFrontdeskKit\FrontdeskController:
+  Atwx\SilverstripeFrontdeskKit\Controller\FrontdeskController:
     # Permissions / security
     PERMISSION_FAILURE_LOGIN: 'Please log in to access this area.'
     PERMISSION_FAILURE_ACCESS: 'You do not have permission to perform this action.'

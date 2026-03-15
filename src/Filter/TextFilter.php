@@ -1,6 +1,6 @@
 <?php
 
-namespace Atwx\SilverstripeFrontdeskKit;
+namespace Atwx\SilverstripeFrontdeskKit\Filter;
 
 use SilverStripe\Forms\FormField;
 use SilverStripe\Forms\TextField;

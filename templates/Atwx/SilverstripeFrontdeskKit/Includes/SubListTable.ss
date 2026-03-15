@@ -16,16 +16,16 @@
            hx-get="$Top.Link"
            hx-target="$Top.HtmxTarget"
            hx-swap="innerHTML"
-           class="btn btn-ghost btn-sm"><%t Atwx\SilverstripeFrontdeskKit\FrontdeskController.ACTION_RESET 'Reset' %></a>
+           class="btn btn-ghost btn-sm"><%t Atwx\SilverstripeFrontdeskKit\Controller\FrontdeskController.ACTION_RESET 'Reset' %></a>
     <% end_if %>
 </form>
 <% end_if %>
 
 <p class="fdk-count">
     <% if $Top.FilterIsActive %>
-        $Items.TotalItems <%t Atwx\SilverstripeFrontdeskKit\FrontdeskController.LABEL_RECORDS_FOUND 'records found' %>
+        $Items.TotalItems <%t Atwx\SilverstripeFrontdeskKit\Controller\FrontdeskController.LABEL_RECORDS_FOUND 'records found' %>
     <% else %>
-        $Items.TotalItems <%t Atwx\SilverstripeFrontdeskKit\FrontdeskController.LABEL_RECORDS 'records' %>
+        $Items.TotalItems <%t Atwx\SilverstripeFrontdeskKit\Controller\FrontdeskController.LABEL_RECORDS 'records' %>
     <% end_if %>
 </p>
 
@@ -55,7 +55,7 @@
                 <% end_loop %>
             <% else %>
                 <tr>
-                    <td colspan="99" class="text-center text-base-content/50 py-8"><%t Atwx\SilverstripeFrontdeskKit\FrontdeskController.NO_RECORDS 'No records found.' %></td>
+                    <td colspan="99" class="text-center text-base-content/50 py-8"><%t Atwx\SilverstripeFrontdeskKit\Controller\FrontdeskController.NO_RECORDS 'No records found.' %></td>
                 </tr>
             <% end_if %>
         </tbody>

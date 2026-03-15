@@ -24,7 +24,7 @@
             </div>
         <% end_loop %>
         <% if $FilterIsActive %>
-            <a href="$Link" class="btn btn-ghost btn-sm"><%t Atwx\SilverstripeFrontdeskKit\FrontdeskController.ACTION_RESET 'Reset' %></a>
+            <a href="$Link" class="btn btn-ghost btn-sm"><%t Atwx\SilverstripeFrontdeskKit\Controller\FrontdeskController.ACTION_RESET 'Reset' %></a>
         <% end_if %>
     </form>
     <% end_if %>
@@ -46,7 +46,7 @@
 <!-- Delete confirm modal -->
 <dialog id="fdk-delete-modal" class="modal">
     <div class="modal-box">
-        <h3 class="font-bold text-lg"><%t Atwx\SilverstripeFrontdeskKit\FrontdeskController.CONFIRM_DELETE 'Are you sure you want to delete this record?' %></h3>
+        <h3 class="font-bold text-lg"><%t Atwx\SilverstripeFrontdeskKit\Controller\FrontdeskController.CONFIRM_DELETE 'Are you sure you want to delete this record?' %></h3>
         <div class="modal-action">
             <button id="fdk-delete-confirm"
                     class="btn btn-error"
@@ -54,9 +54,9 @@
                     hx-target=""
                     hx-swap="outerHTML"
                     onclick="document.getElementById('fdk-delete-modal').close()">
-                <%t Atwx\SilverstripeFrontdeskKit\FrontdeskController.ACTION_DELETE 'Delete' %>
+                <%t Atwx\SilverstripeFrontdeskKit\Controller\FrontdeskController.ACTION_DELETE 'Delete' %>
             </button>
-            <form method="dialog"><button class="btn"><%t Atwx\SilverstripeFrontdeskKit\FrontdeskController.ACTION_CANCEL 'Cancel' %></button></form>
+            <form method="dialog"><button class="btn"><%t Atwx\SilverstripeFrontdeskKit\Controller\FrontdeskController.ACTION_CANCEL 'Cancel' %></button></form>
         </div>
     </div>
 </dialog>

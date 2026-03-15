@@ -1,6 +1,6 @@
 <?php
 
-namespace Atwx\SilverstripeFrontdeskKit;
+namespace Atwx\SilverstripeFrontdeskKit\Table;
 
 use SilverStripe\Control\Controller;
 use SilverStripe\Model\ArrayData;

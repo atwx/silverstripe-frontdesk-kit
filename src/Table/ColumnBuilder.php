@@ -1,6 +1,6 @@
 <?php
 
-namespace Atwx\SilverstripeFrontdeskKit;
+namespace Atwx\SilverstripeFrontdeskKit\Table;
 
 /**
  * Fluent builder for Column. Created by ColumnCollection::make().

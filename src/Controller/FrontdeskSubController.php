@@ -1,7 +1,8 @@
 <?php
 
-namespace Atwx\SilverstripeFrontdeskKit;
+namespace Atwx\SilverstripeFrontdeskKit\Controller;
 
+use Atwx\SilverstripeFrontdeskKit\Filter\FilterCollection;
 use SilverStripe\Control\Controller;
 use SilverStripe\Control\HTTPRequest;
 use SilverStripe\Model\List\PaginatedList;

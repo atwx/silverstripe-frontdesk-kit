@@ -1,6 +1,6 @@
 <?php
 
-namespace Atwx\SilverstripeFrontdeskKit;
+namespace Atwx\SilverstripeFrontdeskKit\Controller;
 
 use SilverStripe\Core\Manifest\ModuleResourceLoader;
 use SilverStripe\View\TemplateGlobalProvider;

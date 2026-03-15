@@ -1,6 +1,6 @@
 <?php
 
-namespace Atwx\SilverstripeFrontdeskKit;
+namespace Atwx\SilverstripeFrontdeskKit\Filter;
 
 use SilverStripe\Forms\DropdownField;
 use SilverStripe\Forms\FormField;

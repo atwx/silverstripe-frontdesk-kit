@@ -1,6 +1,6 @@
 <?php
 
-namespace Atwx\SilverstripeFrontdeskKit;
+namespace Atwx\SilverstripeFrontdeskKit\Table;
 
 class RowAction
 {
@@ -28,11 +28,11 @@ class RowAction
     public static function delete(string $url): static
     {
         $action = new static(
-            _t('Atwx\\SilverstripeFrontdeskKit\\FrontdeskController.ACTION_DELETE', 'Delete'),
+            _t('Atwx\\SilverstripeFrontdeskKit\\Controller\\FrontdeskController.ACTION_DELETE', 'Delete'),
             $url
         );
         $action->isDelete = true;
-        $action->confirmMessage = _t('Atwx\\SilverstripeFrontdeskKit\\FrontdeskController.CONFIRM_DELETE', 'Are you sure you want to delete this record?');
+        $action->confirmMessage = _t('Atwx\\SilverstripeFrontdeskKit\\Controller\\FrontdeskController.CONFIRM_DELETE', 'Are you sure you want to delete this record?');
         $action->icon = 'trash';
         return $action;
     }

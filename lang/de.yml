@@ -1,5 +1,5 @@
 de:
-  Atwx\SilverstripeFrontdeskKit\FrontdeskController:
+  Atwx\SilverstripeFrontdeskKit\Controller\FrontdeskController:
     # Berechtigungen / Sicherheit
     PERMISSION_FAILURE_LOGIN: 'Bitte melden Sie sich an, um auf diesen Bereich zuzugreifen.'
     PERMISSION_FAILURE_ACCESS: 'Sie haben keine Berechtigung, diese Aktion auszuführen.'

@@ -1,9 +1,9 @@
 <p class="fdk-count">
     <% if $FilterIsActive %>
-        $Items.TotalItems <%t Atwx\SilverstripeFrontdeskKit\FrontdeskController.LABEL_RECORDS_FOUND 'records found' %> –
-        <a href="$Link" class="link link-primary"><%t Atwx\SilverstripeFrontdeskKit\FrontdeskController.ACTION_CLEAR_FILTERS 'Clear filters' %></a>
+        $Items.TotalItems <%t Atwx\SilverstripeFrontdeskKit\Controller\FrontdeskController.LABEL_RECORDS_FOUND 'records found' %> –
+        <a href="$Link" class="link link-primary"><%t Atwx\SilverstripeFrontdeskKit\Controller\FrontdeskController.ACTION_CLEAR_FILTERS 'Clear filters' %></a>
     <% else %>
-        $Items.TotalItems <%t Atwx\SilverstripeFrontdeskKit\FrontdeskController.LABEL_RECORDS 'records' %>
+        $Items.TotalItems <%t Atwx\SilverstripeFrontdeskKit\Controller\FrontdeskController.LABEL_RECORDS 'records' %>
     <% end_if %>
 </p>
 
@@ -33,7 +33,7 @@
                 <% end_loop %>
             <% else %>
                 <tr>
-                    <td colspan="99" class="text-center text-base-content/50 py-8"><%t Atwx\SilverstripeFrontdeskKit\FrontdeskController.NO_RECORDS 'No records found.' %></td>
+                    <td colspan="99" class="text-center text-base-content/50 py-8"><%t Atwx\SilverstripeFrontdeskKit\Controller\FrontdeskController.NO_RECORDS 'No records found.' %></td>
                 </tr>
             <% end_if %>
         </tbody>
