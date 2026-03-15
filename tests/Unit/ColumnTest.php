@@ -2,7 +2,7 @@
 
 namespace Atwx\SilverstripeFrontdeskKitTests\Unit;
 
-use Atwx\SilverstripeFrontdeskKit\Column;
+use Atwx\SilverstripeFrontdeskKit\Table\Column;
 use SilverStripe\Dev\SapphireTest;
 use SilverStripe\ORM\DataObject;
 
@@ -165,5 +165,24 @@ class ColumnTest extends SapphireTest
         $record = $this->makeRecord();
         $link = Column::create('customMethod')->link('view/{slug}')->renderLink($record);
         $this->assertEquals('view/my-slug', $link);
+    }
+
+    // ─── renderValue: property path ───────────────────────────────────────────
+
+    public function testRenderValueReadsPropertyWhenNoMethod(): void
+    {
+        $record = $this->makeRecord();
+        $record->Company = 'Acme';
+
+        $this->assertEquals('Acme', Column::create('Company')->renderValue($record));
+    }
+
+    public function testRenderValueFormatterReceivesPropertyValueAsFirstArg(): void
+    {
+        $record = $this->makeRecord();
+        $record->Company = 'Acme';
+
+        $col = Column::create('Company')->format(fn ($v) => strtolower((string) $v));
+        $this->assertEquals('acme', $col->renderValue($record));
     }
 }

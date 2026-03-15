@@ -2,8 +2,8 @@
 
 namespace Atwx\SilverstripeFrontdeskKitTests\Unit;
 
-use Atwx\SilverstripeFrontdeskKit\Column;
-use Atwx\SilverstripeFrontdeskKit\ColumnCollection;
+use Atwx\SilverstripeFrontdeskKit\Table\Column;
+use Atwx\SilverstripeFrontdeskKit\Table\ColumnCollection;
 use SilverStripe\Dev\SapphireTest;
 use SilverStripe\ORM\DataObject;
 

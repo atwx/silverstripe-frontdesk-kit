@@ -2,7 +2,7 @@
 
 namespace Atwx\SilverstripeFrontdeskKitTests\Unit;
 
-use Atwx\SilverstripeFrontdeskKit\RowAction;
+use Atwx\SilverstripeFrontdeskKit\Table\RowAction;
 use SilverStripe\Dev\SapphireTest;
 
 class RowActionTest extends SapphireTest
@@ -135,5 +135,41 @@ class RowActionTest extends SapphireTest
         $action = RowAction::link('View', '/view');
 
         $this->assertFalse($action->HasConfirm());
+    }
+
+    // ─── withTarget ───────────────────────────────────────────────────────────
+
+    public function testTargetDefaultsToEmpty(): void
+    {
+        $action = RowAction::link('View', '/view');
+
+        $this->assertEquals('', $action->getTarget());
+        $this->assertFalse($action->HasTarget());
+        $this->assertEquals('', $action->Target());
+    }
+
+    public function testWithTargetIsFluent(): void
+    {
+        $action = RowAction::link('View', '/view');
+        $this->assertSame($action, $action->withTarget('_blank'));
+    }
+
+    public function testWithTargetSetsValue(): void
+    {
+        $action = RowAction::link('View', '/view')->withTarget('_blank');
+
+        $this->assertEquals('_blank', $action->getTarget());
+        $this->assertTrue($action->HasTarget());
+        $this->assertEquals('_blank', $action->Target());
+    }
+
+    // ─── delete() icon ────────────────────────────────────────────────────────
+
+    public function testDeleteActionHasTrashIcon(): void
+    {
+        $action = RowAction::delete('/delete/1');
+
+        $this->assertEquals('trash', $action->getIcon());
+        $this->assertTrue($action->HasIcon());
     }
 }

@@ -2,9 +2,9 @@
 
 namespace Atwx\SilverstripeFrontdeskKitTests\Unit;
 
-use Atwx\SilverstripeFrontdeskKit\DateRangeFilter;
-use Atwx\SilverstripeFrontdeskKit\SelectFilter;
-use Atwx\SilverstripeFrontdeskKit\TextFilter;
+use Atwx\SilverstripeFrontdeskKit\Filter\DateRangeFilter;
+use Atwx\SilverstripeFrontdeskKit\Filter\SelectFilter;
+use Atwx\SilverstripeFrontdeskKit\Filter\TextFilter;
 use SilverStripe\Dev\SapphireTest;
 use SilverStripe\ORM\DataList;
 
@@ -190,5 +190,22 @@ class FilterTest extends SapphireTest
         $filter = DateRangeFilter::create('Created', 'Created');
 
         $this->assertSame($list, $filter->applyRange($list, '2025-01-01', null));
+    }
+
+    public function testDateRangeFilterApplyToListReturnsUnmodifiedList(): void
+    {
+        $list = $this->createMock(DataList::class);
+        $filter = DateRangeFilter::create('Created', 'Created');
+
+        // applyToList is a no-op on DateRangeFilter; range is handled via applyRange
+        $this->assertSame($list, $filter->applyToList($list, '2025-01-01'));
+    }
+
+    // ─── SelectFilter: options() fluent ───────────────────────────────────────
+
+    public function testSelectFilterOptionsIsFluent(): void
+    {
+        $filter = SelectFilter::create('Status', 'Status');
+        $this->assertSame($filter, $filter->options(['a' => 'A']));
     }
 }

@@ -2,9 +2,9 @@
 
 namespace Atwx\SilverstripeFrontdeskKitTests\Unit;
 
-use Atwx\SilverstripeFrontdeskKit\DateRangeFilter;
-use Atwx\SilverstripeFrontdeskKit\FilterCollection;
-use Atwx\SilverstripeFrontdeskKit\TextFilter;
+use Atwx\SilverstripeFrontdeskKit\Filter\DateRangeFilter;
+use Atwx\SilverstripeFrontdeskKit\Filter\FilterCollection;
+use Atwx\SilverstripeFrontdeskKit\Filter\TextFilter;
 use SilverStripe\Dev\SapphireTest;
 use SilverStripe\Control\HTTPRequest;
 use SilverStripe\ORM\DataList;
@@ -170,5 +170,28 @@ class FilterCollectionTest extends SapphireTest
                 ->apply(fn () => throw new \Exception('must not be called')));
 
         $this->assertSame($list, $c->applyAll($list, $this->request()));
+    }
+
+    // ─── Empty collection ─────────────────────────────────────────────────────
+
+    public function testEmptyCollectionGetFiltersReturnsEmptyArray(): void
+    {
+        $this->assertSame([], FilterCollection::create()->getFilters());
+    }
+
+    public function testEmptyCollectionApplyAllReturnsOriginalList(): void
+    {
+        $list = $this->makeList();
+        $this->assertSame($list, FilterCollection::create()->applyAll($list, $this->request(['Q' => 'x'])));
+    }
+
+    public function testEmptyCollectionIsActiveReturnsFalse(): void
+    {
+        $this->assertFalse(FilterCollection::create()->isActive($this->request(['Q' => 'x'])));
+    }
+
+    public function testEmptyCollectionToFieldListIsEmpty(): void
+    {
+        $this->assertEquals(0, FilterCollection::create()->toFieldList()->count());
     }
 }
