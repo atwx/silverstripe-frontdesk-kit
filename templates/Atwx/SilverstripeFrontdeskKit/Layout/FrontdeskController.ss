@@ -4,16 +4,16 @@
         <div class="fdk-page-actions">
             <% loop $Actions %>
                 <a href="$Link"
-                   class="btn<% if $Primary %> btn-primary<% else %> btn-ghost btn-sm<% end_if %>"
+                   class="btn btn-sm<% if $Primary %> btn-primary<% else %> btn-ghost<% end_if %>"
                    <% if $Target %>target="$Target"<% end_if %>>$Title</a>
             <% end_loop %>
         </div>
     </div>
 
-    <% if $FilterForm.Fields.Count %>
+    <% if $FilterForm %>
     <form class="fdk-filter-bar"
           hx-get="$Link"
-          hx-target="#fdk-list-body"
+          hx-target="#fdk-list-region"
           hx-trigger="change, submit"
           hx-swap="innerHTML"
           method="get"
@@ -29,32 +29,9 @@
     </form>
     <% end_if %>
 
-    <p class="fdk-count">
-        <% if $FilterIsActive %>
-            $Items.TotalItems <%t Atwx\SilverstripeFrontdeskKit\FrontdeskController.LABEL_RECORDS_FOUND 'records found' %> –
-            <a href="$Link" class="link link-primary"><%t Atwx\SilverstripeFrontdeskKit\FrontdeskController.ACTION_CLEAR_FILTERS 'Clear filters' %></a>
-        <% else %>
-            $Items.TotalItems <%t Atwx\SilverstripeFrontdeskKit\FrontdeskController.LABEL_RECORDS 'records' %>
-        <% end_if %>
-    </p>
-
-    <div class="fdk-table-wrapper overflow-x-auto">
-        <table class="table table-zebra w-full">
-            <thead>
-                <tr>
-                    <% loop $Columns %>
-                        <th>$Title</th>
-                    <% end_loop %>
-                    <th></th>
-                </tr>
-            </thead>
-            <tbody id="fdk-list-body">
-                <% include Atwx\\SilverstripeFrontdeskKit\\Includes\\ListTable %>
-            </tbody>
-        </table>
+    <div id="fdk-list-region">
+        <% include Atwx\\SilverstripeFrontdeskKit\\Includes\\ListTable %>
     </div>
-
-    <% include Atwx\\SilverstripeFrontdeskKit\\Includes\\Pagination ItemList=$Items %>
 </div>
 
 <!-- Edit modal: content loaded via HTMX -->

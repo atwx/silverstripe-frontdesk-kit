@@ -381,24 +381,13 @@ abstract class FrontdeskController extends Controller implements PermissionProvi
         return $this->defineColumns();
     }
 
-    public function FilterBar(): \SilverStripe\ORM\FieldType\DBHTMLText
+    public function FilterForm(): ?Form
     {
         $filterCollection = $this->defineFilters();
         $fields = $filterCollection->toFieldList();
-        $actions = FieldList::create(
-            FormAction::create('search', _t(self::class . '.ACTION_FILTER', 'Filter'))->removeExtraClass('btn-primary')->addExtraClass('btn-ghost btn-sm')
-        );
-        $form = Form::create($this, 'FilterForm', $fields, $actions)
-            ->setFormAction($this->Link())
-            ->setFormMethod('GET');
-        $form->loadDataFrom($this->getRequest()->getVars());
-        return $form->forTemplate();
-    }
-
-    public function FilterForm(): Form
-    {
-        $filterCollection = $this->defineFilters();
-        $fields = $filterCollection->toFieldList();
+        if($fields->count() === 0) {
+            return null;
+        }
         $actions = FieldList::create(
             FormAction::create('search', _t(self::class . '.ACTION_FILTER', 'Filter'))->removeExtraClass('btn-primary')->addExtraClass('btn-ghost btn-sm')
         );

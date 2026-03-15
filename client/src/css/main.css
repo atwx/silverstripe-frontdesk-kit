@@ -11,6 +11,7 @@
 /* ── App shell ────────────────────────────────────────────────────────────── */
 .fdk-app {
     @apply bg-base-200 min-h-screen;
+    font-family: var(--fdk-font-family, system-ui, sans-serif);
 }
 
 .fdk-header {
@@ -47,9 +48,13 @@
     @apply text-sm font-medium;
 }
 
-.fdk-filter-field input,
-.fdk-filter-field select {
+.fdk-filter-field input {
     @apply input input-bordered input-sm;
+}
+
+.fdk-filter-field select {
+    @apply select select-bordered select-sm w-auto;
+    line-height: 1rem;
 }
 
 /* ── Count ────────────────────────────────────────────────────────────────── */
