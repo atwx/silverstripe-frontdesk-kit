@@ -1,11 +1,17 @@
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+@import "tailwindcss";
+
+@source "../../../templates/**/*.ss";
+@source "../../../client/src/**/*.{js,css}";
+
+@plugin "daisyui" {
+    themes: light, dark;
+    logs: false;
+}
 
 /* ── Theming via CSS Custom Properties ───────────────────────────────────── */
 :root {
-    --fdk-primary: oklch(var(--p));
-    --fdk-secondary: oklch(var(--s));
+    --fdk-primary: var(--color-primary);
+    --fdk-secondary: var(--color-secondary);
 }
 
 /* ── App shell ────────────────────────────────────────────────────────────── */
@@ -49,11 +55,11 @@
 }
 
 .fdk-filter-field input {
-    @apply input input-bordered input-sm;
+    @apply input input-sm;
 }
 
 .fdk-filter-field select {
-    @apply select select-bordered select-sm w-auto;
+    @apply select select-sm w-auto;
     line-height: 1rem;
 }
 
@@ -82,15 +88,11 @@
 }
 
 .fdk-form-wrap .field {
-    @apply form-control mb-4;
+    @apply mb-4;
 }
 
 .fdk-form-wrap label {
     @apply label;
-}
-
-.fdk-form-wrap label span {
-    @apply label-text;
 }
 
 .fdk-form-wrap input[type="text"],
@@ -98,11 +100,11 @@
 .fdk-form-wrap input[type="tel"],
 .fdk-form-wrap input[type="date"],
 .fdk-form-wrap select {
-    @apply input input-bordered w-full;
+    @apply input w-full;
 }
 
 .fdk-form-wrap textarea {
-    @apply textarea textarea-bordered;
+    @apply textarea;
 }
 
 .fdk-form-wrap .Actions {
