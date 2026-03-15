@@ -1,4 +1,4 @@
-<header class="fdk-header navbar bg-base-100 shadow-sm">
+<header class="fdk-header navbar">
     <div class="navbar-start">
         <a href="/" class="navbar-item">
             <% if $FrontdeskLogo %>

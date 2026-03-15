@@ -8,6 +8,19 @@
     --fdk-secondary: oklch(var(--s));
 }
 
+/* ── App shell ────────────────────────────────────────────────────────────── */
+.fdk-app {
+    @apply bg-base-200 min-h-screen;
+}
+
+.fdk-header {
+    @apply bg-base-100 shadow-sm;
+}
+
+.fdk-main {
+    @apply container mx-auto px-4 py-6;
+}
+
 /* ── Layout ───────────────────────────────────────────────────────────────── */
 .fdk-page-header {
     @apply flex items-center justify-between mb-6;
@@ -74,8 +87,7 @@
 .fdk-form-wrap input[type="email"],
 .fdk-form-wrap input[type="tel"],
 .fdk-form-wrap input[type="date"],
-.fdk-form-wrap select,
-.fdk-form-wrap textarea {
+.fdk-form-wrap select {
     @apply input input-bordered w-full;
 }
 
