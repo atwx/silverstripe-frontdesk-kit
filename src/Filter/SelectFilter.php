@@ -33,7 +33,11 @@ class SelectFilter extends Filter
 
     public function renderField(): FormField
     {
-        return DropdownField::create($this->name, $this->label, $this->resolveOptions())
+        $field = DropdownField::create($this->name, $this->label, $this->resolveOptions())
             ->setEmptyString('Alle');
+        if ($this->default !== null) {
+            $field->setValue($this->default);
+        }
+        return $field;
     }
 }

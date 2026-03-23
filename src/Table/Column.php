@@ -103,17 +103,24 @@ class Column
         $name = $this->name;
 
         if ($this->formatter) {
-            $rawValue = $record->hasMethod($name) ? $record->$name() : $record->$name;
+            $rawValue = $this->resolveField($record, $name);
             return (string) ($this->formatter)($rawValue, $record);
         }
 
-        if ($record->hasMethod($name)) {
-            $value = $record->$name();
-        } else {
-            $value = $record->$name;
+        return (string) $this->resolveField($record, $name);
+    }
+
+    protected function resolveField(DataObject $record, string $name): mixed
+    {
+        if (str_contains($name, '.')) {
+            return $record->relField($name);
         }
 
-        return (string) $value;
+        if ($record->hasMethod($name)) {
+            return $record->$name();
+        }
+
+        return $record->$name;
     }
 
     public function renderLink(DataObject $record): string

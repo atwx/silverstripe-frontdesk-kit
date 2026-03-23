@@ -10,11 +10,23 @@ abstract class Filter
     protected string $name;
     protected string $label;
     protected $applyFn = null;
+    protected mixed $default = null;
 
     public function __construct(string $name, string $label)
     {
         $this->name = $name;
         $this->label = $label;
+    }
+
+    public function defaultValue(mixed $value): static
+    {
+        $this->default = $value;
+        return $this;
+    }
+
+    public function getDefault(): mixed
+    {
+        return $this->default;
     }
 
     public function getName(): string

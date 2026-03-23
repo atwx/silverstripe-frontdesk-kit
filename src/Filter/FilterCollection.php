@@ -35,6 +35,8 @@ class FilterCollection
      */
     public function applyAll(DataList $list, HTTPRequest $request): DataList
     {
+        $hasAnyFilterParam = $this->hasAnyRequestParam($request);
+
         foreach ($this->filters as $filter) {
             if ($filter instanceof DateRangeFilter) {
                 $from = $request->getVar($filter->getName() . '_From');
@@ -44,10 +46,39 @@ class FilterCollection
                 }
             } else {
                 $value = $request->getVar($filter->getName());
+                if ($value === null && !$hasAnyFilterParam && $filter->getDefault() !== null) {
+                    $value = $filter->getDefault();
+                }
                 $list = $filter->applyToList($list, $value);
             }
         }
         return $list;
+    }
+
+    public function getDefaults(): array
+    {
+        $defaults = [];
+        foreach ($this->filters as $filter) {
+            if ($filter->getDefault() !== null) {
+                $defaults[$filter->getName()] = $filter->getDefault();
+            }
+        }
+        return $defaults;
+    }
+
+    public function hasAnyRequestParam(HTTPRequest $request): bool
+    {
+        foreach ($this->filters as $filter) {
+            if ($filter instanceof DateRangeFilter) {
+                if ($request->getVar($filter->getName() . '_From') !== null
+                    || $request->getVar($filter->getName() . '_To') !== null) {
+                    return true;
+                }
+            } elseif ($request->getVar($filter->getName()) !== null) {
+                return true;
+            }
+        }
+        return false;
     }
 
     /**

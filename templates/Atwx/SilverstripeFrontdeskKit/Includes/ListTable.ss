@@ -7,7 +7,7 @@
     <% end_if %>
 </p>
 
-<div class="fdk-table-wrapper overflow-x-auto">
+<div class="fdk-table-wrapper">
     <table class="table table-zebra w-full">
         <thead>
             <tr>

@@ -40,8 +40,9 @@ abstract class FrontdeskController extends Controller implements PermissionProvi
         'view',
         'edit'   => '->canEdit',
         'add'    => '->canEdit',
-        'save'   => '->canEdit',
-        'delete' => '->canEdit',
+        'save'         => '->canEdit',
+        'savecontinue' => '->canEdit',
+        'delete'       => '->canEdit',
         'export',
     ];
 
@@ -340,6 +341,25 @@ abstract class FrontdeskController extends Controller implements PermissionProvi
         return $this->redirect($backURL ?: $this->Link());
     }
 
+    public function savecontinue($data, Form $form)
+    {
+        $class = $this->getManagedModel();
+
+        if (!empty($data['ID'])) {
+            $item = $class::get()->byID($data['ID']);
+            if (!$item) {
+                return $this->httpError(404);
+            }
+        } else {
+            $item = $class::create();
+        }
+
+        $form->saveInto($item);
+        $item->write();
+
+        return $this->redirect($this->Link('edit/' . $item->ID));
+    }
+
     public function delete(HTTPRequest $request)
     {
         if (!$request->isGET() && !$request->isPOST() && !$request->isDelete()) {
@@ -416,6 +436,7 @@ abstract class FrontdeskController extends Controller implements PermissionProvi
 
         return Form::create($this, 'EditForm', $fields, FieldList::create(
             FormAction::create('save', _t(self::class . '.ACTION_SAVE', 'Save')),
+            FormAction::create('savecontinue', _t(self::class . '.ACTION_SAVE_CONTINUE', 'Save & Continue'))->removeExtraClass('btn-primary')->addExtraClass('btn-ghost'),
             LiteralField::create('Cancel', '<a href="javascript:history.back();" class="btn">' . _t(self::class . '.ACTION_CANCEL', 'Cancel') . '</a>')
         ));
     }
@@ -445,7 +466,13 @@ abstract class FrontdeskController extends Controller implements PermissionProvi
         $form = Form::create($this, 'FilterForm', $fields, $actions)
             ->setFormAction($this->Link())
             ->setFormMethod('GET');
-        $form->loadDataFrom($this->getRequest()->getVars());
+        $requestVars = $this->getRequest()->getVars();
+        if ($filterCollection->hasAnyRequestParam($this->getRequest())) {
+            $form->loadDataFrom($requestVars);
+        } else {
+            $defaults = $filterCollection->getDefaults();
+            $form->loadDataFrom($defaults);
+        }
         return $form;
     }
 

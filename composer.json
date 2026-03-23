@@ -8,7 +8,8 @@
     ],
     "license": "BSD-3-Clause",
     "require": {
-        "silverstripe/framework": "^6.0"
+        "silverstripe/framework": "^6.0",
+        "phpoffice/phpspreadsheet": "^2.0 || ^3.0"
     },
     "require-dev": {
         "phpunit/phpunit": "^11.3"

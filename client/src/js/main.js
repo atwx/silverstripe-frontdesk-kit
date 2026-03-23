@@ -6,4 +6,6 @@ window.htmx = htmx;
 
 htmx.config.defaultSwapStyle = 'innerHTML';
 
-Alpine.start();
+// Defer Alpine.start() until DOMContentLoaded so that app-level module scripts
+// can register Alpine.data() components before Alpine initialises the DOM.
+document.addEventListener('DOMContentLoaded', () => Alpine.start());

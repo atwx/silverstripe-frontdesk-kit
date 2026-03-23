@@ -59,7 +59,7 @@
 }
 
 .fdk-filter-field select {
-    @apply select select-sm w-auto;
+    @apply select select-sm w-full;
     line-height: 1rem;
 }
 
@@ -70,11 +70,15 @@
 
 /* ── Table ────────────────────────────────────────────────────────────────── */
 .fdk-table-wrapper {
-    @apply bg-base-100 rounded-box shadow-sm;
+    @apply bg-base-100 rounded-box shadow-sm overflow-visible;
 }
 
 .fdk-row-actions {
     @apply w-10 text-right;
+}
+
+.fdk-row-actions-wrap .dropdown-content {
+    @apply z-50;
 }
 
 /* ── Sublist ──────────────────────────────────────────────────────────────── */
