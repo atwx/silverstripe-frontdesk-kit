@@ -11,16 +11,20 @@ use SilverStripe\ORM\DataList;
 abstract class FrontdeskSubController extends FrontdeskController
 {
     /**
-     * Consume the parent ID segment from the URL, then optionally route to
-     * a sub-action. Without this, Silverstripe treats the numeric ID as an
-     * action name and throws a 403.
+     * Two rules are needed:
+     * 1. "$ParentID/$Action//$ID/$OtherID" – handles edit/delete/save with a record ID
+     *    (e.g. domains/23/edit/19 → ParentID=23, Action=edit, ID=19)
+     * 2. "$ParentID//$Action" – handles index/add where no record ID follows the action
+     *    (e.g. domains/23 → ParentID=23, Action=index)
+     * Without rule 1, $request->param('ID') is never set for edit/delete routes.
      */
     private static $url_handlers = [
-        '$ParentID//$Action' => 'handleAction',
+        '$ParentID/$Action//$ID/$OtherID' => 'handleAction',
+        '$ParentID//$Action'              => 'handleAction',
     ];
 
-    private ?FrontdeskController $parentController = null;
-    private int $parentID = 0;
+    protected ?FrontdeskController $parentController = null;
+    protected int $parentID = 0;
 
     public function setParentContext(FrontdeskController $parent, int $parentId): static
     {
@@ -95,6 +99,26 @@ abstract class FrontdeskSubController extends FrontdeskController
         $paginationRequest = new HTTPRequest('GET', $this->Link(), $this->getRequest()->getVars());
         return PaginatedList::create($this->getQuery(), $paginationRequest)
             ->setPageLength($pageLength);
+    }
+
+    /**
+     * After saving, always return to the parent controller's view page
+     * rather than the sub-controller's own URL.
+     */
+    public function save($data, \SilverStripe\Forms\Form $form)
+    {
+        $class = $this->getManagedModel();
+        if (!empty($data['ID'])) {
+            $item = $class::get()->byID($data['ID']);
+            if (!$item) {
+                return $this->httpError(404);
+            }
+        } else {
+            $item = $class::create();
+        }
+        $form->saveInto($item);
+        $item->write();
+        return $this->redirect($this->parentController->Link('view/' . $this->parentID));
     }
 
     /**

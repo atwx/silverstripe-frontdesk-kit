@@ -3,6 +3,7 @@
 namespace Atwx\SilverstripeFrontdeskKit\Table;
 
 use SilverStripe\ORM\DataObject;
+use SilverStripe\ORM\FieldType\DBHTMLText;
 
 class Column
 {
@@ -98,16 +99,22 @@ class Column
         return $this->visibleInExport;
     }
 
-    public function renderValue(DataObject $record): string
+    public function renderValue(DataObject $record): string|DBHTMLText
     {
         $name = $this->name;
 
         if ($this->formatter) {
             $rawValue = $this->resolveField($record, $name);
-            return (string) ($this->formatter)($rawValue, $record);
+            $result = (string) ($this->formatter)($rawValue, $record);
+        } else {
+            $result = (string) $this->resolveField($record, $name);
         }
 
-        return (string) $this->resolveField($record, $name);
+        if ($this->type === 'html') {
+            return DBHTMLText::create()->setValue($result);
+        }
+
+        return $result;
     }
 
     protected function resolveField(DataObject $record, string $name): mixed
@@ -117,7 +124,14 @@ class Column
         }
 
         if ($record->hasMethod($name)) {
-            return $record->$name();
+            try {
+                $ref = new \ReflectionMethod($record, $name);
+                if ($ref->getNumberOfRequiredParameters() === 0) {
+                    return $record->$name();
+                }
+            } catch (\ReflectionException $e) {
+                // fall through to property access
+            }
         }
 
         return $record->$name;

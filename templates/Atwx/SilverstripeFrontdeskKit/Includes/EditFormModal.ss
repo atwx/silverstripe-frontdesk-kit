@@ -1,3 +1,4 @@
+<style>.fdk-modal-inner [name="action_savecontinue"] { display: none; }</style>
 <div class="fdk-modal-inner">
     <div class="flex items-center justify-between mb-4">
         <h3 class="font-bold text-lg">$Title</h3>

@@ -10,7 +10,12 @@
                 hx-indicator="#fdk-modal-spinner"
                 onclick="document.getElementById('fdk-modal').showModal()"><% if $Icon == pencil %><% include Atwx\\SilverstripeFrontdeskKit\\Includes\\IconPencil %><% else %>$Label<% end_if %></button>
         <% else %>
-        <a href="$Url" class="btn btn-ghost btn-xs" title="$Label.ATT">$Label</a>
+        <a href="$Url" class="btn btn-ghost btn-xs" title="$Label.ATT"<% if $HasTarget %> target="$Target"<% end_if %>>
+            <% if $Icon == external-link %><% include Atwx\\SilverstripeFrontdeskKit\\Includes\\IconExternalLink %>
+            <% else_if $Icon == github %><% include Atwx\\SilverstripeFrontdeskKit\\Includes\\IconGithub %>
+            <% else_if $Icon == pencil %><% include Atwx\\SilverstripeFrontdeskKit\\Includes\\IconPencil %>
+            <% else %>$Label<% end_if %>
+        </a>
         <% end_if %>
     <% end_loop %>
 
