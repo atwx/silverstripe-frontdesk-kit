@@ -14,8 +14,9 @@
     <form class="fdk-filter-bar"
           hx-get="$Link"
           hx-target="#fdk-list-region"
-          hx-trigger="change, submit"
+          hx-trigger="change, submit, input delay:400ms from:find input[type=text]"
           hx-swap="innerHTML"
+          hx-push-url="true"
           method="get"
           action="$Link">
         <% loop $FilterForm.Fields %>

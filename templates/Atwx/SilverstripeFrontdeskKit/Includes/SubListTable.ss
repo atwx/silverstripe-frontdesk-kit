@@ -21,13 +21,26 @@
 </form>
 <% end_if %>
 
-<p class="fdk-count">
-    <% if $Top.FilterIsActive %>
-        $Items.TotalItems <%t Atwx\SilverstripeFrontdeskKit\Controller\FrontdeskController.LABEL_RECORDS_FOUND 'records found' %>
-    <% else %>
-        $Items.TotalItems <%t Atwx\SilverstripeFrontdeskKit\Controller\FrontdeskController.LABEL_RECORDS 'records' %>
+<div class="flex items-center justify-between mb-1">
+    <p class="fdk-count">
+        <% if $Top.FilterIsActive %>
+            $Items.TotalItems <%t Atwx\SilverstripeFrontdeskKit\Controller\FrontdeskController.LABEL_RECORDS_FOUND 'records found' %>
+        <% else %>
+            $Items.TotalItems <%t Atwx\SilverstripeFrontdeskKit\Controller\FrontdeskController.LABEL_RECORDS 'records' %>
+        <% end_if %>
+    </p>
+    <% if $Top.canEdit %>
+    <button type="button"
+            class="btn btn-primary btn-sm"
+            hx-get="$Top.Link('add')"
+            hx-target="#fdk-modal-content"
+            hx-swap="innerHTML"
+            hx-indicator="#fdk-modal-spinner"
+            onclick="document.getElementById('fdk-modal').showModal()">
+        <%t Atwx\SilverstripeFrontdeskKit\Controller\FrontdeskController.ACTION_NEW 'New' %>
+    </button>
     <% end_if %>
-</p>
+</div>
 
 <div class="fdk-table-wrapper">
     <table class="table table-zebra w-full">

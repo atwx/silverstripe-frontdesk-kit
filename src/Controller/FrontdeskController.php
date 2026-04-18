@@ -80,16 +80,27 @@ abstract class FrontdeskController extends Controller implements PermissionProvi
     public function handleRequest(HTTPRequest $request): HTTPResponse
     {
         $response = parent::handleRequest($request);
+
         if (!$this->canView()) {
             $this->pushCurrent();
-            return Security::permissionFailure($this, _t(self::class . '.PERMISSION_FAILURE_LOGIN', 'Please log in to access this area.'));
+            try {
+                return Security::permissionFailure($this, _t(self::class . '.PERMISSION_FAILURE_LOGIN', 'Please log in to access this area.'));
+            } finally {
+                $this->popCurrent();
+            }
         }
+
         if ($response->getStatusCode() == 403) {
             $this->pushCurrent();
-            $response = Security::permissionFailure($this, _t(self::class . '.PERMISSION_FAILURE_ACCESS', 'You do not have permission to perform this action.'));
-            $response->addHeader('Content-Type', 'text/html');
+            try {
+                $response = Security::permissionFailure($this, _t(self::class . '.PERMISSION_FAILURE_ACCESS', 'You do not have permission to perform this action.'));
+                $response->addHeader('Content-Type', 'text/html');
+            } finally {
+                $this->popCurrent();
+            }
             return $response;
         }
+
         return $response;
     }
 
@@ -314,6 +325,14 @@ abstract class FrontdeskController extends Controller implements PermissionProvi
         $form->loadDataFrom(['BackURL' => $request->getVar('BackURL')]);
         $class = $this->getManagedModel();
         $title = _t(self::class . '.TITLE_NEW', 'New {name}', ['name' => singleton($class)->singular_name()]);
+
+        if ($this->isHtmxRequest()) {
+            return $this->renderPartial(
+                'Atwx\\SilverstripeFrontdeskKit\\Includes\\EditFormModal',
+                ['Form' => $form, 'Title' => $title, 'Item' => null]
+            );
+        }
+
         return [
             'Title' => $title,
             'Form' => $form,
