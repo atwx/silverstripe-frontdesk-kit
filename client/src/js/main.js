@@ -1,11 +1,17 @@
 import Alpine from 'alpinejs';
 import htmx from 'htmx.org';
+import { createIcons, Pencil, Trash2, ExternalLink, Github } from 'lucide';
 
 window.Alpine = Alpine;
 window.htmx = htmx;
 
 htmx.config.defaultSwapStyle = 'innerHTML';
 
-// Defer Alpine.start() until DOMContentLoaded so that app-level module scripts
-// can register Alpine.data() components before Alpine initialises the DOM.
-document.addEventListener('DOMContentLoaded', () => Alpine.start());
+const fdkIcons = { Pencil, Trash2, ExternalLink, Github };
+
+document.addEventListener('DOMContentLoaded', () => {
+    Alpine.start();
+    createIcons({ icons: fdkIcons });
+});
+
+document.addEventListener('htmx:afterSwap', () => createIcons({ icons: fdkIcons }));

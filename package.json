@@ -18,6 +18,7 @@
     "dependencies": {
         "daisyui": "^5",
         "htmx.org": "^1.9",
-        "alpinejs": "^3"
+        "alpinejs": "^3",
+        "lucide": "^0.511.0"
     }
 }
