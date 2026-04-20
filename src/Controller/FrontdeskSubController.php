@@ -5,11 +5,28 @@ namespace Atwx\SilverstripeFrontdeskKit\Controller;
 use Atwx\SilverstripeFrontdeskKit\Filter\FilterCollection;
 use SilverStripe\Control\Controller;
 use SilverStripe\Control\HTTPRequest;
+use SilverStripe\Control\HTTPResponse;
 use SilverStripe\Model\List\PaginatedList;
 use SilverStripe\ORM\DataList;
+use SilverStripe\ORM\DataObject;
 
 abstract class FrontdeskSubController extends FrontdeskController
 {
+    /**
+     * FK column on the managed model pointing at the parent record.
+     * Set to e.g. 'WebsiteID'. When set, save() will populate it automatically.
+     */
+    private static $parent_field = null;
+
+    /**
+     * Declared here so overrides in subclasses inherit the permission check.
+     * SilverStripe's checkAccessAction uses definingClassForAction without
+     * inheritance, so each class that defines save()/delete() needs its own entry.
+     */
+    private static $allowed_actions = [
+        'save'   => '->canEdit',
+        'delete' => '->canEdit',
+    ];
     /**
      * Two rules are needed:
      * 1. "$ParentID/$Action//$ID/$OtherID" – handles edit/delete/save with a record ID
@@ -36,6 +53,31 @@ abstract class FrontdeskSubController extends FrontdeskController
     public function getParentID(): int
     {
         return $this->parentID;
+    }
+
+    /**
+     * Returns the ID of the record being edited, or null when there is none
+     * (e.g. on add). Needed because the parent's URL match leaks its own ID
+     * into the request params, so reading $request->param('ID') directly can
+     * return the parent record's ID instead of the sub-record's.
+     */
+    protected function currentRecordID(): ?int
+    {
+        if (!in_array($this->getAction(), ['edit', 'view', 'delete'], true)) {
+            return null;
+        }
+        $id = $this->getRequest()->param('ID');
+        return $id ? (int) $id : null;
+    }
+
+    /**
+     * Load the record currently being edited/viewed, scoped to this parent.
+     * Returns null on add or when the record does not belong to this parent.
+     */
+    protected function currentRecord(): ?DataObject
+    {
+        $id = $this->currentRecordID();
+        return $id ? $this->getBaseQuery()->byID($id) : null;
     }
 
     /**
@@ -102,8 +144,8 @@ abstract class FrontdeskSubController extends FrontdeskController
     }
 
     /**
-     * After saving, always return to the parent controller's view page
-     * rather than the sub-controller's own URL.
+     * After saving, return to the parent controller's view page.
+     * Subclasses can hook into beforeWrite()/afterWrite() rather than overriding.
      */
     public function save($data, \SilverStripe\Forms\Form $form)
     {
@@ -116,9 +158,56 @@ abstract class FrontdeskSubController extends FrontdeskController
         } else {
             $item = $class::create();
         }
+
         $form->saveInto($item);
+        if ($parentField = static::config()->get('parent_field')) {
+            $item->$parentField = $this->parentID;
+        }
+        $this->beforeWrite($item, $data);
         $item->write();
+        $this->afterWrite($item, $data);
+
         return $this->redirect($this->parentController->Link('view/' . $this->parentID));
+    }
+
+    /**
+     * Delete a record scoped to this sub-controller's parent.
+     * Subclasses can hook into beforeDelete()/afterDelete() rather than overriding.
+     */
+    public function delete(HTTPRequest $request)
+    {
+        $id = $request->param('ID');
+        $item = $id ? $this->getBaseQuery()->byID($id) : null;
+        if ($item) {
+            $this->beforeDelete($item);
+            $item->delete();
+            $this->afterDelete($item);
+        }
+
+        if ($this->isHtmxRequest()) {
+            return HTTPResponse::create('', 200);
+        }
+        return $this->redirect($this->parentController->Link('view/' . $this->parentID));
+    }
+
+    /** Hook: mutate $item before it is written. */
+    protected function beforeWrite(DataObject $item, array $data): void
+    {
+    }
+
+    /** Hook: react after $item is written. */
+    protected function afterWrite(DataObject $item, array $data): void
+    {
+    }
+
+    /** Hook: cascade-delete related records before $item is deleted. */
+    protected function beforeDelete(DataObject $item): void
+    {
+    }
+
+    /** Hook: react after $item is deleted. */
+    protected function afterDelete(DataObject $item): void
+    {
     }
 
     /**
