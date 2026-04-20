@@ -5,6 +5,7 @@ namespace Atwx\SilverstripeFrontdeskKit\Forms;
 use Atwx\SilverstripeFrontdeskKit\Controller\FrontdeskController;
 use SilverStripe\Control\Controller;
 use SilverStripe\Core\Extension;
+use SilverStripe\Security\Security;
 use SilverStripe\Forms\CheckboxField;
 use SilverStripe\Forms\CurrencyField;
 use SilverStripe\Forms\DateField;
@@ -94,7 +95,9 @@ class FrontdeskFormFieldExtension extends Extension
 
     private function isFrontdeskContext(): bool
     {
-        return Controller::curr() instanceof FrontdeskController;
+        $controller = Controller::curr();
+        return $controller instanceof FrontdeskController
+            || $controller instanceof Security;
     }
 
     /**
