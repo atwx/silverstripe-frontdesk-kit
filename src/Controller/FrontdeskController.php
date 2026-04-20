@@ -455,7 +455,7 @@ class FrontdeskController extends Controller implements PermissionProvider
 
         return Form::create($this, 'EditForm', $fields, FieldList::create(
             FormAction::create('save', _t(self::class . '.ACTION_SAVE', 'Save')),
-            FormAction::create('savecontinue', _t(self::class . '.ACTION_SAVE_CONTINUE', 'Save & Continue'))->removeExtraClass('btn-primary')->addExtraClass('btn-ghost'),
+            FormAction::create('savecontinue', _t(self::class . '.ACTION_SAVE_CONTINUE', 'Save & Continue'))->addExtraClass('btn-ghost'),
             LiteralField::create('Cancel', '<a href="javascript:history.back();" class="btn">' . _t(self::class . '.ACTION_CANCEL', 'Cancel') . '</a>')
         ));
     }
@@ -480,7 +480,7 @@ class FrontdeskController extends Controller implements PermissionProvider
             return null;
         }
         $actions = FieldList::create(
-            FormAction::create('search', _t(self::class . '.ACTION_FILTER', 'Filter'))->removeExtraClass('btn-primary')->addExtraClass('btn-ghost btn-sm')
+            FormAction::create('search', _t(self::class . '.ACTION_FILTER', 'Filter'))->addExtraClass('btn-ghost btn-sm')
         );
         $form = Form::create($this, 'FilterForm', $fields, $actions)
             ->setFormAction($this->Link())

@@ -2,54 +2,6 @@
 Name: daisyuiforms
 After: framework/_config/routes#coreroutes
 ---
-SilverStripe\Forms\TextField:
-  default_classes:
-    - 'input'
-    - 'w-full'
-SilverStripe\Forms\EmailField:
-  default_classes:
-    - 'input'
-    - 'w-full'
-SilverStripe\Forms\PasswordField:
-  default_classes:
-    - 'input'
-    - 'w-full'
-SilverStripe\Forms\NumericField:
-  default_classes:
-    - 'input'
-    - 'w-full'
-SilverStripe\Forms\UrlField:
-  default_classes:
-    - 'input'
-    - 'w-full'
-SilverStripe\Forms\CurrencyField:
-  default_classes:
-    - 'input'
-    - 'w-full'
-SilverStripe\Forms\DateField:
-  default_classes:
-    - 'input'
-    - 'w-full'
-SilverStripe\Forms\DatetimeField:
-  default_classes:
-    - 'input'
-    - 'w-full'
-SilverStripe\Forms\TextareaField:
-  default_classes:
-    - 'textarea'
-    - 'w-full'
-SilverStripe\Forms\DropdownField:
-  default_classes:
-    - 'select'
-    - 'w-full'
-SilverStripe\Forms\GroupedDropdownField:
-  default_classes:
-    - 'select'
-    - 'w-full'
-SilverStripe\Forms\CheckboxField:
-  default_classes:
-    - 'checkbox'
-SilverStripe\Forms\FormAction:
-  default_classes:
-    - 'btn'
-    - 'btn-primary'
+SilverStripe\Forms\FormField:
+  extensions:
+    - Atwx\SilverstripeFrontdeskKit\Forms\FrontdeskFormFieldExtension
