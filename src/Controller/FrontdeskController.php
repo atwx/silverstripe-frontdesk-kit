@@ -26,7 +26,7 @@ use SilverStripe\Security\Permission;
 use SilverStripe\Security\PermissionProvider;
 use SilverStripe\Security\Security;
 
-abstract class FrontdeskController extends Controller implements PermissionProvider
+class FrontdeskController extends Controller implements PermissionProvider
 {
     private static $managed_model = null;
     private static $url_segment = null;
