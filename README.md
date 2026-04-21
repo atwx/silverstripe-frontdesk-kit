@@ -1,6 +1,6 @@
 # silverstripe-frontdesk-kit
 
-A modern CRUD frontend toolkit for Silverstripe 6, built on **Tailwind CSS + DaisyUI + HTMX + Alpine.js**.
+A modern CRUD frontend toolkit for Silverstripe 6, built on **Tailwind CSS + DaisyUI + HTMX + Alpine.js + Chart.js**.
 
 Rather than rigid table columns from `$summary_fields` and FieldList blobs for filters, you define columns, filters, and row actions cleanly in the controller — inspired by Laravel Backpack and Django Admin.
 
@@ -36,6 +36,7 @@ See **[docs/quickstart.md](docs/quickstart.md)** for a step-by-step guide to set
 | [docs/filters.md](docs/filters.md) | TextFilter, SelectFilter, DateRangeFilter |
 | [docs/row-actions.md](docs/row-actions.md) | Row actions, HTMX actions, conditional visibility |
 | [docs/templates.md](docs/templates.md) | Overriding templates, HTMX partial rendering |
+| [docs/charts.md](docs/charts.md) | Declarative Chart.js rendering via `Chart` include |
 | [docs/frontend.md](docs/frontend.md) | Building CSS/JS, theming via CSS custom properties |
 
 ## Overview
@@ -71,6 +72,36 @@ class ContactManageController extends FrontdeskController
     }
 }
 ```
+
+## Charts
+
+Chart.js is bundled. Render any Chart.js config declaratively:
+
+```ss
+<% include Atwx\SilverstripeFrontdeskKit\Includes\Chart
+    ChartTitle='Revenue (12 months)',
+    ChartHeight='360px',
+    ChartConfigJson=$RevenueChartJson %>
+```
+
+Expose a JSON method on the controller:
+
+```php
+public function RevenueChartJson(): string
+{
+    return json_encode([
+        'type' => 'line',
+        'data' => ['labels' => $labels, 'datasets' => [...]],
+        'options' => ['responsive' => true, 'maintainAspectRatio' => false],
+    ]);
+}
+```
+
+The bundled JS picks up every `[data-fdk-chart]` canvas on page load and after HTMX swaps.
+
+## Form Field Styling
+
+DaisyUI utility classes (`input`, `select`, `textarea`, `checkbox`, `btn`) are applied automatically to any form field rendered inside a `FrontdeskController` or `Security` controller context — the CMS admin is left untouched.
 
 ## Frontend Build
 
