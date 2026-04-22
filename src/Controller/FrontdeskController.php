@@ -104,6 +104,20 @@ class FrontdeskController extends Controller implements PermissionProvider
         return $response;
     }
 
+    /**
+     * Returns the ID of the record being edited/viewed/deleted, or null when
+     * there is none (e.g. on add/index). Sub-controllers override this to
+     * guard against the parent's URL match leaking its own ID into params.
+     */
+    protected function currentRecordID(): ?int
+    {
+        if (!in_array($this->getAction(), ['edit', 'view', 'delete'], true)) {
+            return null;
+        }
+        $id = $this->getRequest()->param('ID');
+        return $id ? (int) $id : null;
+    }
+
     // ─── Override in subclass ─────────────────────────────────────────────────
 
     protected function defineColumns(): ColumnCollection
@@ -440,11 +454,15 @@ class FrontdeskController extends Controller implements PermissionProvider
     public function EditForm(): Form
     {
         $class = $this->getManagedModel();
-        $id = $this->getRequest()->param('ID');
+        $id = $this->currentRecordID();
 
         if ($id) {
             $item = $class::get()->byID($id);
         } else {
+            $item = DataObject::singleton($class);
+        }
+
+        if (!$item) {
             $item = DataObject::singleton($class);
         }
 

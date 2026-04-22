@@ -56,21 +56,6 @@ abstract class FrontdeskSubController extends FrontdeskController
     }
 
     /**
-     * Returns the ID of the record being edited, or null when there is none
-     * (e.g. on add). Needed because the parent's URL match leaks its own ID
-     * into the request params, so reading $request->param('ID') directly can
-     * return the parent record's ID instead of the sub-record's.
-     */
-    protected function currentRecordID(): ?int
-    {
-        if (!in_array($this->getAction(), ['edit', 'view', 'delete'], true)) {
-            return null;
-        }
-        $id = $this->getRequest()->param('ID');
-        return $id ? (int) $id : null;
-    }
-
-    /**
      * Load the record currently being edited/viewed, scoped to this parent.
      * Returns null on add or when the record does not belong to this parent.
      */
