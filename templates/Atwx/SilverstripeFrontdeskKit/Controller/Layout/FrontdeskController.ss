@@ -24,9 +24,6 @@
                 $FieldHolder
             </div>
         <% end_loop %>
-        <% if $FilterIsActive %>
-            <a href="$Link" class="btn btn-ghost btn-sm"><%t Atwx\SilverstripeFrontdeskKit\Controller\FrontdeskController.ACTION_RESET 'Reset' %></a>
-        <% end_if %>
     </form>
     <% end_if %>
 

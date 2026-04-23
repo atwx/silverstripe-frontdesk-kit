@@ -51,7 +51,7 @@
 }
 
 .fdk-filter-field label {
-    @apply text-sm font-medium;
+    @apply block text-sm font-medium;
 }
 
 .fdk-filter-field input {
