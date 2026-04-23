@@ -7,6 +7,14 @@
     <% end_if %>
 </p>
 
+<% if $SummaryStats %>
+<div class="fdk-summary-stats text-sm flex flex-wrap gap-x-4 gap-y-1 mb-2">
+    <% loop $SummaryStats %>
+        <span><span class="opacity-60">$Label:</span> <strong>$Value</strong><% if $SubLabel %> <span class="opacity-60">($SubLabel)</span><% end_if %></span>
+    <% end_loop %>
+</div>
+<% end_if %>
+
 <div class="fdk-table-wrapper">
     <table class="table table-zebra w-full">
         <thead>

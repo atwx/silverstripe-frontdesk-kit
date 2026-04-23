@@ -2,12 +2,15 @@
 
 namespace Atwx\SilverstripeFrontdeskKit\Filter;
 
+use Atwx\SilverstripeFrontdeskKit\Forms\SearchableDropdownField;
 use SilverStripe\Forms\DropdownField;
 use SilverStripe\Forms\FormField;
 
 class SelectFilter extends Filter
 {
     protected mixed $optionSource = [];
+
+    protected bool $searchable = false;
 
     public static function create(string $name, string $label): static
     {
@@ -23,6 +26,12 @@ class SelectFilter extends Filter
         return $this;
     }
 
+    public function searchable(bool $flag = true): static
+    {
+        $this->searchable = $flag;
+        return $this;
+    }
+
     protected function resolveOptions(): mixed
     {
         if (is_callable($this->optionSource)) {
@@ -33,7 +42,8 @@ class SelectFilter extends Filter
 
     public function renderField(): FormField
     {
-        $field = DropdownField::create($this->name, $this->label, $this->resolveOptions())
+        $class = $this->searchable ? SearchableDropdownField::class : DropdownField::class;
+        $field = $class::create($this->name, $this->label, $this->resolveOptions())
             ->setEmptyString('Alle');
         if ($this->default !== null) {
             $field->setValue($this->default);

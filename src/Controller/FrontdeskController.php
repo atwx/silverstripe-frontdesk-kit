@@ -594,6 +594,15 @@ class FrontdeskController extends Controller implements PermissionProvider
         return $this->defineFilters()->isActive($this->getRequest());
     }
 
+    /**
+     * Override in subclasses to show aggregate stats above the list.
+     * Each entry should expose Label, Value and optionally SubLabel.
+     */
+    public function SummaryStats(): ?ArrayList
+    {
+        return null;
+    }
+
     public function CurrentQuery(): string
     {
         $vars = $this->getRequest()->getVars();
