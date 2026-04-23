@@ -34,6 +34,16 @@ class FrontdeskController extends Controller implements PermissionProvider
     private static $logo = null; // Configured via YAML; read by FrontdeskTemplateProvider
     private static $page_length = 30;
 
+    /**
+     * Main navigation entries, keyed by arbitrary identifier. Each entry:
+     *   - title: label shown in the nav
+     *   - segment: URL path (used for both link and active-match)
+     *   - controller: FQCN of the target controller; used for canView() filtering
+     * Configure via YAML on FrontdeskController. Entries are rendered in the
+     * order they appear in the merged config.
+     */
+    private static $main_navigation = [];
+
     private static $allowed_actions = [
         'index',
         'EditForm',
@@ -615,31 +625,145 @@ class FrontdeskController extends Controller implements PermissionProvider
         return i18n::convert_rfc1766(i18n::get_locale());
     }
 
+    public function CurrentUser()
+    {
+        return Security::getCurrentUser();
+    }
+
+    public function MainNavigation(): ArrayList
+    {
+        $navigation = ArrayList::create();
+        $request = $this->getRequest();
+        $url = $request ? (string) $request->getURL() : '';
+        $entries = (array) self::config()->get('main_navigation');
+
+        foreach ($entries as $entry) {
+            $class = $entry['controller'] ?? null;
+            $segment = (string) ($entry['segment'] ?? '');
+            $title = (string) ($entry['title'] ?? $segment);
+            if (!$class || !class_exists($class)) {
+                continue;
+            }
+            $controller = singleton($class);
+            if (!$controller->canView()) {
+                continue;
+            }
+            $active = $segment !== ''
+                && ($url === $segment || str_starts_with($url, $segment . '/'));
+            if (!$active && !empty($entry['default']) && $url === '') {
+                $active = true;
+            }
+            $navigation->push(ArrayData::create([
+                'Title' => $title,
+                'Link' => $segment,
+                'Active' => $active,
+            ]));
+        }
+
+        return $navigation;
+    }
+
+    public function CurrentUserInitials(): string
+    {
+        $m = Security::getCurrentUser();
+        if (!$m) {
+            return '';
+        }
+        $init = strtoupper(mb_substr((string) $m->FirstName, 0, 1) . mb_substr((string) $m->Surname, 0, 1));
+        return $init ?: strtoupper(mb_substr((string) $m->Email, 0, 1));
+    }
+
+    public function CurrentUserDisplayName(): string
+    {
+        $m = Security::getCurrentUser();
+        if (!$m) {
+            return '';
+        }
+        $name = trim(((string) $m->FirstName) . ' ' . ((string) $m->Surname));
+        return $name !== '' ? $name : (string) $m->Email;
+    }
+
+    public function HasPermission(string $code): bool
+    {
+        $member = Security::getCurrentUser();
+        if (!$member) {
+            return false;
+        }
+        return Permission::checkMember($member, 'ADMIN') || Permission::checkMember($member, $code);
+    }
+
     // ─── Permission ───────────────────────────────────────────────────────────
 
     public function canView($member = null): bool
     {
-        return (bool) Security::getCurrentUser();
+        $member = $member ?: Security::getCurrentUser();
+        if (!$member) {
+            return false;
+        }
+        if (Permission::checkMember($member, 'ADMIN')) {
+            return true;
+        }
+        return Permission::checkMember($member, $this->getPermissionCode('VIEW'))
+            || Permission::checkMember($member, $this->getPermissionCode('EDIT'));
     }
 
     public function canEdit($member = null): bool
     {
-        return Permission::check('ADMIN');
+        $member = $member ?: Security::getCurrentUser();
+        if (!$member) {
+            return false;
+        }
+        if (Permission::checkMember($member, 'ADMIN')) {
+            return true;
+        }
+        return Permission::checkMember($member, $this->getPermissionCode('EDIT'));
+    }
+
+    /**
+     * Returns the permission code for this controller's action (VIEW or EDIT),
+     * derived from $url_segment. Subclasses can override $permission_code to
+     * pin a specific prefix.
+     */
+    public function getPermissionCode(string $action): string
+    {
+        $prefix = (string) $this->config()->get('permission_code');
+        if (!$prefix) {
+            $segment = (string) $this->config()->get('url_segment');
+            $prefix = 'FDK_' . strtoupper(preg_replace('/[^A-Za-z0-9]+/', '_', $segment));
+        }
+        return $prefix . '_' . strtoupper($action);
     }
 
     public function providePermissions(): array
     {
         $perms = [];
-        foreach (ClassInfo::subclassesFor(static::class) as $class) {
-            if ($class === static::class) {
+        foreach (ClassInfo::subclassesFor(FrontdeskController::class) as $class) {
+            if ($class === FrontdeskController::class || $class === FrontdeskSubController::class) {
                 continue;
             }
-            $parts = explode('\\', (string) $class);
-            $simpleClass = array_pop($parts);
-            $code = 'FRONTDESK_ACCESS_' . strtoupper($simpleClass);
-            $perms[$code] = [
-                'name' => _t(self::class . '.PERMISSION_ACCESS', "Access to '{name}'", ['name' => $simpleClass]),
-                'category' => _t(self::class . '.PERMISSION_CATEGORY', 'Frontdesk Access'),
+            // Skip SubControllers — they inherit from their parent.
+            if (is_subclass_of($class, FrontdeskSubController::class)) {
+                continue;
+            }
+            $ref = new \ReflectionClass($class);
+            if ($ref->isAbstract()) {
+                continue;
+            }
+            $segment = (string) singleton($class)->config()->get('url_segment');
+            if (!$segment) {
+                continue;
+            }
+            $title = (string) singleton($class)->config()->get('title') ?: $segment;
+            $prefix = (string) singleton($class)->config()->get('permission_code')
+                ?: 'FDK_' . strtoupper(preg_replace('/[^A-Za-z0-9]+/', '_', $segment));
+            $category = _t(self::class . '.PERMISSION_CATEGORY', 'Frontdesk Access');
+            $perms[$prefix . '_VIEW'] = [
+                'name' => _t(self::class . '.PERMISSION_VIEW', "View '{name}'", ['name' => $title]),
+                'category' => $category,
+            ];
+            $perms[$prefix . '_EDIT'] = [
+                'name' => _t(self::class . '.PERMISSION_EDIT', "Edit '{name}' (includes add/delete)", ['name' => $title]),
+                'category' => $category,
             ];
         }
         return $perms;
