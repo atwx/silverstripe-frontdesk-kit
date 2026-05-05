@@ -11,7 +11,7 @@
         <% end_if %>
         <% loop $ItemList.PaginationSummary %>
             <% if $CurrentBool %>
-                <button class="join-item btn btn-sm btn-active">$PageNum</button>
+                <button class="join-item btn btn-sm btn-primary">$PageNum</button>
             <% else %>
                 <% if $Link %>
                     <a class="join-item btn btn-sm"
