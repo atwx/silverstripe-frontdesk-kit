@@ -484,7 +484,7 @@ class FrontdeskController extends Controller implements PermissionProvider
         return Form::create($this, 'EditForm', $fields, FieldList::create(
             FormAction::create('save', _t(self::class . '.ACTION_SAVE', 'Save')),
             FormAction::create('savecontinue', _t(self::class . '.ACTION_SAVE_CONTINUE', 'Save & Continue'))->addExtraClass('btn-ghost'),
-            LiteralField::create('Cancel', '<a href="javascript:history.back();" class="btn">' . _t(self::class . '.ACTION_CANCEL', 'Cancel') . '</a>')
+            LiteralField::create('Cancel', '<a href="javascript:void(0);" onclick="var d=this.closest(\'dialog\'); if(d){d.close();return false;} history.back();" class="btn">' . _t(self::class . '.ACTION_CANCEL', 'Cancel') . '</a>')
         ));
     }
 
