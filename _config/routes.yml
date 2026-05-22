@@ -9,3 +9,4 @@ SilverStripe\Control\Director:
     'profile//$Action/$ID': 'Atwx\SilverstripeFrontdeskKit\Controller\ProfileController'
     'users//$Action/$ID':   'Atwx\SilverstripeFrontdeskKit\Controller\UserManageController'
     'groups//$Action/$ID':  'Atwx\SilverstripeFrontdeskKit\Controller\GroupManageController'
+    'site-config//$Action': 'Atwx\SilverstripeFrontdeskKit\Controller\SiteConfigController'

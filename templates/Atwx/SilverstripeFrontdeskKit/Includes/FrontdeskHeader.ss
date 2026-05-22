@@ -35,6 +35,9 @@
                 <% if $HasPermission('FDK_GROUPS_VIEW') %>
                 <li><a href="/groups">Gruppen</a></li>
                 <% end_if %>
+                <% if $HasPermission('ADMIN') %>
+                <li><a href="/site-config">Einstellungen</a></li>
+                <% end_if %>
                 <li><a href="/Security/logout">Logout</a></li>
             </ul>
         </div>
