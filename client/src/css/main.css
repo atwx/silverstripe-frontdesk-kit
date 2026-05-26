@@ -96,12 +96,14 @@
 }
 
 .fdk-form-wrap label {
-    @apply label;
+    @apply block text-sm font-medium;
 }
 
 .fdk-form-wrap input[type="text"],
 .fdk-form-wrap input[type="email"],
+.fdk-form-wrap input[type="password"],
 .fdk-form-wrap input[type="tel"],
+.fdk-form-wrap input[type="number"],
 .fdk-form-wrap input[type="date"],
 .fdk-form-wrap select {
     @apply input w-full;
