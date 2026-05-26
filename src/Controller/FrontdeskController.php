@@ -324,7 +324,7 @@ class FrontdeskController extends Controller implements PermissionProvider
             }
             $form->loadDataFrom($item);
         }
-        $form->loadDataFrom(['BackURL' => $request->getVar('BackURL') ?: $this->Link()]);
+        $form->loadDataFrom(['BackURL' => $request->getVar('BackURL') ?: $this->resolveBackURL($request)]);
         $title = _t(self::class . '.TITLE_EDIT', 'Edit {name}', ['name' => singleton($class)->singular_name()]);
 
         if ($this->isHtmxRequest()) {
@@ -346,7 +346,7 @@ class FrontdeskController extends Controller implements PermissionProvider
     {
         $form = $this->EditForm();
         $form->loadDataFrom($request->getVars());
-        $form->loadDataFrom(['BackURL' => $request->getVar('BackURL')]);
+        $form->loadDataFrom(['BackURL' => $request->getVar('BackURL') ?: $this->resolveBackURL($request)]);
         $class = $this->getManagedModel();
         $title = _t(self::class . '.TITLE_NEW', 'New {name}', ['name' => singleton($class)->singular_name()]);
 
@@ -368,7 +368,8 @@ class FrontdeskController extends Controller implements PermissionProvider
     {
         $class = $this->getManagedModel();
 
-        if (!empty($data['ID'])) {
+        $isNew = empty($data['ID']);
+        if (!$isNew) {
             $item = $class::get()->byID($data['ID']);
             if (!$item) {
                 return $this->httpError(404);
@@ -379,6 +380,10 @@ class FrontdeskController extends Controller implements PermissionProvider
 
         $form->saveInto($item);
         $item->write();
+
+        if ($isNew) {
+            return $this->redirect($this->Link('view/' . $item->ID));
+        }
 
         $backURL = $data['BackURL'] ?? $this->Link();
         return $this->redirect($backURL ?: $this->Link());
@@ -802,6 +807,21 @@ class FrontdeskController extends Controller implements PermissionProvider
         $pageLength = (int) (self::config()->get('page_length') ?: 30);
         return PaginatedList::create($this->getQuery(), $this->getRequest())
             ->setPageLength($pageLength);
+    }
+
+    protected function resolveBackURL(HTTPRequest $request): string
+    {
+        $candidate = $request->getHeader('HX-Current-URL') ?: $request->getHeader('Referer');
+        if (!$candidate) {
+            return $this->Link();
+        }
+        $parts = parse_url($candidate);
+        $path = ($parts['path'] ?? '/') . (isset($parts['query']) ? '?' . $parts['query'] : '');
+        $own = '/' . trim($this->Link(), '/');
+        if (str_starts_with($path, $own . '/edit') || str_starts_with($path, $own . '/add')) {
+            return $this->Link();
+        }
+        return $path;
     }
 
     protected function isHtmxRequest(): bool
