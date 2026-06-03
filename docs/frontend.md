@@ -4,8 +4,8 @@
 
 | Tool | Purpose |
 |---|---|
-| **Tailwind CSS v3** | Utility-first CSS |
-| **DaisyUI v4** | Component layer on top of Tailwind |
+| **Tailwind CSS v4** | Utility-first CSS |
+| **DaisyUI v5** | Component layer on top of Tailwind |
 | **HTMX v1.9** | Partial page updates without writing JS |
 | **Alpine.js v3** | Client-side state (dropdowns, checkboxes) |
 | **Vite v5** | JS bundler |
@@ -34,37 +34,95 @@ The built files are committed to the repository so consuming projects do not nee
 
 ## How assets are loaded
 
-`FrontdeskController.ss` loads the assets via Silverstripe's `resourceURL()`:
+There are two ways to consume the kit's CSS. Pick **one** — loading both at the
+same time gives you two DaisyUI runtimes (duplicated theme/base layers), and the
+one that loads last wins for equal-specificity rules, which can silently override
+the kit's component styling (e.g. a `btn-primary` losing its foreground colour).
+
+The JS bundle (`frontdesk.js`) is always loaded the same way, via `resourceURL()`.
+
+### Mode 1 — Prebuilt stylesheet (no Node.js build in the host app)
+
+Load the shipped `frontdesk.css` directly. This is what `FrontdeskController.ss`
+does by default:
 
 ```html
 <link rel="stylesheet" href="$resourceURL('atwx/silverstripe-frontdesk-kit:client/dist/frontdesk.css')">
 <script src="$resourceURL('atwx/silverstripe-frontdesk-kit:client/dist/frontdesk.js')" defer></script>
 ```
 
-Silverstripe's vendor plugin exposes `client/dist` via `_resources/` (configured in `extra.expose` in the module's `composer.json`).
+Silverstripe's vendor plugin exposes `client/dist` via `_resources/` (configured in
+`extra.expose` in the module's `composer.json`).
+
+### Mode 2 — Single Tailwind build (host app builds its own CSS)
+
+When the host app already runs Tailwind (e.g. via Vite), build the whole page from
+**one** Tailwind run by importing the kit's `preset.css` into your own entry. The
+preset carries the DaisyUI config, the kit's `@source` globs and the `.fdk-*`
+component styles — but deliberately does **not** `@import "tailwindcss"` (your entry
+does that exactly once):
+
+```css
+/* app/client/src/css/tailwind.css */
+@import "tailwindcss";
+@import "@fdk/preset.css";
+
+@source "../../../templates/**/*.ss"; /* your own templates */
+@source "../../../src/**/*.php";
+```
+
+Map the `@fdk` alias to the kit's CSS directory. With `@tailwindcss/vite` the
+alias replacement **must be an absolute path** (a relative one is not resolved for
+CSS `@import`):
+
+```js
+// vite.config.js
+import { fileURLToPath, URL } from 'node:url'
+// …
+resolve: {
+  alias: [{
+    find: '@fdk',
+    replacement: fileURLToPath(new URL(
+      './vendor/atwx/silverstripe-frontdesk-kit/client/src/css', import.meta.url)),
+  }],
+},
+```
+
+Then **remove the `frontdesk.css` `<link>`** from your `Page.ss` (keep the
+`frontdesk.js` `<script>`). The preset's `@source` paths resolve relative to the
+preset file, so the kit's classes (`btn-primary`, `.fdk-*`, …) are emitted by your
+build even though the kit lives in the gitignored `vendor/` directory.
+
+> Don't declare `@plugin "daisyui"` again in your own entry — the preset already
+> does. Override theme tokens (see [Theming](#theming)) instead.
+
+In this mode the host's installed Tailwind/DaisyUI versions are used; the kit's own
+`package.json` versions only matter for rebuilding the prebuilt `frontdesk.css`.
 
 ---
 
 ## Theming
 
-DaisyUI exposes its colour tokens as CSS custom properties (`--p`, `--s`, etc.). The module maps them to its own properties:
+DaisyUI v5 exposes its colour tokens as CSS custom properties (`--color-primary`,
+`--color-secondary`, etc.). The module maps them to its own properties:
 
 ```css
-/* client/src/css/main.css */
+/* client/src/css/preset.css */
 :root {
-    --fdk-primary:   oklch(var(--p));
-    --fdk-secondary: oklch(var(--s));
+    --fdk-primary:   var(--color-primary);
+    --fdk-secondary: var(--color-secondary);
 }
 ```
 
-To theme the kit without rebuilding, override the DaisyUI variables anywhere in your app's CSS **after** the module stylesheet is loaded:
+To theme the kit without rebuilding, override the DaisyUI tokens anywhere in your
+app's CSS **after** the kit styles are loaded:
 
 ```css
 /* app/client/src/scss/main.scss */
 :root {
-    --p: 220 80% 30%;   /* primary: dark blue */
-    --s: 160 60% 40%;   /* secondary: teal */
-    --a: 30 90% 55%;    /* accent: amber */
+    --color-primary:   oklch(45% 0.24 277);  /* primary */
+    --color-secondary: oklch(58% 0.23 277);  /* secondary */
+    --color-accent:    oklch(70% 0.18 50);   /* accent */
 }
 ```
 

@@ -105,19 +105,64 @@ DaisyUI utility classes (`input`, `select`, `textarea`, `checkbox`, `btn`) are a
 
 ## Frontend Build
 
+The kit ships a **prebuilt** `client/dist/frontdesk.css` + `frontdesk.js`, so
+consuming projects work without Node.js. There are two ways to consume the CSS —
+see **[docs/frontend.md](docs/frontend.md)** for details.
+
+**1. Prebuilt stylesheet** (no build step) — load it directly, as
+`FrontdeskController.ss` does:
+
+```html
+<link rel="stylesheet" href="$resourceURL('atwx/silverstripe-frontdesk-kit:client/dist/frontdesk.css')">
+```
+
+**2. Single Tailwind build** (recommended when your app already builds its own
+CSS) — *don't* also load `frontdesk.css`; that creates a second DaisyUI runtime
+that can override the kit's component styles. Instead import the kit's **preset**
+into your own Tailwind entry so the whole page comes from one build:
+
+```css
+/* app/client/src/css/tailwind.css */
+@import "tailwindcss";
+@import "@fdk/preset.css";            /* daisyUI config + kit @source globs + .fdk-* */
+
+@source "../../../templates/**/*.ss"; /* your own templates */
+@source "../../../src/**/*.php";
+```
+
+Map the `@fdk` alias to the kit's CSS dir. With `@tailwindcss/vite` the alias
+replacement **must be absolute**:
+
+```js
+// vite.config.js
+import { fileURLToPath, URL } from 'node:url'
+// …
+resolve: {
+  alias: [{
+    find: '@fdk',
+    replacement: fileURLToPath(new URL(
+      './vendor/atwx/silverstripe-frontdesk-kit/client/src/css', import.meta.url)),
+  }],
+},
+```
+
+Then drop the `frontdesk.css` `<link>` (keep the `frontdesk.js` `<script>`).
+
+Rebuilding the prebuilt files:
+
 ```bash
 cd vendor/atwx/silverstripe-frontdesk-kit
 yarn install
 yarn build
 ```
 
-Theme without rebuilding via CSS custom properties:
+Theme without rebuilding by overriding DaisyUI v5 tokens **after** the kit styles:
 
 ```css
 /* In your app CSS */
 :root {
-    --p: 220 80% 30%;   /* DaisyUI primary colour */
-    --s: 160 60% 40%;   /* DaisyUI secondary colour */
+    --color-primary:   oklch(45% 0.24 277);  /* primary colour */
+    --color-secondary: oklch(58% 0.23 277);  /* secondary colour */
 }
 ```
 

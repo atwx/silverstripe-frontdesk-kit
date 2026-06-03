@@ -1,0 +1,140 @@
+/*
+ * frontdesk-kit Tailwind/DaisyUI preset — consumable partial.
+ *
+ * Deliberately does NOT `@import "tailwindcss"` — the host entry does that
+ * exactly once. Importing this preset lets a host app build the whole page
+ * from ONE Tailwind build: a single DaisyUI runtime, no duplicated theme/base
+ * layers, and no cascade conflicts between the kit's CSS and the app's CSS.
+ *
+ * Host usage (single-build; the prebuilt frontdesk.css <link> is then dropped):
+ *
+ *   @import "tailwindcss";
+ *   @import "@fdk/preset.css";          // via a Vite alias to this directory
+ *   @source "../../../templates/**\/*.ss";
+ *   @source "../../../src/**\/*.php";
+ *
+ * The kit still ships a prebuilt client/dist/frontdesk.css (built from main.css)
+ * for host apps that do not run their own Tailwind build.
+ */
+
+@plugin "daisyui" {
+    themes: light, dark;
+    logs: false;
+}
+
+/* Scan the kit's own templates + client source so its DaisyUI component
+   classes (btn-primary, badge-*, …) are always emitted by whatever build
+   includes this preset. @source paths resolve relative to THIS file, so they
+   keep pointing at the kit wherever it is installed — including vendor/, which
+   automatic content detection skips because it is gitignored. */
+@source "../../../templates/**/*.ss";
+@source "../../../client/src/**/*.{js,css}";
+
+/* ── Theming via CSS Custom Properties ───────────────────────────────────── */
+:root {
+    --fdk-primary: var(--color-primary);
+    --fdk-secondary: var(--color-secondary);
+}
+
+/* ── App shell ────────────────────────────────────────────────────────────── */
+.fdk-app {
+    @apply bg-base-200 min-h-screen;
+    font-family: var(--fdk-font-family, system-ui, sans-serif);
+}
+
+.fdk-header {
+    @apply bg-base-100 shadow-sm;
+}
+
+.fdk-main {
+    @apply container mx-auto px-4 py-6;
+}
+
+/* ── Layout ───────────────────────────────────────────────────────────────── */
+.fdk-page-header {
+    @apply flex items-center justify-between mb-6;
+}
+
+.fdk-page-title {
+    @apply text-2xl font-bold;
+}
+
+.fdk-page-actions {
+    @apply flex gap-2;
+}
+
+/* ── Filter bar ───────────────────────────────────────────────────────────── */
+.fdk-filter-bar {
+    @apply flex flex-wrap gap-3 items-end mb-4 p-4 bg-base-100 rounded-box shadow-sm;
+}
+
+.fdk-filter-field {
+    @apply flex flex-col gap-1;
+}
+
+.fdk-filter-field label {
+    @apply block text-sm font-medium;
+}
+
+.fdk-filter-field input {
+    @apply input input-sm;
+}
+
+.fdk-filter-field select {
+    @apply select select-sm w-full;
+    line-height: 1rem;
+}
+
+/* ── Count ────────────────────────────────────────────────────────────────── */
+.fdk-count {
+    @apply text-sm text-base-content/60 mb-2;
+}
+
+/* ── Table ────────────────────────────────────────────────────────────────── */
+.fdk-table-wrapper {
+    @apply bg-base-100 rounded-box shadow-sm overflow-visible;
+}
+
+.fdk-row-actions {
+    @apply w-10 text-right;
+}
+
+.fdk-row-actions-wrap .dropdown-content {
+    @apply z-50;
+}
+
+/* ── Sublist ──────────────────────────────────────────────────────────────── */
+.fdk-sublist-title {
+    @apply text-lg font-semibold mb-3;
+}
+
+/* ── Form ─────────────────────────────────────────────────────────────────── */
+.fdk-form-wrap {
+    @apply bg-base-100 rounded-box shadow-sm p-6 max-w-3xl;
+}
+
+.fdk-form-wrap .field {
+    @apply mb-4;
+}
+
+.fdk-form-wrap label {
+    @apply block text-sm font-medium;
+}
+
+.fdk-form-wrap input[type="text"],
+.fdk-form-wrap input[type="email"],
+.fdk-form-wrap input[type="password"],
+.fdk-form-wrap input[type="tel"],
+.fdk-form-wrap input[type="number"],
+.fdk-form-wrap input[type="date"],
+.fdk-form-wrap select {
+    @apply input w-full;
+}
+
+.fdk-form-wrap textarea {
+    @apply textarea;
+}
+
+.fdk-form-wrap .Actions {
+    @apply flex gap-3 mt-6;
+}
