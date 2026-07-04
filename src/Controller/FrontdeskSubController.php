@@ -175,16 +175,6 @@ abstract class FrontdeskSubController extends FrontdeskController
         return $this->redirect($this->parentController->Link('view/' . $this->parentID));
     }
 
-    /** Hook: mutate $item before it is written. */
-    protected function beforeWrite(DataObject $item, array $data): void
-    {
-    }
-
-    /** Hook: react after $item is written. */
-    protected function afterWrite(DataObject $item, array $data): void
-    {
-    }
-
     /** Hook: cascade-delete related records before $item is deleted. */
     protected function beforeDelete(DataObject $item): void
     {

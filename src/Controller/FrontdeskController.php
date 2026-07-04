@@ -379,7 +379,9 @@ class FrontdeskController extends Controller implements PermissionProvider
         }
 
         $form->saveInto($item);
+        $this->beforeWrite($item, $data);
         $item->write();
+        $this->afterWrite($item, $data);
 
         if ($isNew) {
             return $this->redirect($this->Link('view/' . $item->ID));
@@ -403,9 +405,21 @@ class FrontdeskController extends Controller implements PermissionProvider
         }
 
         $form->saveInto($item);
+        $this->beforeWrite($item, $data);
         $item->write();
+        $this->afterWrite($item, $data);
 
         return $this->redirect($this->Link('edit/' . $item->ID));
+    }
+
+    /** Hook: mutate $item before it is written. */
+    protected function beforeWrite(DataObject $item, array $data): void
+    {
+    }
+
+    /** Hook: react after $item is written. */
+    protected function afterWrite(DataObject $item, array $data): void
+    {
     }
 
     public function delete(HTTPRequest $request)
