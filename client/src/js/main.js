@@ -1,6 +1,7 @@
 import Alpine from 'alpinejs';
 import htmx from 'htmx.org';
 import Chart from 'chart.js/auto';
+import Treeselect from 'treeselectjs';
 import { createIcons, Pencil, Trash2, ExternalLink, Github, KeyRound, Download, FileText, Printer, Minimize2, Maximize2 } from 'lucide';
 
 window.Alpine = Alpine;
@@ -48,75 +49,9 @@ window.fdkSearchable = () => ({
 const fdkIcons = { Pencil, Trash2, ExternalLink, Github, KeyRound, Download, FileText, Printer, Minimize2, Maximize2 };
 
 // ─── Checkbox tree ([data-fdk-checkbox-tree]) ────────────────────────────────
-// Renders a dropdown with a hierarchical, independent-node checkbox tree.
+// Hierarchical, independent-node checkbox tree rendered by treeselectjs.
 // Options come from an embedded JSON script block; the selection is written
 // back to a hidden input as a JSON array of IDs.
-
-function fdkBranchHasSelected(nodes, selected) {
-    return nodes.some((n) =>
-        selected.has(Number(n.value)) || (n.children && fdkBranchHasSelected(n.children, selected))
-    );
-}
-
-function fdkBuildTreeList(nodes, selected, onChange) {
-    const ul = document.createElement('ul');
-    ul.className = 'fdk-tree-list';
-    nodes.forEach((node) => {
-        const li = document.createElement('li');
-        const row = document.createElement('div');
-        row.className = 'flex items-center gap-1 py-0.5';
-
-        const hasChildren = node.children && node.children.length > 0;
-        let childList = null;
-        if (hasChildren) {
-            childList = fdkBuildTreeList(node.children, selected, onChange);
-            childList.className += ' ms-6';
-            const open = fdkBranchHasSelected(node.children, selected);
-            if (!open) childList.classList.add('hidden');
-
-            const caret = document.createElement('button');
-            caret.type = 'button';
-            caret.className = 'btn btn-ghost btn-xs px-1 w-5';
-            caret.textContent = open ? '▾' : '▸';
-            caret.addEventListener('click', (e) => {
-                e.preventDefault();
-                const nowHidden = childList.classList.toggle('hidden');
-                caret.textContent = nowHidden ? '▸' : '▾';
-            });
-            row.appendChild(caret);
-        } else {
-            const spacer = document.createElement('span');
-            spacer.className = 'inline-block w-5 shrink-0';
-            row.appendChild(spacer);
-        }
-
-        const label = document.createElement('label');
-        label.className = 'flex items-center gap-2 cursor-pointer min-w-0';
-        const cb = document.createElement('input');
-        cb.type = 'checkbox';
-        cb.className = 'checkbox checkbox-sm';
-        cb.checked = selected.has(Number(node.value));
-        cb.addEventListener('change', () => {
-            if (cb.checked) {
-                selected.add(Number(node.value));
-            } else {
-                selected.delete(Number(node.value));
-            }
-            onChange();
-        });
-        const text = document.createElement('span');
-        text.className = 'truncate text-sm';
-        text.textContent = node.name;
-        label.appendChild(cb);
-        label.appendChild(text);
-        row.appendChild(label);
-
-        li.appendChild(row);
-        if (childList) li.appendChild(childList);
-        ul.appendChild(li);
-    });
-    return ul;
-}
 
 function initFdkCheckboxTrees(root = document) {
     root.querySelectorAll('[data-fdk-checkbox-tree]').forEach((el) => {
@@ -132,29 +67,25 @@ function initFdkCheckboxTrees(root = document) {
         }
         const input = el.querySelector('[data-fdk-tree-input]');
         const treeRoot = el.querySelector('[data-fdk-tree-root]');
-        const summary = el.querySelector('[data-fdk-tree-summary]');
 
-        let initial = [];
+        let value = [];
         try {
-            initial = input.value ? JSON.parse(input.value) : [];
+            value = input.value ? JSON.parse(input.value) : [];
         } catch (e) {
-            initial = [];
+            value = [];
         }
-        const selected = new Set((Array.isArray(initial) ? initial : []).map(Number));
 
-        const update = () => {
-            input.value = JSON.stringify([...selected]);
-            if (summary) {
-                summary.textContent = selected.size > 0 ? selected.size + ' ausgewählt' : 'Auswählen…';
-            }
+        const treeselect = new Treeselect({
+            parentHtmlContainer: treeRoot,
+            value: Array.isArray(value) ? value : [],
+            options: options,
+            isIndependentNodes: true,
+        });
+
+        treeselect.srcElement.addEventListener('input', (e) => {
+            input.value = JSON.stringify(e.detail);
             input.dispatchEvent(new Event('change', { bubbles: true }));
-        };
-
-        treeRoot.appendChild(fdkBuildTreeList(options, selected, update));
-        input.value = JSON.stringify([...selected]);
-        if (summary) {
-            summary.textContent = selected.size > 0 ? selected.size + ' ausgewählt' : 'Auswählen…';
-        }
+        });
     });
 }
 

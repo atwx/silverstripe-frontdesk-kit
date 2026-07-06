@@ -9,17 +9,18 @@
         "build:css": "tailwindcss -i client/src/css/main.css -o client/dist/frontdesk.css --minify"
     },
     "devDependencies": {
-        "vite": "^5",
-        "tailwindcss": "^4",
         "@tailwindcss/cli": "^4",
         "@tailwindcss/postcss": "^4",
-        "postcss": "^8"
+        "postcss": "^8",
+        "tailwindcss": "^4",
+        "vite": "^5"
     },
     "dependencies": {
+        "alpinejs": "^3",
         "chart.js": "^4",
         "daisyui": "^5",
         "htmx.org": "^1.9",
-        "alpinejs": "^3",
-        "lucide": "^0.511.0"
+        "lucide": "^0.511.0",
+        "treeselectjs": "^0.13"
     }
 }

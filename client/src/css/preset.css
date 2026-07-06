@@ -30,6 +30,9 @@
 @source "../../../templates/**/*.ss";
 @source "../../../client/src/**/*.{js,css}";
 
+/* treeselectjs styles for the fdk checkbox-tree component */
+@import "./treeselectjs.css";
+
 /* ── Theming via CSS Custom Properties ───────────────────────────────────── */
 :root {
     --fdk-primary: var(--color-primary);
@@ -76,7 +79,9 @@
     @apply block text-sm font-medium;
 }
 
-.fdk-filter-field input {
+/* Not checkboxes/radios — a checkbox styled as a text input renders broken
+   (e.g. inside the checkbox-tree filter). */
+.fdk-filter-field input:not([type="checkbox"]):not([type="radio"]) {
     @apply input input-sm;
 }
 
