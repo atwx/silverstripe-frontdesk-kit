@@ -29,6 +29,10 @@
    automatic content detection skips because it is gitignored. */
 @source "../../../templates/**/*.ss";
 @source "../../../client/src/**/*.{js,css}";
+/* The kit's PHP emits DaisyUI classes too (FrontdeskFormFieldExtension's
+   field-class map, RowAction/Column defaults) — scan it so classes like
+   `textarea` that appear nowhere else are still generated. */
+@source "../../../src/**/*.php";
 
 /* treeselectjs styles for the fdk checkbox-tree component */
 @import "./treeselectjs.css";
