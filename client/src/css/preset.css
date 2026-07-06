@@ -33,6 +33,18 @@
 /* treeselectjs styles for the fdk checkbox-tree component */
 @import "./treeselectjs.css";
 
+/* Truncate long tag names so multi-selections don't blow up the layout;
+   the full name stays available via the tag's title tooltip. */
+.fdk-checkbox-tree .treeselect-input__tags-element {
+    max-width: 10rem;
+    overflow: hidden;
+}
+.fdk-checkbox-tree .treeselect-input__tags-name {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
 /* ── Theming via CSS Custom Properties ───────────────────────────────────── */
 :root {
     --fdk-primary: var(--color-primary);
