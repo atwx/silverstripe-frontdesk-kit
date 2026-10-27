@@ -62,7 +62,7 @@ abstract class FrontdeskSubController extends FrontdeskController
     protected function currentRecord(): ?DataObject
     {
         $id = $this->currentRecordID();
-        return $id ? $this->getBaseQuery()->byID($id) : null;
+        return $id ? $this->getBaseList()->byID($id) : null;
     }
 
     /**
@@ -71,11 +71,21 @@ abstract class FrontdeskSubController extends FrontdeskController
     abstract protected function getBaseQuery(): DataList;
 
     /**
+     * Records are always loaded from the parent-scoped query.
+     */
+    protected function getBaseList(): DataList
+    {
+        $list = $this->getBaseQuery();
+        $this->extend('updateBaseList', $list);
+        return $list;
+    }
+
+    /**
      * Override: apply filters from request to the scoped base query.
      */
     protected function getQuery(): DataList
     {
-        return $this->defineFilters()->applyAll($this->getBaseQuery(), $this->getRequest());
+        return $this->defineFilters()->applyAll($this->getBaseList(), $this->getRequest());
     }
 
     /**
@@ -136,11 +146,12 @@ abstract class FrontdeskSubController extends FrontdeskController
     {
         $class = $this->getManagedModel();
         if (!empty($data['ID'])) {
-            $item = $class::get()->byID($data['ID']);
+            $item = $this->findRecord((int) $data['ID'], 'canEdit');
             if (!$item) {
                 return $this->httpError(404);
             }
         } else {
+            $this->assertCanCreate();
             $item = $class::create();
         }
 
@@ -161,8 +172,9 @@ abstract class FrontdeskSubController extends FrontdeskController
      */
     public function delete(HTTPRequest $request)
     {
+        $this->assertDeleteMethod($request);
         $id = $request->param('ID');
-        $item = $id ? $this->getBaseQuery()->byID($id) : null;
+        $item = $id ? $this->findRecord((int) $id, 'canDelete') : null;
         if ($item) {
             $this->beforeDelete($item);
             $item->delete();
@@ -173,16 +185,6 @@ abstract class FrontdeskSubController extends FrontdeskController
             return HTTPResponse::create('', 200);
         }
         return $this->redirect($this->parentController->Link('view/' . $this->parentID));
-    }
-
-    /** Hook: cascade-delete related records before $item is deleted. */
-    protected function beforeDelete(DataObject $item): void
-    {
-    }
-
-    /** Hook: react after $item is deleted. */
-    protected function afterDelete(DataObject $item): void
-    {
     }
 
     /**

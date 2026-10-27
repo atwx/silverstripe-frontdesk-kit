@@ -20,6 +20,7 @@ use SilverStripe\i18n\i18n;
 use SilverStripe\Model\List\ArrayList;
 use SilverStripe\Model\ArrayData;
 use SilverStripe\Model\List\PaginatedList;
+use SilverStripe\ORM\DataList;
 use SilverStripe\ORM\DataObject;
 use SilverStripe\ORM\FieldType\DBHTMLText;
 use SilverStripe\Security\Permission;
@@ -43,6 +44,19 @@ class FrontdeskController extends Controller implements PermissionProvider
      * order they appear in the merged config.
      */
     private static $main_navigation = [];
+
+    /**
+     * When true, records are checked with their own canView/canEdit/canDelete/
+     * canCreate before they are shown, edited, saved or deleted. Off by default
+     * for backwards compatibility; recommended for new projects.
+     */
+    private static $check_record_permissions = false;
+
+    /**
+     * Whether the delete action accepts GET requests. The built-in UI deletes via
+     * HTMX DELETE; disable this to protect against CSRF via links.
+     */
+    private static $allow_get_delete = true;
 
     private static $allowed_actions = [
         'index',
@@ -281,7 +295,7 @@ class FrontdeskController extends Controller implements PermissionProvider
         if (!$id) {
             return $this->httpError(404);
         }
-        $item = $class::get()->byID($id);
+        $item = $this->findRecord((int) $id, 'canView');
         if (!$item) {
             return $this->httpError(404);
         }
@@ -318,7 +332,7 @@ class FrontdeskController extends Controller implements PermissionProvider
         $class = $this->getManagedModel();
         $item = null;
         if ($id) {
-            $item = $class::get()->byID($id);
+            $item = $this->findRecord((int) $id, 'canEdit');
             if (!$item) {
                 return $this->httpError(404);
             }
@@ -344,6 +358,7 @@ class FrontdeskController extends Controller implements PermissionProvider
 
     public function add(HTTPRequest $request)
     {
+        $this->assertCanCreate();
         $form = $this->EditForm();
         $form->loadDataFrom($request->getVars());
         $form->loadDataFrom(['BackURL' => $request->getVar('BackURL') ?: $this->resolveBackURL($request)]);
@@ -370,11 +385,12 @@ class FrontdeskController extends Controller implements PermissionProvider
 
         $isNew = empty($data['ID']);
         if (!$isNew) {
-            $item = $class::get()->byID($data['ID']);
+            $item = $this->findRecord((int) $data['ID'], 'canEdit');
             if (!$item) {
                 return $this->httpError(404);
             }
         } else {
+            $this->assertCanCreate();
             $item = $class::create();
         }
 
@@ -396,11 +412,12 @@ class FrontdeskController extends Controller implements PermissionProvider
         $class = $this->getManagedModel();
 
         if (!empty($data['ID'])) {
-            $item = $class::get()->byID($data['ID']);
+            $item = $this->findRecord((int) $data['ID'], 'canEdit');
             if (!$item) {
                 return $this->httpError(404);
             }
         } else {
+            $this->assertCanCreate();
             $item = $class::create();
         }
 
@@ -412,27 +429,16 @@ class FrontdeskController extends Controller implements PermissionProvider
         return $this->redirect($this->Link('edit/' . $item->ID));
     }
 
-    /** Hook: mutate $item before it is written. */
-    protected function beforeWrite(DataObject $item, array $data): void
-    {
-    }
-
-    /** Hook: react after $item is written. */
-    protected function afterWrite(DataObject $item, array $data): void
-    {
-    }
-
     public function delete(HTTPRequest $request)
     {
-        if (!$request->isGET() && !$request->isPOST() && !$request->isDelete()) {
-            // Accept any HTTP method for simplicity
-        }
+        $this->assertDeleteMethod($request);
         $id = $request->param('ID');
-        $class = $this->getManagedModel();
         if ($id) {
-            $item = $class::get()->byID($id);
+            $item = $this->findRecord((int) $id, 'canDelete');
             if ($item) {
+                $this->beforeDelete($item);
                 $item->delete();
+                $this->afterDelete($item);
             }
         }
 
@@ -486,7 +492,7 @@ class FrontdeskController extends Controller implements PermissionProvider
         $id = $this->currentRecordID();
 
         if ($id) {
-            $item = $class::get()->byID($id);
+            $item = $this->findRecord($id, 'canEdit');
         } else {
             $item = DataObject::singleton($class);
         }
@@ -500,11 +506,13 @@ class FrontdeskController extends Controller implements PermissionProvider
         $fields->push(HiddenField::create('ID', 'ID'));
         $fields->push(HiddenField::create('BackURL', 'BackURL'));
 
-        return Form::create($this, 'EditForm', $fields, FieldList::create(
+        $form = Form::create($this, 'EditForm', $fields, FieldList::create(
             FormAction::create('save', _t(self::class . '.ACTION_SAVE', 'Save')),
             FormAction::create('savecontinue', _t(self::class . '.ACTION_SAVE_CONTINUE', 'Save & Continue'))->addExtraClass('btn-ghost'),
             LiteralField::create('Cancel', '<a href="javascript:void(0);" onclick="var d=this.closest(\'dialog\'); if(d){d.close();return false;} history.back();" class="btn">' . _t(self::class . '.ACTION_CANCEL', 'Cancel') . '</a>')
         ));
+        $this->extend('updateEditForm', $form, $item);
+        return $form;
     }
 
     // ─── Template data ────────────────────────────────────────────────────────
@@ -810,10 +818,75 @@ class FrontdeskController extends Controller implements PermissionProvider
 
     protected function getQuery()
     {
+        return $this->defineFilters()->applyAll($this->getBaseList(), $this->getRequest());
+    }
+
+    /**
+     * Unfiltered list of records this controller works on. All records are
+     * loaded from it (list, view, edit, save, delete), so restricting it here
+     * restricts access everywhere.
+     */
+    protected function getBaseList(): DataList
+    {
         $class = $this->getManagedModel();
-        $list = DataObject::get($class);
-        $list = $this->defineFilters()->applyAll($list, $this->getRequest());
+        $list = $class::get();
+        $this->extend('updateBaseList', $list);
         return $list;
+    }
+
+    /**
+     * Loads a record from the base list. With check_record_permissions, a
+     * record the current user may not access results in a 403.
+     *
+     * @param string $permission canView, canEdit or canDelete
+     */
+    protected function findRecord(int $id, string $permission = 'canView'): ?DataObject
+    {
+        $item = $id ? $this->getBaseList()->byID($id) : null;
+        if ($item && static::config()->get('check_record_permissions') && !$item->$permission()) {
+            $this->httpError(403);
+        }
+        return $item;
+    }
+
+    protected function assertCanCreate(): void
+    {
+        if (static::config()->get('check_record_permissions')
+            && !DataObject::singleton($this->getManagedModel())->canCreate()
+        ) {
+            $this->httpError(403);
+        }
+    }
+
+    protected function assertDeleteMethod(HTTPRequest $request): void
+    {
+        if (!static::config()->get('allow_get_delete') && !$request->isDELETE() && !$request->isPOST()) {
+            $this->httpError(405);
+        }
+    }
+
+    /** Hook: mutate $item before it is written. */
+    protected function beforeWrite(DataObject $item, array $data): void
+    {
+        $this->extend('onBeforeWriteRecord', $item, $data);
+    }
+
+    /** Hook: react after $item is written. */
+    protected function afterWrite(DataObject $item, array $data): void
+    {
+        $this->extend('onAfterWriteRecord', $item, $data);
+    }
+
+    /** Hook: e.g. cascade-delete related records before $item is deleted. */
+    protected function beforeDelete(DataObject $item): void
+    {
+        $this->extend('onBeforeDeleteRecord', $item);
+    }
+
+    /** Hook: react after $item is deleted. */
+    protected function afterDelete(DataObject $item): void
+    {
+        $this->extend('onAfterDeleteRecord', $item);
     }
 
     protected function getItems(): PaginatedList
