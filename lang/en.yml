@@ -8,6 +8,11 @@ en:
     # Page header actions
     ACTION_NEW: 'New'
     ACTION_EXPORT: 'Export'
+    LABEL_BULK: 'Selected records'
+    LABEL_BULK_CHOOSE: 'Choose action'
+    ACTION_BULK_APPLY: 'Apply'
+    LABEL_SELECT_ALL: 'Select all'
+    LABEL_SELECT_RECORD: 'Select record'
     # Filter bar
     ACTION_FILTER: 'Filter'
     ACTION_RESET: 'Reset'

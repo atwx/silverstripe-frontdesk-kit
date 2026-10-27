@@ -3,11 +3,13 @@
 namespace Atwx\SilverstripeFrontdeskKit\Controller;
 
 use Atwx\SilverstripeFrontdeskKit\Filter\FilterCollection;
+use Atwx\SilverstripeFrontdeskKit\Table\BulkAction;
 use Atwx\SilverstripeFrontdeskKit\Table\ColumnCollection;
 use Atwx\SilverstripeFrontdeskKit\Table\RowAction;
 use PhpOffice\PhpSpreadsheet\Spreadsheet;
 use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
 use SilverStripe\Control\Controller;
+use SilverStripe\Control\Director;
 use SilverStripe\Control\HTTPRequest;
 use SilverStripe\Control\HTTPResponse;
 use SilverStripe\Core\ClassInfo;
@@ -26,6 +28,7 @@ use SilverStripe\ORM\FieldType\DBHTMLText;
 use SilverStripe\Security\Permission;
 use SilverStripe\Security\PermissionProvider;
 use SilverStripe\Security\Security;
+use SilverStripe\Security\SecurityToken;
 
 class FrontdeskController extends Controller implements PermissionProvider
 {
@@ -68,6 +71,7 @@ class FrontdeskController extends Controller implements PermissionProvider
         'savecontinue' => '->canEdit',
         'delete'       => '->canEdit',
         'export',
+        'bulk'         => '->canEdit',
     ];
 
     public function init()
@@ -157,6 +161,17 @@ class FrontdeskController extends Controller implements PermissionProvider
     protected function defineFilters(): FilterCollection
     {
         return FilterCollection::create();
+    }
+
+    /**
+     * Actions for records selected via the checkbox column. Without bulk
+     * actions the list has no checkbox column.
+     *
+     * @return BulkAction[]
+     */
+    protected function defineBulkActions(): array
+    {
+        return [];
     }
 
     /**
@@ -448,6 +463,76 @@ class FrontdeskController extends Controller implements PermissionProvider
         }
 
         return $this->redirectBack();
+    }
+
+    /**
+     * Applies a bulk action to the selected records (POST with CSRF token).
+     * Records are loaded from the base list; with check_record_permissions only
+     * records the user may edit are passed to the handler.
+     */
+    public function bulk(HTTPRequest $request)
+    {
+        if (!$request->isPOST() || !SecurityToken::inst()->checkRequest($request)) {
+            return $this->httpError(400);
+        }
+        [$name, $option] = array_pad(explode(':', (string) $request->postVar('BulkAction'), 2), 2, null);
+        $action = null;
+        foreach ($this->defineBulkActions() as $candidate) {
+            if ($candidate->getName() === $name) {
+                $action = $candidate;
+            }
+        }
+        if (!$action || ($action->getOptions() && !array_key_exists((string) $option, $action->getOptions()))) {
+            return $this->httpError(400);
+        }
+        $ids = array_filter(array_map('intval', (array) $request->postVar('ids')));
+        $records = $this->getBaseList()->filter('ID', $ids ?: [0]);
+        if (static::config()->get('check_record_permissions')) {
+            $allowed = [];
+            foreach ($records as $record) {
+                if ($record->canEdit()) {
+                    $allowed[] = $record->ID;
+                }
+            }
+            $records = $records->filter('ID', $allowed ?: [0]);
+        }
+
+        $result = $action->handle($records, $option);
+        if ($result instanceof HTTPResponse) {
+            return $result;
+        }
+        if (is_string($result) && $result !== '') {
+            $request->getSession()->set('FrontdeskBulkMessage', $result);
+        }
+        $back = (string) $request->postVar('BackURL');
+        return $this->redirect(Director::is_site_url($back) ? $back : $this->Link());
+    }
+
+    public function BulkActions(): ArrayList
+    {
+        return ArrayList::create($this->defineBulkActions());
+    }
+
+    /**
+     * Message of the last bulk action (shown once).
+     */
+    public function BulkMessage(): ?string
+    {
+        if ($this->bulkMessage === false) {
+            $session = $this->getRequest()->getSession();
+            $this->bulkMessage = $session->get('FrontdeskBulkMessage');
+            $session->clear('FrontdeskBulkMessage');
+        }
+        return $this->bulkMessage;
+    }
+
+    /** Message of the last bulk action, read once per request (false = not read yet). */
+    private string|null|false $bulkMessage = false;
+
+    public function SecurityTokenValue(): string
+    {
+        // Null when CSRF protection is disabled (e.g. in tests).
+        return (string) SecurityToken::inst()->getValue();
     }
 
     public function export(HTTPRequest $request)

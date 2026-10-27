@@ -8,6 +8,11 @@ de:
     # Seitenkopf-Aktionen
     ACTION_NEW: 'Neu'
     ACTION_EXPORT: 'Exportieren'
+    LABEL_BULK: 'Ausgewählte'
+    LABEL_BULK_CHOOSE: 'Aktion wählen'
+    ACTION_BULK_APPLY: 'Ausführen'
+    LABEL_SELECT_ALL: 'Alle auswählen'
+    LABEL_SELECT_RECORD: 'Eintrag auswählen'
     # Filterleiste
     ACTION_FILTER: 'Filtern'
     ACTION_RESET: 'Zurücksetzen'

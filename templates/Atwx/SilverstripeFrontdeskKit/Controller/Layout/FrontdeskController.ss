@@ -27,6 +27,32 @@
     </form>
     <% end_if %>
 
+    <% if $BulkMessage %>
+    <div role="status" class="alert alert-success mb-4">$BulkMessage</div>
+    <% end_if %>
+
+    <% if $BulkActions.Count %>
+    <form id="fdk-bulk-form" class="fdk-bulk-bar flex flex-wrap items-center gap-2 mb-2" method="post" action="$Link('bulk')"
+          onsubmit="this.BackURL.value = window.location.pathname + window.location.search">
+        <input type="hidden" name="SecurityID" value="$SecurityTokenValue">
+        <input type="hidden" name="BackURL" value="">
+        <label for="fdk-bulk-action" class="text-sm"><%t Atwx\SilverstripeFrontdeskKit\Controller\FrontdeskController.LABEL_BULK 'Selected records' %>:</label>
+        <select id="fdk-bulk-action" name="BulkAction" class="select select-sm" required>
+            <option value=""><%t Atwx\SilverstripeFrontdeskKit\Controller\FrontdeskController.LABEL_BULK_CHOOSE 'Choose action' %></option>
+            <% loop $BulkActions %>
+                <% if $HasOptions %>
+                    <optgroup label="$Label">
+                        <% loop $Choices %><option value="$Value">$Title</option><% end_loop %>
+                    </optgroup>
+                <% else %>
+                    <% loop $Choices %><option value="$Value">$Title</option><% end_loop %>
+                <% end_if %>
+            <% end_loop %>
+        </select>
+        <button type="submit" class="btn btn-sm"><%t Atwx\SilverstripeFrontdeskKit\Controller\FrontdeskController.ACTION_BULK_APPLY 'Apply' %></button>
+    </form>
+    <% end_if %>
+
     <div id="fdk-list-region">
         <% include Atwx\\SilverstripeFrontdeskKit\\Includes\\ListTable %>
     </div>

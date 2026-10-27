@@ -19,6 +19,12 @@
     <table class="table table-zebra w-full">
         <thead>
             <tr>
+                <% if $Top.BulkActions.Count %>
+                    <th class="w-8">
+                        <input type="checkbox" class="checkbox checkbox-sm" aria-label="<%t Atwx\SilverstripeFrontdeskKit\Controller\FrontdeskController.LABEL_SELECT_ALL 'Select all' %>"
+                               onclick="document.querySelectorAll('input[name=&quot;ids[]&quot;]').forEach(c => c.checked = this.checked)">
+                    </th>
+                <% end_if %>
                 <% loop $Columns %>
                     <th>$Title</th>
                 <% end_loop %>
@@ -29,6 +35,12 @@
             <% if $ItemRows.Count %>
                 <% loop $ItemRows %>
                     <tr id="fdk-row-$ID">
+                        <% if $Top.BulkActions.Count %>
+                            <td>
+                                <input type="checkbox" class="checkbox checkbox-sm" name="ids[]" value="$ID" form="fdk-bulk-form"
+                                       aria-label="<%t Atwx\SilverstripeFrontdeskKit\Controller\FrontdeskController.LABEL_SELECT_RECORD 'Select record' %> $ID">
+                            </td>
+                        <% end_if %>
                         <% loop $Cells %>
                             <td>
                                 <% if $HasLink %><a href="$Link">$Value</a><% else %>$Value<% end_if %>
