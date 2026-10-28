@@ -10,6 +10,10 @@
         </div>
     </div>
 
+    <% if $Tabs %>
+        <% include Atwx\\SilverstripeFrontdeskKit\\Includes\\Tabs %>
+    <% end_if %>
+
     <% if $FilterForm %>
     <form class="fdk-filter-bar"
           hx-get="$Link"

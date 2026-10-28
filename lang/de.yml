@@ -7,6 +7,7 @@ de:
     PERMISSION_ACCESS: "Zugriff auf '{name}'"
     # Seitenkopf-Aktionen
     ACTION_NEW: 'Neu'
+    TAB_OVERVIEW: 'Übersicht'
     ACTION_EXPORT: 'Exportieren'
     LABEL_BULK: 'Ausgewählte'
     LABEL_BULK_CHOOSE: 'Aktion wählen'

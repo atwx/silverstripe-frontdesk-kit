@@ -35,6 +35,7 @@ See **[docs/quickstart.md](docs/quickstart.md)** for a step-by-step guide to set
 | [docs/columns.md](docs/columns.md) | Defining columns, links, formatting, export |
 | [docs/filters.md](docs/filters.md) | TextFilter, SelectFilter, DateRangeFilter |
 | [docs/row-actions.md](docs/row-actions.md) | Row actions, HTMX actions, conditional visibility |
+| [docs/sub-controllers.md](docs/sub-controllers.md) | Child lists of a record: inline sublists or tabs |
 | [docs/templates.md](docs/templates.md) | Overriding templates, HTMX partial rendering |
 | [docs/charts.md](docs/charts.md) | Declarative Chart.js rendering via `Chart` include |
 | [docs/frontend.md](docs/frontend.md) | Building CSS/JS, theming via CSS custom properties |

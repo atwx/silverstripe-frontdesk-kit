@@ -7,6 +7,7 @@ en:
     PERMISSION_ACCESS: "Access to '{name}'"
     # Page header actions
     ACTION_NEW: 'New'
+    TAB_OVERVIEW: 'Overview'
     ACTION_EXPORT: 'Export'
     LABEL_BULK: 'Selected records'
     LABEL_BULK_CHOOSE: 'Choose action'

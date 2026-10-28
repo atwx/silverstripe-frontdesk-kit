@@ -57,6 +57,13 @@ class FrontdeskController extends Controller implements PermissionProvider
     private static $check_record_permissions = false;
 
     /**
+     * When true, sub-controllers are shown as tabs of the record (each one a
+     * full list page with filters, bulk actions and export) instead of inline
+     * sublists below the record view. The record view becomes the first tab.
+     */
+    private static $sub_controller_tabs = false;
+
+    /**
      * Whether the delete action accepts GET requests. The built-in UI deletes via
      * HTMX DELETE; disable this to protect against CSRF via links.
      */
@@ -109,6 +116,11 @@ class FrontdeskController extends Controller implements PermissionProvider
     public function handleRequest(HTTPRequest $request): HTTPResponse
     {
         $response = parent::handleRequest($request);
+
+        // A nested sub-controller may already have redirected to the login form.
+        if (!$this->canView() && $response->isRedirect()) {
+            return $response;
+        }
 
         if (!$this->canView()) {
             $this->pushCurrent();
@@ -329,6 +341,9 @@ class FrontdeskController extends Controller implements PermissionProvider
     protected function getSubControllerData(DataObject $record): ArrayList
     {
         $result = ArrayList::create();
+        if (static::config()->get('sub_controller_tabs')) {
+            return $result;
+        }
         foreach (static::config()->get('sub_controllers') ?? [] as $class) {
             $segment = singleton($class)->config()->get('url_segment');
             $title   = singleton($class)->config()->get('title');
@@ -339,6 +354,52 @@ class FrontdeskController extends Controller implements PermissionProvider
             ]));
         }
         return $result;
+    }
+
+    /**
+     * Tabs of a record (record view plus one tab per sub-controller) when
+     * sub_controller_tabs is enabled, null otherwise.
+     *
+     * @param string|null $active url_segment of the active sub-controller, null for the record view
+     */
+    public function RecordTabs(int $recordID, ?string $active = null): ?ArrayList
+    {
+        if (!static::config()->get('sub_controller_tabs') || !$recordID) {
+            return null;
+        }
+        $tabs = ArrayList::create([ArrayData::create([
+            'Title'  => $this->overviewTabTitle(),
+            'Link'   => $this->Link('view/' . $recordID),
+            'Active' => $active === null,
+        ])]);
+        foreach (static::config()->get('sub_controllers') ?? [] as $class) {
+            $segment = singleton($class)->config()->get('url_segment');
+            $tabs->push(ArrayData::create([
+                'Title'  => singleton($class)->config()->get('title'),
+                'Link'   => $this->Link($segment . '/' . $recordID),
+                'Active' => $active === $segment,
+            ]));
+        }
+        return $tabs;
+    }
+
+    /**
+     * Label of the first tab (the record view).
+     */
+    protected function overviewTabTitle(): string
+    {
+        return _t(self::class . '.TAB_OVERVIEW', 'Overview');
+    }
+
+    /**
+     * Tabs shown above the current page, see RecordTabs().
+     */
+    public function Tabs(): ?ArrayList
+    {
+        if ($this->getAction() !== 'view') {
+            return null;
+        }
+        return $this->RecordTabs((int) $this->getRequest()->param('ID'));
     }
 
     public function edit(HTTPRequest $request)

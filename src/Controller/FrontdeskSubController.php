@@ -113,6 +113,9 @@ abstract class FrontdeskSubController extends FrontdeskController
      */
     public function index(HTTPRequest $request)
     {
+        if ($this->isTab()) {
+            return parent::index($request);
+        }
         if ($this->isHtmxRequest()) {
             return $this->renderPartial(
                 'Atwx\\SilverstripeFrontdeskKit\\Includes\\SubListTable',
@@ -163,7 +166,52 @@ abstract class FrontdeskSubController extends FrontdeskController
         $item->write();
         $this->afterWrite($item, $data);
 
-        return $this->redirect($this->parentController->Link('view/' . $this->parentID));
+        return $this->redirect($this->afterSaveLink());
+    }
+
+    /**
+     * Whether this sub-controller is shown as a tab of the parent record.
+     */
+    public function isTab(): bool
+    {
+        return (bool) $this->parentController?->config()->get('sub_controller_tabs');
+    }
+
+    /**
+     * Where to go after saving or deleting: the tab list or the parent record view.
+     */
+    protected function afterSaveLink(): string
+    {
+        return $this->isTab() ? $this->Link() : $this->parentController->Link('view/' . $this->parentID);
+    }
+
+    /**
+     * The parent record, scoped by the parent controller's permissions.
+     */
+    public function ParentRecord(): ?DataObject
+    {
+        $class = $this->parentController?->getManagedModel();
+        $record = $class ? DataObject::get($class)->byID($this->parentID) : null;
+        return $record && $record->canView() ? $record : null;
+    }
+
+    /**
+     * In tab mode the page shows the parent record's title above the tabs.
+     */
+    public function Title(): string
+    {
+        if ($this->isTab() && ($record = $this->ParentRecord())) {
+            return (string) $record->getTitle();
+        }
+        return parent::Title();
+    }
+
+    public function Tabs(): ?\SilverStripe\Model\List\ArrayList
+    {
+        if (!$this->isTab()) {
+            return null;
+        }
+        return $this->parentController->RecordTabs($this->parentID, static::config()->get('url_segment'));
     }
 
     /**
@@ -184,7 +232,7 @@ abstract class FrontdeskSubController extends FrontdeskController
         if ($this->isHtmxRequest()) {
             return HTTPResponse::create('', 200);
         }
-        return $this->redirect($this->parentController->Link('view/' . $this->parentID));
+        return $this->redirect($this->afterSaveLink());
     }
 
     /**

@@ -10,6 +10,10 @@
         </div>
     </div>
 
+    <% if $Tabs %>
+        <% include Atwx\\SilverstripeFrontdeskKit\\Includes\\Tabs %>
+    <% end_if %>
+
     $ViewContent
 
     <% loop $SubControllerData %>
