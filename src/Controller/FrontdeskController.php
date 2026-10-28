@@ -13,6 +13,7 @@ use SilverStripe\Control\Director;
 use SilverStripe\Control\HTTPRequest;
 use SilverStripe\Control\HTTPResponse;
 use SilverStripe\Core\ClassInfo;
+use SilverStripe\Core\Validation\ValidationResult;
 use SilverStripe\Forms\FieldList;
 use SilverStripe\Forms\Form;
 use SilverStripe\Forms\FormAction;
@@ -351,9 +352,14 @@ class FrontdeskController extends Controller implements PermissionProvider
             if (!$item) {
                 return $this->httpError(404);
             }
-            $form->loadDataFrom($item);
+            // After a failed save the submitted values were restored from the session; keep them.
+            if ($form->getSessionData() === null) {
+                $form->loadDataFrom($item);
+            }
         }
-        $form->loadDataFrom(['BackURL' => $request->getVar('BackURL') ?: $this->resolveBackURL($request)]);
+        if ($form->getSessionData() === null) {
+            $form->loadDataFrom(['BackURL' => $request->getVar('BackURL') ?: $this->resolveBackURL($request)]);
+        }
         $title = _t(self::class . '.TITLE_EDIT', 'Edit {name}', ['name' => singleton($class)->singular_name()]);
 
         if ($this->isHtmxRequest()) {
@@ -375,8 +381,10 @@ class FrontdeskController extends Controller implements PermissionProvider
     {
         $this->assertCanCreate();
         $form = $this->EditForm();
-        $form->loadDataFrom($request->getVars());
-        $form->loadDataFrom(['BackURL' => $request->getVar('BackURL') ?: $this->resolveBackURL($request)]);
+        if ($form->getSessionData() === null) {
+            $form->loadDataFrom($request->getVars());
+            $form->loadDataFrom(['BackURL' => $request->getVar('BackURL') ?: $this->resolveBackURL($request)]);
+        }
         $class = $this->getManagedModel();
         $title = _t(self::class . '.TITLE_NEW', 'New {name}', ['name' => singleton($class)->singular_name()]);
 
@@ -596,8 +604,26 @@ class FrontdeskController extends Controller implements PermissionProvider
             FormAction::create('savecontinue', _t(self::class . '.ACTION_SAVE_CONTINUE', 'Save & Continue'))->addExtraClass('btn-ghost'),
             LiteralField::create('Cancel', '<a href="javascript:void(0);" onclick="var d=this.closest(\'dialog\'); if(d){d.close();return false;} history.back();" class="btn">' . _t(self::class . '.ACTION_CANCEL', 'Cancel') . '</a>')
         ));
+        $form->setValidationResponseCallback(fn (ValidationResult $result) => $this->validationErrorResponse($form, $result));
         $this->extend('updateEditForm', $form, $item);
         return $form;
+    }
+
+    /**
+     * Sends the user back to the edit page after a failed save, with messages and submitted values.
+     * The default redirectBack() would end on the list when the form was opened in a modal.
+     */
+    protected function validationErrorResponse(Form $form, ValidationResult $result): HTTPResponse
+    {
+        $data = $form->getData();
+        $form->setSessionValidationResult($result);
+        $form->setSessionData($data);
+        $id = (int) ($data['ID'] ?? 0);
+        $link = $this->Link($id ? 'edit/' . $id : 'add');
+        if (!empty($data['BackURL']) && Director::is_site_url($data['BackURL'])) {
+            $link .= '?BackURL=' . urlencode($data['BackURL']);
+        }
+        return $this->redirect($link);
     }
 
     // ─── Template data ────────────────────────────────────────────────────────
