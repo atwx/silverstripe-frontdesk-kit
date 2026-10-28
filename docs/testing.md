@@ -15,6 +15,14 @@ All module classes use the Silverstripe framework (ArrayList, FormField, i18n, e
 
 The module's `tests/bootstrap.php` automatically detects whether it is embedded inside a project (standard path `vendor/atwx/silverstripe-frontdesk-kit/`) and delegates to the project bootstrap. When running standalone with the module's own `composer install`, it falls back to the module-local bootstrap instead.
 
+### Fresh manifest
+
+The test stubs implement `TestOnly` and are only part of the class manifest
+when it is built for tests. A manifest cached by the web app or `sake` lacks
+them, which shows up as "getItemPath returned null" errors, empty titles or
+missing columns. Run with `SS_PHPUNIT_FLUSH=1` or a separate `SS_TEMP_PATH`
+(e.g. a `ddev phpunit` command that clears its own cache folder).
+
 ### DB user requirement
 
 Silverstripe's `SapphireTest` needs permission to create temporary databases even for `$usesDatabase = false` tests. Make sure the configured DB user has `CREATE DATABASE` privileges (e.g. `root` in a local ddev environment).

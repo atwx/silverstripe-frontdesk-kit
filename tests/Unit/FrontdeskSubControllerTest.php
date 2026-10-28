@@ -5,6 +5,7 @@ namespace Atwx\SilverstripeFrontdeskKitTests\Unit;
 use Atwx\SilverstripeFrontdeskKit\Controller\FrontdeskSubController;
 use SilverStripe\Control\HTTPRequest;
 use SilverStripe\Control\Session;
+use SilverStripe\Core\Config\Config;
 use SilverStripe\Dev\SapphireTest;
 use SilverStripe\Dev\TestOnly;
 use SilverStripe\ORM\DataList;
@@ -124,5 +125,30 @@ class FrontdeskSubControllerTest extends SapphireTest
         $sub->setParentContext($parent, 5);
 
         $this->assertTrue($sub->canEdit());
+    }
+
+    // ─── Tabs ─────────────────────────────────────────────────────────────────
+
+    public function testNoTabsByDefault(): void
+    {
+        $sub = $this->makeSubController(5);
+        $this->assertNull($this->makeParent()->RecordTabs(5));
+        $this->assertFalse($sub->isTab());
+        $this->assertNull($sub->Tabs());
+    }
+
+    public function testRecordTabsWithSubControllerTabs(): void
+    {
+        Config::modify()->set(TestFdkController::class, 'sub_controller_tabs', true);
+        Config::modify()->set(TestFdkController::class, 'sub_controllers', [TestFdkSubController::class]);
+
+        $tabs = $this->makeParent()->RecordTabs(5);
+        $this->assertSame(['Overview', 'Sub Items'], $tabs->column('Title'));
+        $this->assertSame(['test-items/view/5', 'test-items/sub-items/5'], $tabs->column('Link'));
+        $this->assertSame([true, false], $tabs->column('Active'));
+
+        $sub = $this->makeSubController(5);
+        $this->assertTrue($sub->isTab());
+        $this->assertSame([false, true], $sub->Tabs()->column('Active'));
     }
 }

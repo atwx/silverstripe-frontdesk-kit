@@ -268,12 +268,21 @@ class FrontdeskControllerTest extends SapphireTest
         $ctrl   = $this->makeController();
         $ctrl->setCanEdit(true);
         $record = $this->makeDummyRecord(99);
-        $list   = $ctrl->RowActionsFor($record);
+        $actions = $ctrl->RowActionsFor($record);
 
-        $this->assertInstanceOf(ArrayList::class, $list);
-        $this->assertGreaterThan(0, $list->count());
+        // Actions are split into direct buttons and dropdown entries.
+        $this->assertInstanceOf(ArrayData::class, $actions);
+        $this->assertInstanceOf(ArrayList::class, $actions->DirectActions);
+        $this->assertInstanceOf(ArrayList::class, $actions->DropdownActions);
+        $this->assertSame($actions->DropdownActions->count() > 0, $actions->HasDropdownActions);
 
-        $first = $list->first();
+        $all = ArrayList::create(array_merge(
+            $actions->DirectActions->toArray(),
+            $actions->DropdownActions->toArray()
+        ));
+        $this->assertGreaterThan(0, $all->count());
+
+        $first = $all->first();
         $this->assertInstanceOf(ArrayData::class, $first);
         $this->assertNotEmpty($first->Label);
         $this->assertNotEmpty($first->Url);
