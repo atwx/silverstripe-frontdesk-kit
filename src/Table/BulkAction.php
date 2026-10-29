@@ -22,6 +22,8 @@ class BulkAction
 {
     protected array $options = [];
 
+    protected bool $newWindow = false;
+
     /** @var callable */
     protected $handler;
 
@@ -42,6 +44,21 @@ class BulkAction
     {
         $this->options = $options;
         return $this;
+    }
+
+    /**
+     * Submit into a new tab, for responses shown in the browser (e.g. a PDF),
+     * so the list stays open.
+     */
+    public function newWindow(bool $newWindow = true): static
+    {
+        $this->newWindow = $newWindow;
+        return $this;
+    }
+
+    public function opensNewWindow(): bool
+    {
+        return $this->newWindow;
     }
 
     public function getName(): string
@@ -83,10 +100,18 @@ class BulkAction
     {
         $choices = ArrayList::create();
         if (!$this->options) {
-            $choices->push(ArrayData::create(['Value' => $this->name, 'Title' => $this->label]));
+            $choices->push(ArrayData::create([
+                'Value' => $this->name,
+                'Title' => $this->label,
+                'NewWindow' => $this->newWindow,
+            ]));
         }
         foreach ($this->options as $value => $label) {
-            $choices->push(ArrayData::create(['Value' => $this->name . ':' . $value, 'Title' => $label]));
+            $choices->push(ArrayData::create([
+                'Value' => $this->name . ':' . $value,
+                'Title' => $label,
+                'NewWindow' => $this->newWindow,
+            ]));
         }
         return $choices;
     }
