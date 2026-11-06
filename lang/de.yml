@@ -4,6 +4,8 @@ de:
     PERMISSION_FAILURE_LOGIN: 'Bitte melden Sie sich an, um auf diesen Bereich zuzugreifen.'
     PERMISSION_FAILURE_ACCESS: 'Sie haben keine Berechtigung, diese Aktion auszuführen.'
     PERMISSION_CATEGORY: 'Frontdesk-Zugriff'
+    PERMISSION_VIEW: '„{name}“ ansehen'
+    PERMISSION_EDIT: '„{name}“ bearbeiten (inkl. anlegen und löschen)'
     PERMISSION_ACCESS: "Zugriff auf '{name}'"
     # Seitenkopf-Aktionen
     ACTION_NEW: 'Neu'
@@ -24,6 +26,7 @@ de:
     ACTION_DELETE: 'Löschen'
     # Formularaktionen
     ACTION_SAVE: 'Speichern'
+    ACTION_SAVE_CONTINUE: 'Speichern & weiter'
     ACTION_CANCEL: 'Abbrechen'
     ACTION_BACK: '← Zurück'
     # Seitentitel

@@ -24,6 +24,7 @@ en:
     ACTION_DELETE: 'Delete'
     # Form actions
     ACTION_SAVE: 'Save'
+    ACTION_SAVE_CONTINUE: 'Save & Continue'
     ACTION_CANCEL: 'Cancel'
     ACTION_BACK: '← Back'
     # Page titles
