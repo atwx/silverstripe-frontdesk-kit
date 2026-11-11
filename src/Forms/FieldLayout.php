@@ -41,7 +41,7 @@ class FieldLayout
     private const array SYSTEM_FIELDS = ['ID', 'ClassName', 'RecordClassName', 'Created', 'LastEdited'];
 
     /**
-     * @var array<int, array{title: string, fields: array<int, string>, open: bool}>
+     * @var array<int, array{title: string, fields: array<int, string>, open: bool, key: string}>
      */
     private array $groups = [];
 
@@ -54,11 +54,69 @@ class FieldLayout
 
     /**
      * @param array<int, string> $fields
+     * @param string|null $key Stable key of the group (default: its title), e.g. to show it on a record page
      */
-    public function group(string $title, array $fields, bool $open = true): static
+    public function group(string $title, array $fields, bool $open = true, ?string $key = null): static
     {
-        $this->groups[] = ['title' => $title, 'fields' => array_values($fields), 'open' => $open];
+        $this->groups[] = [
+            'title' => $title,
+            'fields' => array_values($fields),
+            'open' => $open,
+            'key' => $key ?? $title,
+        ];
         return $this;
+    }
+
+    /**
+     * Copy of this layout that only shows the given groups: fields of other groups
+     * and fields in no group become hidden (so they are left out of the form and a
+     * change to them is reset on save). Groups keep their order.
+     *
+     * @param array<int, string> $keys
+     */
+    public function onlyGroups(array $keys): static
+    {
+        $layout = clone $this;
+        $layout->groups = array_values(array_filter(
+            $this->groups,
+            fn (array $group) => in_array($group['key'], $keys, true)
+        ));
+        $keep = [];
+        foreach ($layout->groups as $group) {
+            foreach ($group['fields'] as $name) {
+                $keep[$name] = true;
+            }
+        }
+        $layout->defaultLevel = self::HIDDEN;
+        foreach (array_keys($this->levels) as $name) {
+            if (!isset($keep[$name])) {
+                $layout->levels[$name] = self::HIDDEN;
+            }
+        }
+        foreach (array_keys($keep) as $name) {
+            $layout->levels[$name] = $this->levelFor($name);
+        }
+        return $layout;
+    }
+
+    /**
+     * Whether any field of the given groups is visible (or, with $writable, writable).
+     *
+     * @param array<int, string> $keys
+     */
+    public function hasFieldsIn(array $keys, bool $writable = false): bool
+    {
+        foreach ($this->groups as $group) {
+            if (!in_array($group['key'], $keys, true)) {
+                continue;
+            }
+            foreach ($group['fields'] as $name) {
+                if ($writable ? $this->isWritable($name) : $this->isVisible($name)) {
+                    return true;
+                }
+            }
+        }
+        return false;
     }
 
     public function setLevel(string $field, string $level): static
@@ -103,7 +161,7 @@ class FieldLayout
     }
 
     /**
-     * @return array<int, array{title: string, fields: array<int, string>, open: bool}>
+     * @return array<int, array{title: string, fields: array<int, string>, open: bool, key: string}>
      */
     public function getGroups(): array
     {

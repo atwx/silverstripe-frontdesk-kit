@@ -7,7 +7,7 @@
      data-options="$OptionsAsJson.ATT"
      @keydown.escape="open = false"
      @click.outside="open = false">
-    <input type="hidden" name="$Name.ATT" x-ref="hidden" :value="value">
+    <input type="hidden" name="$Name.ATT" value="$Value.ATT" x-ref="hidden" :value="value">
     <input type="text"
            class="input w-full"
            x-model="query"
