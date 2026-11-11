@@ -47,6 +47,8 @@ class RecordActionTestController extends FrontdeskController implements TestOnly
                     $record->write();
                     return 'State changed.';
                 }),
+            RecordAction::create('assign', 'Assign')
+                ->select('lead', 'Lead', [3 => 'Ann', 5 => 'Bob'], '5'),
         ];
     }
 
@@ -168,7 +170,9 @@ class RecordActionControllerTest extends SapphireTest
 
         $data = $ctrl->view($request);
 
-        $this->assertSame(['state'], $data['RecordActions']->column('Name'));
+        $this->assertSame(['state', 'assign'], $data['RecordActions']->column('Name'));
+        $select = $data['RecordActions']->last()->Selects->first();
+        $this->assertSame(['5'], $select->Options->filter('Selected', true)->column('Value'), 'numeric current value is preselected');
         $this->assertSame(['open', 'closed'], $data['RecordActions']->first()->Options->column('Value'));
         $this->assertSame(['new', 'old'], $data['Timeline']->column('Title'), 'newest first');
         $html = (string) $data['ViewContent'];
