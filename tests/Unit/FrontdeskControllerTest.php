@@ -55,6 +55,11 @@ class TestFdkController extends FrontdeskController implements TestOnly
     }
 }
 
+class TestFdkNoAddController extends TestFdkController implements TestOnly
+{
+    private static $allow_add = false;
+}
+
 // ─── Tests ────────────────────────────────────────────────────────────────────
 
 class FrontdeskControllerTest extends SapphireTest
@@ -297,5 +302,28 @@ class FrontdeskControllerTest extends SapphireTest
     {
         $ctrl = $this->makeController();
         $this->assertFalse($ctrl->canView());
+    }
+
+    public function testAllowAddFalseHidesNewAndRefusesAdd(): void
+    {
+        $ctrl = TestFdkNoAddController::create();
+        $req = new HTTPRequest('GET', '/test-items/add');
+        $req->setSession(new Session([]));
+        $ctrl->setRequest($req);
+        $ctrl->setCanEdit(true);
+
+        $this->assertFalse($ctrl->canAdd());
+        $this->assertNotContains('Neu', $ctrl->Actions()->column('Title'));
+        $this->assertNotContains('New', $ctrl->Actions()->column('Title'));
+        $this->expectException(\SilverStripe\Control\HTTPResponse_Exception::class);
+        $ctrl->add($req);
+    }
+
+    public function testCanAddFollowsCanEdit(): void
+    {
+        $ctrl = $this->makeController();
+        $this->assertFalse($ctrl->canAdd());
+        $ctrl->setCanEdit(true);
+        $this->assertTrue($ctrl->canAdd());
     }
 }

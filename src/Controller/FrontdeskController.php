@@ -81,6 +81,12 @@ class FrontdeskController extends Controller implements PermissionProvider
      */
     private static $allow_get_delete = true;
 
+    /**
+     * Set to false for lists whose records are created elsewhere (no "New",
+     * the add action answers 403).
+     */
+    private static $allow_add = true;
+
     private static $allowed_actions = [
         'index',
         'EditForm',
@@ -1372,7 +1378,7 @@ class FrontdeskController extends Controller implements PermissionProvider
     public function Actions(): ArrayList
     {
         $actions = ArrayList::create();
-        if ($this->canEdit()) {
+        if ($this->canAdd()) {
             $actions->push(ArrayData::create([
                 'Title' => _t(self::class . '.ACTION_NEW', 'New'),
                 'Primary' => true,
@@ -1664,8 +1670,19 @@ class FrontdeskController extends Controller implements PermissionProvider
         return $item;
     }
 
+    /**
+     * Whether new records can be added here (button "New" and the add action).
+     */
+    public function canAdd(): bool
+    {
+        return static::config()->get('allow_add') !== false && $this->canEdit();
+    }
+
     protected function assertCanCreate(): void
     {
+        if (!$this->canAdd()) {
+            $this->httpError(403);
+        }
         if (static::config()->get('check_record_permissions')
             && !DataObject::singleton($this->getManagedModel())->canCreate()
         ) {
