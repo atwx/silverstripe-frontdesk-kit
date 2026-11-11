@@ -110,6 +110,22 @@ class FieldLayoutTest extends SapphireTest
         $this->assertSame('secret', $record->Note);
     }
 
+    public function testResetCoversVirtualFields(): void
+    {
+        $record = FieldLayoutTestModel::create(['ID' => 5, 'Title' => 'A'], DataObject::CREATE_HYDRATED);
+        // e.g. a form saving into a virtual field
+        $record->Virtual_locked = 'x';
+        $record->Virtual_open = 'y';
+
+        $layout = FieldLayout::create()->setLevels([
+            'Virtual_locked' => FieldLayout::READ,
+            'Virtual_open' => FieldLayout::WRITE,
+        ]);
+        $this->assertSame(['Virtual_locked'], $layout->resetLockedChanges($record));
+        $this->assertNull($record->getField('Virtual_locked'));
+        $this->assertSame('y', $record->getField('Virtual_open'));
+    }
+
     public function testViewGroups(): void
     {
         $rows = [];

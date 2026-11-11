@@ -163,13 +163,15 @@ class FieldLayout
 
     /**
      * Undo changes to fields that are not writable (call after saveInto()).
+     * Covers database fields and other values set on the record (e.g. virtual
+     * fields a form saves into).
      *
      * @return array<int, string> Names of the fields that were reset
      */
     public function resetLockedChanges(DataObject $record): array
     {
         $reset = [];
-        foreach ($record->getChangedFields(true, DataObject::CHANGE_VALUE) as $name => $change) {
+        foreach ($record->getChangedFields(false, DataObject::CHANGE_VALUE) as $name => $change) {
             if (in_array($name, self::SYSTEM_FIELDS, true) || $this->isWritable($name)) {
                 continue;
             }

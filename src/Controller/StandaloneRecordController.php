@@ -65,6 +65,15 @@ abstract class StandaloneRecordController extends Controller
     abstract protected function defineFieldLayout(DataObject $record): FieldLayout;
 
     /**
+     * Modify the (scaffolded) form fields before the layout is applied, e.g. to
+     * add virtual fields. Values of added fields are not loaded from the record.
+     */
+    protected function formFields(FieldList $fields, DataObject $record): FieldList
+    {
+        return $fields;
+    }
+
+    /**
      * @return RecordAction[]
      */
     protected function defineRecordActions(DataObject $record): array
@@ -146,7 +155,7 @@ abstract class StandaloneRecordController extends Controller
     {
         $record = $this->currentRecord();
         $layout = $this->defineFieldLayout($record);
-        $fields = $layout->applyTo($record->scaffoldFormFields());
+        $fields = $layout->applyTo($this->formFields($record->scaffoldFormFields(), $record));
         if ($fields->saveableFields() === []) {
             return null;
         }
@@ -165,7 +174,7 @@ abstract class StandaloneRecordController extends Controller
         $record = $this->currentRecord();
         $form->saveInto($record);
         $this->defineFieldLayout($record)->resetLockedChanges($record);
-        $changed = array_keys($record->getChangedFields(true, DataObject::CHANGE_VALUE));
+        $changed = array_keys($record->getChangedFields(false, DataObject::CHANGE_VALUE));
         $this->beforeSave($record, $changed);
         $record->write();
         $this->afterSave($record, $changed);
