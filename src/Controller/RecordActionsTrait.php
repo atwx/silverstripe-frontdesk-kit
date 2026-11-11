@@ -89,10 +89,11 @@ trait RecordActionsTrait
             foreach ($action->getSelects() as $name => $select) {
                 $selectOptions = ArrayList::create();
                 foreach ($select['options'] as $value => $label) {
+                    // Numeric option keys become integers in PHP arrays.
                     $selectOptions->push(ArrayData::create([
-                        'Value' => $value,
+                        'Value' => (string) $value,
                         'Label' => $label,
-                        'Selected' => $value === $select['value'],
+                        'Selected' => (string) $value === $select['value'],
                     ]));
                 }
                 $selects->push(ArrayData::create([
