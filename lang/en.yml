@@ -44,3 +44,5 @@ en:
     COMMENT_REQUIRED: 'Please enter a comment.'
   Atwx\SilverstripeFrontdeskKit\Controller\StandaloneRecordController:
     SAVED: 'Your changes have been saved.'
+  Atwx\SilverstripeFrontdeskKit\Forms\SearchableDropdownField:
+    EMPTY: '– please choose –'

@@ -3,6 +3,7 @@
 namespace Atwx\SilverstripeFrontdeskKit\Controller;
 
 use Atwx\SilverstripeFrontdeskKit\Forms\FieldLayout;
+use Atwx\SilverstripeFrontdeskKit\Forms\SearchableDropdownField;
 use Atwx\SilverstripeFrontdeskKit\Table\RecordAction;
 use SilverStripe\Control\Controller;
 use SilverStripe\Control\HTTPRequest;
@@ -155,7 +156,9 @@ abstract class StandaloneRecordController extends Controller
     {
         $record = $this->currentRecord();
         $layout = $this->defineFieldLayout($record);
-        $fields = $layout->applyTo($this->formFields($record->scaffoldFormFields(), $record));
+        $fields = $layout->applyTo(
+            $this->formFields(SearchableDropdownField::replaceCmsFields($record->scaffoldFormFields()), $record)
+        );
         if ($fields->saveableFields() === []) {
             return null;
         }
