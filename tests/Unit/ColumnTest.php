@@ -185,4 +185,30 @@ class ColumnTest extends SapphireTest
         $col = Column::create('Company')->format(fn ($v) => strtolower((string) $v));
         $this->assertEquals('acme', $col->renderValue($record));
     }
+
+    // ─── visibleWhen ──────────────────────────────────────────────────────────
+
+    public function testVisibleWhenHidesValuePerRecord(): void
+    {
+        $col = Column::create('Name')->visibleWhen(fn (DataObject $record) => $record->Name !== 'secret');
+
+        $this->assertEquals('open', $col->renderValue($this->makeRecord(['Name' => 'open'])));
+        $this->assertEquals('', $col->renderValue($this->makeRecord(['Name' => 'secret'])));
+        $this->assertTrue($col->isVisibleFor($this->makeRecord(['Name' => 'open'])));
+        $this->assertTrue(Column::create('Name')->isVisibleFor($this->makeRecord()), 'visible by default');
+    }
+
+    public function testVisibleWhenAlsoSkipsFormatter(): void
+    {
+        $called = false;
+        $col = Column::create('Name')
+            ->format(function () use (&$called) {
+                $called = true;
+                return 'x';
+            })
+            ->visibleWhen(fn () => false);
+
+        $this->assertEquals('', $col->renderValue($this->makeRecord(['Name' => 'a'])));
+        $this->assertFalse($called);
+    }
 }

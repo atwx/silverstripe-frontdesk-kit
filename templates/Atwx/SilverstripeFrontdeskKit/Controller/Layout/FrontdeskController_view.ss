@@ -2,6 +2,7 @@
     <div class="fdk-page-header">
         <h1 class="fdk-page-title">$Title</h1>
         <div class="fdk-page-actions">
+            <% include Atwx\\SilverstripeFrontdeskKit\\Includes\\RecordActionButtons %>
             <% loop $ViewActions %>
                 <a href="$Link"
                    class="btn btn-sm <% if $Primary %>btn-primary<% else %>btn-ghost<% end_if %><% if $Active %> btn-active<% end_if %>"
@@ -10,11 +11,17 @@
         </div>
     </div>
 
+    <% include Atwx\\SilverstripeFrontdeskKit\\Includes\\FlashMessage %>
+
     <% if $Tabs %>
         <% include Atwx\\SilverstripeFrontdeskKit\\Includes\\Tabs %>
     <% end_if %>
 
     $ViewContent
+
+    <% if $Timeline %>
+        <% include Atwx\\SilverstripeFrontdeskKit\\Includes\\Timeline %>
+    <% end_if %>
 
     <% loop $SubControllerData %>
     <section class="fdk-sublist mt-8">
@@ -28,6 +35,8 @@
     </section>
     <% end_loop %>
 </div>
+
+<% include Atwx\\SilverstripeFrontdeskKit\\Includes\\RecordActionDialogs %>
 
 <!-- Edit modal: content loaded via HTMX -->
 <dialog id="fdk-modal" class="modal">
