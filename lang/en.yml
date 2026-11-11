@@ -1,5 +1,14 @@
 en:
   Atwx\SilverstripeFrontdeskKit\Controller\FrontdeskController:
+    VIEW_ALL: 'All'
+    VIEW_SAVE: 'Save view'
+    VIEW_TITLE: 'Name'
+    VIEW_SHARED: 'For everyone'
+    VIEW_COLUMNS: 'Columns (list and export)'
+    VIEW_HINT: 'The view keeps the current filters.'
+    VIEW_DELETE: 'Delete view'
+    VIEW_CONFIRM_DELETE: 'Delete this view?'
+    VIEW_TITLE_REQUIRED: 'Please enter a name for the view.'
     # Permissions / security
     PERMISSION_FAILURE_LOGIN: 'Please log in to access this area.'
     PERMISSION_FAILURE_ACCESS: 'You do not have permission to perform this action.'

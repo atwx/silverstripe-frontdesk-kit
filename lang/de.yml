@@ -1,5 +1,14 @@
 de:
   Atwx\SilverstripeFrontdeskKit\Controller\FrontdeskController:
+    VIEW_ALL: 'Alle'
+    VIEW_SAVE: 'Ansicht speichern'
+    VIEW_TITLE: 'Name'
+    VIEW_SHARED: 'Für alle'
+    VIEW_COLUMNS: 'Spalten (Liste und Export)'
+    VIEW_HINT: 'Die Ansicht übernimmt die aktuellen Filter.'
+    VIEW_DELETE: 'Ansicht löschen'
+    VIEW_CONFIRM_DELETE: 'Diese Ansicht löschen?'
+    VIEW_TITLE_REQUIRED: 'Bitte einen Namen für die Ansicht angeben.'
     # Berechtigungen / Sicherheit
     PERMISSION_FAILURE_LOGIN: 'Bitte melden Sie sich an, um auf diesen Bereich zuzugreifen.'
     PERMISSION_FAILURE_ACCESS: 'Sie haben keine Berechtigung, diese Aktion auszuführen.'

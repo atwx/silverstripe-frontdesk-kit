@@ -70,6 +70,34 @@ class ColumnCollection extends ArrayList
     }
 
     /**
+     * Columns of the list without a view: neither optional nor export-only.
+     */
+    public function forList(): static
+    {
+        $collection = new static();
+        foreach ($this->items as $col) {
+            if (!$col->isOptional() && !$col->isExportOnly()) {
+                $collection->addColumn($col);
+            }
+        }
+        return $collection;
+    }
+
+    /**
+     * Columns of the export without a view: all but optional ones.
+     */
+    public function withoutOptional(): static
+    {
+        $collection = new static();
+        foreach ($this->items as $col) {
+            if (!$col->isOptional()) {
+                $collection->addColumn($col);
+            }
+        }
+        return $collection;
+    }
+
+    /**
      * Return only columns marked as visible in export.
      */
     public function forExport(): static
