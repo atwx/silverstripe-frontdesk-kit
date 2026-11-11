@@ -29,7 +29,7 @@
             $Items.TotalItems <%t Atwx\SilverstripeFrontdeskKit\Controller\FrontdeskController.LABEL_RECORDS 'records' %>
         <% end_if %>
     </p>
-    <% if $Top.canEdit %>
+    <% if $Top.canAdd %>
     <button type="button"
             class="btn btn-primary btn-sm"
             hx-get="$Top.Link('add')"

@@ -59,3 +59,15 @@ In tab mode
 
 `Tabs()` returns the tabs shown above a page (`Includes/Tabs.ss`). Controllers
 may override it to show their own tabs, e.g. sections of an area.
+
+## Lists without "New"
+
+Records that are created elsewhere (e.g. documents created by an action, or
+one entry per configured checklist item) set
+
+```php
+private static $allow_add = false;
+```
+
+The "New" button is hidden (`canAdd()`), the `add` action and saving a new
+record answer 403. Editing and deleting are not affected.
