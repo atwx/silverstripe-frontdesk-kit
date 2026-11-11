@@ -1,6 +1,6 @@
 <%-- Record view with record pages: fixed header, sidebar with the pages, current page. --%>
-<div class="fdk-page-header">
-    <div>
+<div class="fdk-page-header flex-wrap gap-4">
+    <div class="min-w-0">
         <h1 class="fdk-page-title">$Title</h1>
         <% if $HeaderFields %>
         <dl class="fdk-header-fields flex flex-wrap gap-x-6 gap-y-1 mt-2 text-sm">
@@ -10,7 +10,7 @@
         </dl>
         <% end_if %>
     </div>
-    <div class="fdk-page-actions">
+    <div class="fdk-page-actions flex-wrap">
         <% include Atwx\\SilverstripeFrontdeskKit\\Includes\\RecordActionButtons %>
         <% loop $ViewActions %>
             <a href="$Link" class="btn btn-sm btn-ghost" <% if $Target %>target="$Target"<% end_if %>>$Title</a>
