@@ -158,6 +158,15 @@ class FrontdeskController extends Controller implements PermissionProvider
      */
     protected function currentRecordID(): ?int
     {
+        // A submitted edit form posts to <segment>/EditForm without an ID in the URL.
+        // The form must be built for the submitted record, so that field levels that
+        // depend on the record (e.g. its status) match the form that was shown;
+        // findRecord() still checks the record against the base list.
+        $request = $this->getRequest();
+        if ($this->getAction() === 'EditForm' && $request->isPOST()) {
+            $id = (int) $request->postVar('ID');
+            return $id ?: null;
+        }
         if (!in_array($this->getAction(), ['edit', 'view', 'delete'], true)) {
             return null;
         }
