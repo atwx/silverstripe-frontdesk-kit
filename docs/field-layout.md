@@ -81,3 +81,37 @@ Override `timelineTitle()` to change the heading. `Includes/Timeline.ss` renders
 `Column::visibleWhen(fn (DataObject $record) => …)` leaves the cell empty (list
 and export) for records where the callable returns false, e.g. for field-level
 permissions.
+
+## Standalone record page (no login)
+
+`StandaloneRecordController` shows a single record without the frontdesk
+navigation and without login, e.g. for an edit link sent to someone without an
+account. The subclass decides which record a request may access; field levels,
+form, saving and record actions work as above.
+
+```php
+class EditLinkController extends StandaloneRecordController
+{
+    protected function resolveRecord(HTTPRequest $request): ?DataObject
+    {
+        return MyLink::findByToken((string) $request->param('Key'))?->Record();  // null → 404
+    }
+
+    protected function baseLink(): string
+    {
+        return 'edit/' . $this->getRequest()->param('Key');
+    }
+
+    protected function defineFieldLayout(DataObject $record): FieldLayout { … }
+    protected function defineRecordActions(DataObject $record): array { … }
+}
+```
+
+Route it without parameters (`'edit': EditLinkController`); the controller reads
+the key from the first URL segment (`edit/<key>`, `edit/<key>/recordaction`).
+Hooks: `pageTitle()`, `introText()`, `onView()`, `beforeSave()`, `afterSave()`.
+The form only holds visible fields; only writable fields are saved. Responses
+are sent with `Cache-Control: no-store` and `X-Robots-Tag: noindex`.
+
+The page uses the main template `FrontdeskStandalonePage` (loads the kit's
+prebuilt CSS); override it in the project to load the project's stylesheet.

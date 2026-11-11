@@ -56,7 +56,7 @@ class RecordAction
     }
 
     /**
-     * @param array<string, string> $options value => label
+     * @param array<int|string, string> $options value => label (values are used as strings)
      */
     public function options(array $options): static
     {

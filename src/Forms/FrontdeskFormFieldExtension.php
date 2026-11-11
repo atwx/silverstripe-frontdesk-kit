@@ -3,6 +3,7 @@
 namespace Atwx\SilverstripeFrontdeskKit\Forms;
 
 use Atwx\SilverstripeFrontdeskKit\Controller\FrontdeskController;
+use Atwx\SilverstripeFrontdeskKit\Controller\StandaloneRecordController;
 use SilverStripe\Control\Controller;
 use SilverStripe\Core\Extension;
 use SilverStripe\Security\Security;
@@ -23,7 +24,7 @@ use SilverStripe\Forms\UrlField;
 
 /**
  * Applies DaisyUI utility classes to form fields, but only when the request is
- * being handled by a FrontdeskController. Keeps the SilverStripe CMS admin
+ * being handled by a FrontdeskController (or a standalone record page). Keeps the SilverStripe CMS admin
  * unaffected.
  *
  * @extends Extension<FormField>
@@ -97,6 +98,7 @@ class FrontdeskFormFieldExtension extends Extension
     {
         $controller = Controller::curr();
         return $controller instanceof FrontdeskController
+            || $controller instanceof StandaloneRecordController
             || $controller instanceof Security;
     }
 

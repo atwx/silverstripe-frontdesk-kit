@@ -36,6 +36,8 @@ use SilverStripe\Security\SecurityToken;
 
 class FrontdeskController extends Controller implements PermissionProvider
 {
+    use RecordActionsTrait;
+
     private static $managed_model = null;
     private static $url_segment = null;
     private static $title = '';
@@ -482,7 +484,7 @@ class FrontdeskController extends Controller implements PermissionProvider
         if ($form->getSessionData() === null) {
             $form->loadDataFrom(['BackURL' => $request->getVar('BackURL') ?: $this->resolveBackURL($request)]);
         }
-        $title = _t(self::class . '.TITLE_EDIT', 'Edit {name}', ['name' => singleton($class)->singular_name()]);
+        $title = _t(self::class . '.TITLE_EDIT', 'Edit {name}', ['name' => singleton($class)->i18n_singular_name()]);
 
         if ($this->isHtmxRequest()) {
             return $this->renderPartial(
@@ -508,7 +510,7 @@ class FrontdeskController extends Controller implements PermissionProvider
             $form->loadDataFrom(['BackURL' => $request->getVar('BackURL') ?: $this->resolveBackURL($request)]);
         }
         $class = $this->getManagedModel();
-        $title = _t(self::class . '.TITLE_NEW', 'New {name}', ['name' => singleton($class)->singular_name()]);
+        $title = _t(self::class . '.TITLE_NEW', 'New {name}', ['name' => singleton($class)->i18n_singular_name()]);
 
         if ($this->isHtmxRequest()) {
             return $this->renderPartial(
@@ -645,69 +647,16 @@ class FrontdeskController extends Controller implements PermissionProvider
      */
     public function recordaction(HTTPRequest $request)
     {
-        if (!$request->isPOST() || !SecurityToken::inst()->checkRequest($request)) {
-            return $this->httpError(400);
-        }
         $record = $this->findRecord((int) $request->param('ID'), 'canView');
         if (!$record) {
             return $this->httpError(404);
         }
-        $action = null;
-        foreach ($this->defineRecordActions($record) as $candidate) {
-            if ($candidate->getName() === (string) $request->postVar('RecordAction')) {
-                $action = $candidate;
-            }
-        }
-        if (!$action) {
-            return $this->httpError(400);
-        }
-
-        $option = $request->postVar('Option');
-        try {
-            $result = $action->run(
-                $record,
-                $option === null ? null : (string) $option,
-                (string) $request->postVar('Comment')
-            );
-        } catch (ActionException $e) {
-            $this->flash($e->getMessage(), 'error');
-            $result = null;
-        }
-        if ($result instanceof HTTPResponse) {
-            return $result;
-        }
-        if (is_string($result) && $result !== '') {
-            $this->flash($result);
-        }
-        $back = (string) $request->postVar('BackURL');
-        return $this->redirect($back !== '' && Director::is_site_url($back) ? $back : $this->Link('view/' . $record->ID));
+        return $this->runRecordAction($request, $record, $this->Link('view/' . $record->ID));
     }
 
-    /**
-     * Template data for the record actions of a record.
-     */
-    protected function recordActionsFor(DataObject $record): ArrayList
+    protected function recordActionUrl(DataObject $record): string
     {
-        $result = ArrayList::create();
-        foreach ($this->defineRecordActions($record) as $action) {
-            $options = ArrayList::create();
-            foreach ($action->getOptions() as $value => $label) {
-                $options->push(ArrayData::create(['Value' => $value, 'Label' => $label]));
-            }
-            $result->push(ArrayData::create([
-                'Name'            => $action->getName(),
-                'Label'           => $action->getLabel(),
-                'Description'     => $action->getDescription(),
-                'Options'         => $options,
-                'HasOptions'      => $action->hasOptions(),
-                'CommentLabel'    => $action->getCommentLabel(),
-                'CommentRequired' => $action->isCommentRequired(),
-                'SubmitLabel'     => $action->getSubmitLabel(),
-                'Url'             => $this->Link('recordaction/' . $record->ID),
-                'RecordID'        => $record->ID,
-            ]));
-        }
-        return $result;
+        return $this->Link('recordaction/' . $record->ID);
     }
 
     protected function timelineFor(DataObject $record): ?ArrayList
@@ -720,28 +669,6 @@ class FrontdeskController extends Controller implements PermissionProvider
         usort($entries, fn ($a, $b) => (int) $b->Timestamp <=> (int) $a->Timestamp);
         return ArrayList::create($entries);
     }
-
-    /**
-     * Message shown once on the next page (type: success, error, info).
-     */
-    protected function flash(string $message, string $type = 'success'): void
-    {
-        $this->getRequest()->getSession()->set('FrontdeskFlash', ['Text' => $message, 'Type' => $type]);
-    }
-
-    public function FlashMessage(): ?ArrayData
-    {
-        if ($this->flashMessage === false) {
-            $session = $this->getRequest()->getSession();
-            $data = $session->get('FrontdeskFlash');
-            $session->clear('FrontdeskFlash');
-            $this->flashMessage = is_array($data) ? ArrayData::create($data) : null;
-        }
-        return $this->flashMessage;
-    }
-
-    /** Flash message, read once per request (false = not read yet). */
-    private ArrayData|null|false $flashMessage = false;
 
     public function BulkActions(): ArrayList
     {
@@ -763,12 +690,6 @@ class FrontdeskController extends Controller implements PermissionProvider
 
     /** Message of the last bulk action, read once per request (false = not read yet). */
     private string|null|false $bulkMessage = false;
-
-    public function SecurityTokenValue(): string
-    {
-        // Null when CSRF protection is disabled (e.g. in tests).
-        return (string) SecurityToken::inst()->getValue();
-    }
 
     public function export(HTTPRequest $request)
     {
@@ -795,7 +716,7 @@ class FrontdeskController extends Controller implements PermissionProvider
         }
 
         $class = $this->getManagedModel();
-        $className = strtolower(DataObject::singleton($class)->plural_name());
+        $className = strtolower(DataObject::singleton($class)->i18n_plural_name());
         $fileName = 'export-' . $className . '-' . date('Y-m-d') . '.xlsx';
 
         $writer = new Xlsx($spreadsheet);

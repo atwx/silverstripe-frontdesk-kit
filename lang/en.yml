@@ -42,3 +42,5 @@ en:
   Atwx\SilverstripeFrontdeskKit\Table\RecordAction:
     CHOOSE_OPTION: 'Please choose an option.'
     COMMENT_REQUIRED: 'Please enter a comment.'
+  Atwx\SilverstripeFrontdeskKit\Controller\StandaloneRecordController:
+    SAVED: 'Your changes have been saved.'
