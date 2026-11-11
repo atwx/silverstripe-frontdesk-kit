@@ -1,4 +1,7 @@
 <div class="fdk-manager">
+<% if $RecordPages %>
+    <% include Atwx\\SilverstripeFrontdeskKit\\Includes\\RecordPageView %>
+<% else %>
     <div class="fdk-page-header">
         <h1 class="fdk-page-title">$Title</h1>
         <div class="fdk-page-actions">
@@ -24,16 +27,9 @@
     <% end_if %>
 
     <% loop $SubControllerData %>
-    <section class="fdk-sublist mt-8">
-        <h2 class="fdk-sublist-title">$Title</h2>
-        <div id="fdk-sublist-$Segment"
-             hx-get="$Url"
-             hx-trigger="load"
-             hx-swap="innerHTML">
-            <span class="loading loading-spinner loading-sm text-base-content/30"></span>
-        </div>
-    </section>
+        <% include Atwx\\SilverstripeFrontdeskKit\\Includes\\SubListBlock Title=$Title, Segment=$Segment, Url=$Url %>
     <% end_loop %>
+<% end_if %>
 </div>
 
 <% include Atwx\\SilverstripeFrontdeskKit\\Includes\\RecordActionDialogs %>
