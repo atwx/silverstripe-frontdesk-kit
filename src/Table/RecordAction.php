@@ -128,7 +128,7 @@ class RecordAction
     }
 
     /**
-     * @param callable(DataObject, ?string, string): (string|HTTPResponse|null) $handler
+     * @param callable(DataObject, ?string, string, array<string, string>): (string|HTTPResponse|null) $handler
      */
     public function handle(callable $handler): static
     {
