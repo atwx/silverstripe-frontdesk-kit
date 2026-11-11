@@ -53,6 +53,11 @@ protected function defineRecordActions(DataObject $record): array
 }
 ```
 
+Selects ask for several values at once (`->select($name, $label, $options, $current)`);
+the handler receives them as fourth argument (`['name' => value or '']`), only
+declared selects with one of their options. After the action the dialog returns
+to the page it was opened on (BackURL), e.g. a record page.
+
 Only the actions returned for the record are executed, and only with one of
 their options. The endpoint is open to everyone who can view the list, so
 return only the actions the current user may run. Messages are shown once on

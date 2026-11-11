@@ -18,6 +18,16 @@ use SilverStripe\ORM\DataObject;
  *           return 'Status changed.';
  *       });
  *
+ * Selects ask for several values at once, e.g. one person per responsibility:
+ *
+ *   RecordAction::create('assign', 'Responsibility')
+ *       ->select('lead', 'Lead', [3 => 'Ann', 5 => 'Bob'], '3')
+ *       ->select('deputy', 'Deputy', [3 => 'Ann', 5 => 'Bob'])
+ *       ->handle(fn (DataObject $record, ?string $option, string $comment, array $values) => …);
+ *
+ * Only declared selects reach the handler, each with one of its options or ''
+ * (nothing chosen).
+ *
  * Without options the dialog just confirms the action. The handler may return a
  * message (shown after the redirect), an HTTPResponse, or null. Only actions
  * returned by defineRecordActions() for the record can be executed, and only
@@ -37,6 +47,11 @@ class RecordAction
     private string $submitLabel = '';
 
     private string $description = '';
+
+    /**
+     * @var array<string, array{label: string, options: array<string, string>, value: string, empty: string}>
+     */
+    private array $selects = [];
 
     /**
      * @var callable|null
@@ -65,6 +80,32 @@ class RecordAction
             $this->options[(string) $value] = (string) $label;
         }
         return $this;
+    }
+
+    /**
+     * A select in the dialog (value '' = nothing chosen).
+     *
+     * @param array<int|string, string> $options value => label
+     */
+    public function select(string $name, string $label, array $options, ?string $value = null, string $emptyLabel = '–'): static
+    {
+        if (!preg_match('/^[A-Za-z0-9_-]+$/', $name)) {
+            throw new \InvalidArgumentException("Invalid select name '{$name}'");
+        }
+        $map = [];
+        foreach ($options as $key => $optionLabel) {
+            $map[(string) $key] = (string) $optionLabel;
+        }
+        $this->selects[$name] = ['label' => $label, 'options' => $map, 'value' => (string) $value, 'empty' => $emptyLabel];
+        return $this;
+    }
+
+    /**
+     * @return array<string, array{label: string, options: array<string, string>, value: string, empty: string}>
+     */
+    public function getSelects(): array
+    {
+        return $this->selects;
     }
 
     public function withComment(string $label, bool $required = false): static
@@ -139,10 +180,20 @@ class RecordAction
     }
 
     /**
-     * Run the action. Validates option and comment; throws ActionException.
+     * Run the action. Validates option, selects and comment; throws ActionException.
+     *
+     * @param array<string, mixed> $values Submitted values of the selects
      */
-    public function run(DataObject $record, ?string $option, string $comment): string|HTTPResponse|null
+    public function run(DataObject $record, ?string $option, string $comment, array $values = []): string|HTTPResponse|null
     {
+        $selected = [];
+        foreach ($this->selects as $name => $select) {
+            $value = (string) ($values[$name] ?? '');
+            if ($value !== '' && !array_key_exists($value, $select['options'])) {
+                throw new ActionException(_t(self::class . '.CHOOSE_OPTION', 'Please choose an option.'));
+            }
+            $selected[$name] = $value;
+        }
         if ($this->options !== [] && ($option === null || !array_key_exists($option, $this->options))) {
             throw new ActionException(_t(self::class . '.CHOOSE_OPTION', 'Please choose an option.'));
         }
@@ -156,6 +207,6 @@ class RecordAction
         if (!$this->handler) {
             return null;
         }
-        return ($this->handler)($record, $option, $comment);
+        return ($this->handler)($record, $option, $comment, $selected);
     }
 }
