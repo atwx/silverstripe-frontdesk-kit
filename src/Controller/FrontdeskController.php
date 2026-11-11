@@ -680,7 +680,7 @@ class FrontdeskController extends Controller implements PermissionProvider
             $this->flash($result);
         }
         $back = (string) $request->postVar('BackURL');
-        return $this->redirect(Director::is_site_url($back) ? $back : $this->Link('view/' . $record->ID));
+        return $this->redirect($back !== '' && Director::is_site_url($back) ? $back : $this->Link('view/' . $record->ID));
     }
 
     /**
