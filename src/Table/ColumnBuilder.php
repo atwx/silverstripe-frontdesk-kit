@@ -47,6 +47,18 @@ class ColumnBuilder
         return $this;
     }
 
+    public function optional(bool $v = true): static
+    {
+        $this->column->optional($v);
+        return $this;
+    }
+
+    public function exportOnly(bool $v = true): static
+    {
+        $this->column->exportOnly($v);
+        return $this;
+    }
+
     public function visibleInExport(bool $v): static
     {
         $this->column->visibleInExport($v);

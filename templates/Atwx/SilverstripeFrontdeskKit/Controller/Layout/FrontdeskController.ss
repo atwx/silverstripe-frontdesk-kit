@@ -14,6 +14,8 @@
         <% include Atwx\\SilverstripeFrontdeskKit\\Includes\\Tabs %>
     <% end_if %>
 
+    <% include Atwx\\SilverstripeFrontdeskKit\\Includes\\ListViews %>
+
     <% if $FilterForm %>
     <form class="fdk-filter-bar"
           hx-get="$Link"

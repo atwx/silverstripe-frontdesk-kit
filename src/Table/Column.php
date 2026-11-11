@@ -7,6 +7,10 @@ use SilverStripe\ORM\FieldType\DBHTMLText;
 
 class Column
 {
+    private bool $optional = false;
+
+    private bool $exportOnly = false;
+
     protected string $name;
     protected string $label = '';
     protected ?string $linkPattern = null;
@@ -103,6 +107,34 @@ class Column
     public function isVisibleFor(DataObject $record): bool
     {
         return $this->visibleCondition === null || (bool) ($this->visibleCondition)($record);
+    }
+
+    /**
+     * Optional columns are only shown when a list view selects them.
+     */
+    public function optional(bool $v = true): static
+    {
+        $this->optional = $v;
+        return $this;
+    }
+
+    public function isOptional(): bool
+    {
+        return $this->optional;
+    }
+
+    /**
+     * Export-only columns are left out of the list (unless a view selects them).
+     */
+    public function exportOnly(bool $v = true): static
+    {
+        $this->exportOnly = $v;
+        return $this;
+    }
+
+    public function isExportOnly(): bool
+    {
+        return $this->exportOnly;
     }
 
     public function visibleInExport(bool $v): static
