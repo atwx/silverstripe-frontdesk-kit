@@ -4,6 +4,7 @@ namespace Atwx\SilverstripeFrontdeskKit\Controller;
 
 use Atwx\SilverstripeFrontdeskKit\Filter\FilterCollection;
 use Atwx\SilverstripeFrontdeskKit\Forms\FieldLayout;
+use Atwx\SilverstripeFrontdeskKit\Forms\SearchableDropdownField;
 use Atwx\SilverstripeFrontdeskKit\Table\ActionException;
 use Atwx\SilverstripeFrontdeskKit\Table\BulkAction;
 use Atwx\SilverstripeFrontdeskKit\Table\ColumnCollection;
@@ -274,19 +275,24 @@ class FrontdeskController extends Controller implements PermissionProvider
             } else {
                 $rows[$name . 'ID'] = ArrayData::create([
                     'Label' => $label,
-                    'Value' => method_exists($related, 'Title') ? $related->Title() : (string) $related->ID,
+                    'Value' => (string) $related->getTitle(),
                     'Type'  => 'text',
                 ]);
             }
         }
 
-        // has_many relations: show count + class name
-        foreach ($record->config()->get('has_many') ?? [] as $name => $class) {
-            $label = $labels[$name] ?? $name;
-            $count = $record->$name()->count();
+        // has_many relations: show the count, unless a sub-controller lists them
+        $listed = [];
+        foreach (static::config()->get('sub_controllers') ?? [] as $subClass) {
+            $listed[] = singleton($subClass)->config()->get('managed_model');
+        }
+        foreach (array_keys($record->config()->get('has_many') ?? []) as $name) {
+            if (in_array(DataObject::getSchema()->hasManyComponent($record::class, $name), $listed, true)) {
+                continue;
+            }
             $rows[$name] = ArrayData::create([
-                'Label' => $label,
-                'Value' => $count . ' ' . $name,
+                'Label' => $labels[$name] ?? $name,
+                'Value' => (string) $record->$name()->count(),
                 'Type'  => 'text',
             ]);
         }
@@ -751,7 +757,7 @@ class FrontdeskController extends Controller implements PermissionProvider
             $item = DataObject::singleton($class);
         }
 
-        $scaffolded = $item->scaffoldFormFields();
+        $scaffolded = SearchableDropdownField::replaceCmsFields($item->scaffoldFormFields());
         $fields = $this->formFields($scaffolded);
         $layout = $this->defineFieldLayout($item->isInDB() ? $item : null);
         if ($layout) {
