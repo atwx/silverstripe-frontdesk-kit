@@ -57,7 +57,8 @@ trait RecordActionsTrait
             $result = $action->run(
                 $record,
                 $option === null ? null : (string) $option,
-                (string) $request->postVar('Comment')
+                (string) $request->postVar('Comment'),
+                (array) $request->postVar('Select')
             );
         } catch (ActionException $e) {
             $this->flash($e->getMessage(), 'error');
@@ -84,7 +85,25 @@ trait RecordActionsTrait
             foreach ($action->getOptions() as $value => $label) {
                 $options->push(ArrayData::create(['Value' => $value, 'Label' => $label]));
             }
+            $selects = ArrayList::create();
+            foreach ($action->getSelects() as $name => $select) {
+                $selectOptions = ArrayList::create();
+                foreach ($select['options'] as $value => $label) {
+                    $selectOptions->push(ArrayData::create([
+                        'Value' => $value,
+                        'Label' => $label,
+                        'Selected' => $value === $select['value'],
+                    ]));
+                }
+                $selects->push(ArrayData::create([
+                    'Name' => $name,
+                    'Label' => $select['label'],
+                    'EmptyLabel' => $select['empty'],
+                    'Options' => $selectOptions,
+                ]));
+            }
             $result->push(ArrayData::create([
+                'Selects'         => $selects,
                 'Name'            => $action->getName(),
                 'Label'           => $action->getLabel(),
                 'Description'     => $action->getDescription(),

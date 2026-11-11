@@ -89,4 +89,27 @@ class RecordActionTest extends SapphireTest
         $this->assertSame(strtotime('2026-11-11 10:30:00'), $entry->Timestamp);
         $this->assertSame('11.11.2026', $entry->Date->Format('dd.MM.yyyy'));
     }
+
+    public function testSelectsReachTheHandlerWithDeclaredValuesOnly(): void
+    {
+        $received = null;
+        $action = RecordAction::create('assign', 'Assign')
+            ->select('lead', 'Lead', [3 => 'Ann', 5 => 'Bob'], '3')
+            ->select('deputy', 'Deputy', [3 => 'Ann'])
+            ->handle(function ($record, $option, $comment, array $values) use (&$received) {
+                $received = $values;
+                return 'ok';
+            });
+
+        $this->assertSame('3', $action->getSelects()['lead']['value']);
+        $action->run(DataObject::create(), null, '', ['lead' => '5', 'other' => 'x']);
+        $this->assertSame(['lead' => '5', 'deputy' => ''], $received);
+    }
+
+    public function testSelectRejectsUnknownValue(): void
+    {
+        $action = RecordAction::create('assign', 'Assign')->select('lead', 'Lead', [3 => 'Ann']);
+        $this->expectException(ActionException::class);
+        $action->run(DataObject::create(), null, '', ['lead' => '99']);
+    }
 }

@@ -4,8 +4,10 @@
     <div class="modal-box">
         <h3 class="font-bold text-lg mb-2">$Label</h3>
         <% if $Description %><p class="mb-4 text-base-content/70">$Description</p><% end_if %>
-        <form method="post" action="$Url" class="space-y-4">
+        <form method="post" action="$Url" class="space-y-4"
+              onsubmit="this.BackURL.value = window.location.pathname + window.location.search">
             <input type="hidden" name="SecurityID" value="$Top.SecurityTokenValue">
+            <input type="hidden" name="BackURL" value="">
             <input type="hidden" name="RecordAction" value="$Name">
             <% if $HasOptions %>
             <fieldset class="space-y-2">
@@ -17,6 +19,17 @@
                 <% end_loop %>
             </fieldset>
             <% end_if %>
+            <% loop $Selects %>
+            <label class="block">
+                <span class="label-text">$Label</span>
+                <select name="Select[$Name]" class="select select-bordered w-full mt-1">
+                    <option value="">$EmptyLabel</option>
+                    <% loop $Options %>
+                    <option value="$Value"<% if $Selected %> selected<% end_if %>>$Label</option>
+                    <% end_loop %>
+                </select>
+            </label>
+            <% end_loop %>
             <% if $CommentLabel %>
             <label class="block">
                 <span class="label-text">$CommentLabel</span>
