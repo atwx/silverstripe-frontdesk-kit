@@ -36,3 +36,9 @@ en:
     NO_RECORDS: 'No records found.'
     LABEL_RECORDS_FOUND: 'records found'
     LABEL_RECORDS: 'records'
+    # Record view: timeline
+    TIMELINE: 'Timeline'
+    TIMELINE_EMPTY: 'No entries yet.'
+  Atwx\SilverstripeFrontdeskKit\Table\RecordAction:
+    CHOOSE_OPTION: 'Please choose an option.'
+    COMMENT_REQUIRED: 'Please enter a comment.'

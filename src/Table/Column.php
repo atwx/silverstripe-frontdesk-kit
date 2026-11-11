@@ -14,6 +14,7 @@ class Column
     protected string $type = 'text';
     protected $formatter = null;
     protected bool $visibleInExport = true;
+    protected $visibleCondition = null;
 
     public function __construct(string $name, string $label = '')
     {
@@ -88,6 +89,22 @@ class Column
         return $this;
     }
 
+    /**
+     * Show the value only for records where the callable returns true; the cell
+     * stays empty otherwise (list and export), e.g. for field-level permissions.
+     * Callable receives the record.
+     */
+    public function visibleWhen(callable $fn): static
+    {
+        $this->visibleCondition = $fn;
+        return $this;
+    }
+
+    public function isVisibleFor(DataObject $record): bool
+    {
+        return $this->visibleCondition === null || (bool) ($this->visibleCondition)($record);
+    }
+
     public function visibleInExport(bool $v): static
     {
         $this->visibleInExport = $v;
@@ -102,6 +119,10 @@ class Column
     public function renderValue(DataObject $record): string|DBHTMLText
     {
         $name = $this->name;
+
+        if (!$this->isVisibleFor($record)) {
+            return '';
+        }
 
         if ($this->formatter) {
             $rawValue = $this->resolveField($record, $name);

@@ -3,8 +3,11 @@
 namespace Atwx\SilverstripeFrontdeskKit\Controller;
 
 use Atwx\SilverstripeFrontdeskKit\Filter\FilterCollection;
+use Atwx\SilverstripeFrontdeskKit\Forms\FieldLayout;
+use Atwx\SilverstripeFrontdeskKit\Table\ActionException;
 use Atwx\SilverstripeFrontdeskKit\Table\BulkAction;
 use Atwx\SilverstripeFrontdeskKit\Table\ColumnCollection;
+use Atwx\SilverstripeFrontdeskKit\Table\RecordAction;
 use Atwx\SilverstripeFrontdeskKit\Table\RowAction;
 use PhpOffice\PhpSpreadsheet\Spreadsheet;
 use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
@@ -80,6 +83,7 @@ class FrontdeskController extends Controller implements PermissionProvider
         'delete'       => '->canEdit',
         'export',
         'bulk'         => '->canEdit',
+        'recordaction',
     ];
 
     public function init()
@@ -208,7 +212,18 @@ class FrontdeskController extends Controller implements PermissionProvider
      */
     protected function defineViewFields(DataObject $record): ArrayList
     {
-        $rows = ArrayList::create();
+        return ArrayList::create(array_values($this->viewFieldRows($record)));
+    }
+
+    /**
+     * View rows keyed by form field name (has_one relations as "<Name>ID"),
+     * see defineViewFields(). Used to arrange rows by a FieldLayout.
+     *
+     * @return array<string, ArrayData>
+     */
+    protected function viewFieldRows(DataObject $record): array
+    {
+        $rows = [];
 
         // DB fields (respects field_labels)
         $labels = $record->fieldLabels(false);
@@ -218,11 +233,11 @@ class FrontdeskController extends Controller implements PermissionProvider
             $value = $dbField
                 ? (method_exists($dbField, 'Nice') ? $dbField->Nice() : (string) $dbField)
                 : (string) $record->$name;
-            $rows->push(ArrayData::create([
+            $rows[$name] = ArrayData::create([
                 'Label' => $label,
                 'Value' => $value,
                 'Type'  => 'text',
-            ]));
+            ]);
         }
 
         // has_one relations
@@ -234,23 +249,23 @@ class FrontdeskController extends Controller implements PermissionProvider
             }
             // Image / File: render thumbnail or filename
             if (is_a($related, 'SilverStripe\Assets\Image', true)) {
-                $rows->push(ArrayData::create([
+                $rows[$name . 'ID'] = ArrayData::create([
                     'Label' => $label,
                     'Value' => $related->ScaleWidth(200)->forTemplate(),
                     'Type'  => 'html',
-                ]));
+                ]);
             } elseif (is_a($related, 'SilverStripe\Assets\File', true)) {
-                $rows->push(ArrayData::create([
+                $rows[$name . 'ID'] = ArrayData::create([
                     'Label' => $label,
                     'Value' => $related->Name,
                     'Type'  => 'text',
-                ]));
+                ]);
             } else {
-                $rows->push(ArrayData::create([
+                $rows[$name . 'ID'] = ArrayData::create([
                     'Label' => $label,
                     'Value' => method_exists($related, 'Title') ? $related->Title() : (string) $related->ID,
                     'Type'  => 'text',
-                ]));
+                ]);
             }
         }
 
@@ -258,11 +273,11 @@ class FrontdeskController extends Controller implements PermissionProvider
         foreach ($record->config()->get('has_many') ?? [] as $name => $class) {
             $label = $labels[$name] ?? $name;
             $count = $record->$name()->count();
-            $rows->push(ArrayData::create([
+            $rows[$name] = ArrayData::create([
                 'Label' => $label,
                 'Value' => $count . ' ' . $name,
                 'Type'  => 'text',
-            ]));
+            ]);
         }
 
         return $rows;
@@ -289,8 +304,41 @@ class FrontdeskController extends Controller implements PermissionProvider
         return $actions;
     }
 
+    /**
+     * Actions on a single record, shown on the record view (see RecordAction).
+     * Return only the actions the current user may run on this record: the
+     * controller executes nothing else. Runs for users who can view the list.
+     *
+     * @return RecordAction[]
+     */
+    protected function defineRecordActions(DataObject $record): array
+    {
+        return [];
+    }
+
+    /**
+     * Timeline of the record (TimelineEntry rows), shown below the record view.
+     * Null = no timeline.
+     */
+    protected function defineTimeline(DataObject $record): ?ArrayList
+    {
+        return null;
+    }
+
+    protected function timelineTitle(): string
+    {
+        return _t(self::class . '.TIMELINE', 'Timeline');
+    }
+
     protected function defineViewContent(DataObject $record): DBHTMLText
     {
+        $layout = $this->defineFieldLayout($record);
+        if ($layout) {
+            return $this->renderWith(
+                'Atwx\\SilverstripeFrontdeskKit\\Includes\\ViewGroups',
+                ['ViewGroups' => $layout->viewGroups($this->viewFieldRows($record))]
+            );
+        }
         return $this->renderWith(
             'Atwx\\SilverstripeFrontdeskKit\\Includes\\ViewDetail',
             ['ViewFields' => $this->defineViewFields($record)]
@@ -300,6 +348,16 @@ class FrontdeskController extends Controller implements PermissionProvider
     protected function formFields(FieldList $fields): FieldList
     {
         return $fields;
+    }
+
+    /**
+     * Groups and access levels of the record's fields, used by the edit form,
+     * the record view and saving (changes to fields that are not writable are
+     * reset). $record is null when a new record is added. Null = no layout.
+     */
+    protected function defineFieldLayout(?DataObject $record): ?FieldLayout
+    {
+        return null;
     }
 
     // ─── CRUD Actions ─────────────────────────────────────────────────────────
@@ -334,6 +392,9 @@ class FrontdeskController extends Controller implements PermissionProvider
             'ViewFields'        => $this->defineViewFields($item),
             'ViewActions'       => $this->defineViewActions($item),
             'ViewContent'       => $this->defineViewContent($item),
+            'RecordActions'     => $this->recordActionsFor($item),
+            'Timeline'          => $this->timelineFor($item),
+            'TimelineTitle'     => $this->timelineTitle(),
             'SubControllerData' => $this->getSubControllerData($item),
         ];
     }
@@ -479,6 +540,7 @@ class FrontdeskController extends Controller implements PermissionProvider
         }
 
         $form->saveInto($item);
+        $this->defineFieldLayout($isNew ? null : $item)?->resetLockedChanges($item);
         $this->beforeWrite($item, $data);
         $item->write();
         $this->afterWrite($item, $data);
@@ -506,6 +568,7 @@ class FrontdeskController extends Controller implements PermissionProvider
         }
 
         $form->saveInto($item);
+        $this->defineFieldLayout($item->isInDB() ? $item : null)?->resetLockedChanges($item);
         $this->beforeWrite($item, $data);
         $item->write();
         $this->afterWrite($item, $data);
@@ -576,6 +639,109 @@ class FrontdeskController extends Controller implements PermissionProvider
         $back = (string) $request->postVar('BackURL');
         return $this->redirect(Director::is_site_url($back) ? $back : $this->Link());
     }
+
+    /**
+     * Runs a record action (POST with CSRF token) and returns to the record view.
+     */
+    public function recordaction(HTTPRequest $request)
+    {
+        if (!$request->isPOST() || !SecurityToken::inst()->checkRequest($request)) {
+            return $this->httpError(400);
+        }
+        $record = $this->findRecord((int) $request->param('ID'), 'canView');
+        if (!$record) {
+            return $this->httpError(404);
+        }
+        $action = null;
+        foreach ($this->defineRecordActions($record) as $candidate) {
+            if ($candidate->getName() === (string) $request->postVar('RecordAction')) {
+                $action = $candidate;
+            }
+        }
+        if (!$action) {
+            return $this->httpError(400);
+        }
+
+        $option = $request->postVar('Option');
+        try {
+            $result = $action->run(
+                $record,
+                $option === null ? null : (string) $option,
+                (string) $request->postVar('Comment')
+            );
+        } catch (ActionException $e) {
+            $this->flash($e->getMessage(), 'error');
+            $result = null;
+        }
+        if ($result instanceof HTTPResponse) {
+            return $result;
+        }
+        if (is_string($result) && $result !== '') {
+            $this->flash($result);
+        }
+        $back = (string) $request->postVar('BackURL');
+        return $this->redirect(Director::is_site_url($back) ? $back : $this->Link('view/' . $record->ID));
+    }
+
+    /**
+     * Template data for the record actions of a record.
+     */
+    protected function recordActionsFor(DataObject $record): ArrayList
+    {
+        $result = ArrayList::create();
+        foreach ($this->defineRecordActions($record) as $action) {
+            $options = ArrayList::create();
+            foreach ($action->getOptions() as $value => $label) {
+                $options->push(ArrayData::create(['Value' => $value, 'Label' => $label]));
+            }
+            $result->push(ArrayData::create([
+                'Name'            => $action->getName(),
+                'Label'           => $action->getLabel(),
+                'Description'     => $action->getDescription(),
+                'Options'         => $options,
+                'HasOptions'      => $action->hasOptions(),
+                'CommentLabel'    => $action->getCommentLabel(),
+                'CommentRequired' => $action->isCommentRequired(),
+                'SubmitLabel'     => $action->getSubmitLabel(),
+                'Url'             => $this->Link('recordaction/' . $record->ID),
+                'RecordID'        => $record->ID,
+            ]));
+        }
+        return $result;
+    }
+
+    protected function timelineFor(DataObject $record): ?ArrayList
+    {
+        $timeline = $this->defineTimeline($record);
+        if ($timeline === null) {
+            return null;
+        }
+        $entries = $timeline->toArray();
+        usort($entries, fn ($a, $b) => (int) $b->Timestamp <=> (int) $a->Timestamp);
+        return ArrayList::create($entries);
+    }
+
+    /**
+     * Message shown once on the next page (type: success, error, info).
+     */
+    protected function flash(string $message, string $type = 'success'): void
+    {
+        $this->getRequest()->getSession()->set('FrontdeskFlash', ['Text' => $message, 'Type' => $type]);
+    }
+
+    public function FlashMessage(): ?ArrayData
+    {
+        if ($this->flashMessage === false) {
+            $session = $this->getRequest()->getSession();
+            $data = $session->get('FrontdeskFlash');
+            $session->clear('FrontdeskFlash');
+            $this->flashMessage = is_array($data) ? ArrayData::create($data) : null;
+        }
+        return $this->flashMessage;
+    }
+
+    /** Flash message, read once per request (false = not read yet). */
+    private ArrayData|null|false $flashMessage = false;
 
     public function BulkActions(): ArrayList
     {
@@ -657,6 +823,10 @@ class FrontdeskController extends Controller implements PermissionProvider
 
         $scaffolded = $item->scaffoldFormFields();
         $fields = $this->formFields($scaffolded);
+        $layout = $this->defineFieldLayout($item->isInDB() ? $item : null);
+        if ($layout) {
+            $fields = $layout->applyTo($fields);
+        }
         $fields->push(HiddenField::create('ID', 'ID'));
         $fields->push(HiddenField::create('BackURL', 'BackURL'));
 
