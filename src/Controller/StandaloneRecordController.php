@@ -2,6 +2,8 @@
 
 namespace Atwx\SilverstripeFrontdeskKit\Controller;
 
+use Atwx\SilverstripeFrontdeskKit\Catalog\CatalogFields;
+use Atwx\SilverstripeFrontdeskKit\Catalog\Catalogs;
 use Atwx\SilverstripeFrontdeskKit\Forms\FieldLayout;
 use Atwx\SilverstripeFrontdeskKit\Forms\FileUploadField;
 use Atwx\SilverstripeFrontdeskKit\Forms\RecordFiles;
@@ -162,10 +164,10 @@ abstract class StandaloneRecordController extends Controller
         $layout = $this->defineFieldLayout($record);
         $fields = $layout->applyTo(
             $this->formFields(
-                FileUploadField::replaceCmsFields(
+                CatalogFields::apply(FileUploadField::replaceCmsFields(
                     SearchableDropdownField::replaceCmsFields($record->scaffoldFormFields()),
                     $record
-                ),
+                ), $record),
                 $record
             )
         );
@@ -276,6 +278,16 @@ abstract class StandaloneRecordController extends Controller
                 $rows[$name . 'ID'] = ArrayData::create([
                     'Label' => $labels[$name] ?? $name,
                     'Value' => (string) $related->getTitle(),
+                    'Type' => 'text',
+                ]);
+            }
+        }
+        $catalogs = Catalogs::singleton();
+        foreach ($catalogs->fieldsOf($record) as $relation => $key) {
+            if ($catalogs->relationType($record::class, $relation) === 'many_many') {
+                $rows[$relation] = ArrayData::create([
+                    'Label' => $labels[$relation] ?? $catalogs->title($key),
+                    'Value' => $catalogs->titlesOf($record, $relation),
                     'Type' => 'text',
                 ]);
             }

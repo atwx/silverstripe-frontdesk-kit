@@ -59,3 +59,7 @@ en:
     HINT: 'Allowed: {types}, at most {size}'
     REMOVE: 'Remove file'
     REQUIRED: 'Please choose a file.'
+  Atwx\SilverstripeFrontdeskKit\Catalog\CatalogEntry:
+    SINGULARNAME: 'Catalog entry'
+    PLURALNAME: 'Catalog entries'
+    INACTIVE_LABEL: '{title} (inactive)'

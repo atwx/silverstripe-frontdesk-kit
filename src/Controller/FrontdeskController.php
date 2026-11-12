@@ -3,6 +3,8 @@
 namespace Atwx\SilverstripeFrontdeskKit\Controller;
 
 use Atwx\SilverstripeFrontdeskKit\Filter\FilterCollection;
+use Atwx\SilverstripeFrontdeskKit\Catalog\CatalogFields;
+use Atwx\SilverstripeFrontdeskKit\Catalog\Catalogs;
 use Atwx\SilverstripeFrontdeskKit\Forms\FieldLayout;
 use Atwx\SilverstripeFrontdeskKit\Forms\FileUploadField;
 use Atwx\SilverstripeFrontdeskKit\Forms\RecordFiles;
@@ -288,6 +290,18 @@ class FrontdeskController extends Controller implements PermissionProvider
             ]);
         }
 
+        // many_many catalog fields: titles of the entries
+        $catalogs = Catalogs::singleton();
+        foreach ($catalogs->fieldsOf($record) as $relation => $key) {
+            if ($catalogs->relationType($record::class, $relation) === 'many_many') {
+                $rows[$relation] = ArrayData::create([
+                    'Label' => $labels[$relation] ?? $catalogs->title($key),
+                    'Value' => $catalogs->titlesOf($record, $relation),
+                    'Type'  => 'text',
+                ]);
+            }
+        }
+
         // has_many relations: show the count, unless a sub-controller lists them
         $listed = [];
         foreach (static::config()->get('sub_controllers') ?? [] as $subClass) {
@@ -532,6 +546,9 @@ class FrontdeskController extends Controller implements PermissionProvider
         $this->assertCanCreate();
         $form = $this->EditForm();
         if ($form->getSessionData() === null) {
+            // Defaults of the model (e.g. a checkbox that is on for new records)
+            $class = $this->getManagedModel();
+            $form->loadDataFrom($class::create(), Form::MERGE_IGNORE_FALSEISH);
             $form->loadDataFrom($request->getVars());
             $form->loadDataFrom(['BackURL' => $request->getVar('BackURL') ?: $this->resolveBackURL($request)]);
         }
@@ -770,10 +787,10 @@ class FrontdeskController extends Controller implements PermissionProvider
             $item = DataObject::singleton($class);
         }
 
-        $scaffolded = FileUploadField::replaceCmsFields(
+        $scaffolded = CatalogFields::apply(FileUploadField::replaceCmsFields(
             SearchableDropdownField::replaceCmsFields($item->scaffoldFormFields()),
             $item
-        );
+        ), $item);
         $fields = $this->formFields($scaffolded);
         $layout = $this->formLayout($item->isInDB() ? $item : null);
         if ($layout) {
