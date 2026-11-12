@@ -15,6 +15,7 @@ use Atwx\SilverstripeFrontdeskKit\Table\ColumnCollection;
 use Atwx\SilverstripeFrontdeskKit\Table\RecordAction;
 use Atwx\SilverstripeFrontdeskKit\Table\RowAction;
 use Atwx\SilverstripeFrontdeskKit\View\RecordPage;
+use Atwx\SilverstripeFrontdeskKit\View\ViewRow;
 use PhpOffice\PhpSpreadsheet\Spreadsheet;
 use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
 use SilverStripe\Assets\File;
@@ -261,16 +262,7 @@ class FrontdeskController extends Controller implements PermissionProvider
             if (in_array($name, $hidden, true)) {
                 continue;
             }
-            $label = $labels[$name] ?? $name;
-            $dbField = $record->dbObject($name);
-            $value = $dbField
-                ? (method_exists($dbField, 'Nice') ? $dbField->Nice() : (string) $dbField)
-                : (string) $record->$name;
-            $rows[$name] = ArrayData::create([
-                'Label' => $label,
-                'Value' => $value,
-                'Type'  => 'text',
-            ]);
+            $rows[$name] = ViewRow::forField($labels[$name] ?? $name, $record, $name);
         }
 
         // has_one relations
