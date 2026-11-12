@@ -1198,7 +1198,59 @@ class FrontdeskController extends Controller implements PermissionProvider
     protected function getQuery()
     {
         $list = $this->defineFilters()->applyAll($this->getBaseList(), $this->listRequest());
-        return $this->currentListView()?->applyTo($list) ?? $list;
+        $list = $this->currentListView()?->applyTo($list) ?? $list;
+        return $this->applyColumnSort($list);
+    }
+
+    /**
+     * Sorts by the column chosen in the header (?sort=<column>&dir=asc|desc),
+     * if that column is sortable.
+     */
+    protected function applyColumnSort(DataList $list): DataList
+    {
+        $name = (string) $this->getRequest()->getVar('sort');
+        if ($name === '') {
+            return $list;
+        }
+        foreach ($this->Columns() as $column) {
+            if ($column->getName() === $name && $column->isSortable()) {
+                return $column->applySort($list, (string) $this->getRequest()->getVar('dir'));
+            }
+        }
+        return $list;
+    }
+
+    /**
+     * Header cells of the list: title, and for sortable columns the link that
+     * sorts by them (toggling the direction) and the current direction.
+     */
+    public function ColumnHeaders(): ArrayList
+    {
+        $request = $this->getRequest();
+        $current = (string) $request->getVar('sort');
+        $dir = strtolower((string) $request->getVar('dir')) === 'desc' ? 'desc' : 'asc';
+        $vars = $request->getVars();
+        unset($vars['url'], $vars['start']);
+        foreach (array_keys($vars) as $key) {
+            if (str_ends_with((string) $key, '_start')) {
+                unset($vars[$key]);
+            }
+        }
+        $headers = ArrayList::create();
+        foreach ($this->Columns() as $column) {
+            $sortable = $column->isSortable();
+            $active = $sortable && $current === $column->getName();
+            $next = $active && $dir === 'asc' ? 'desc' : 'asc';
+            $headers->push(ArrayData::create([
+                'Title' => $column->getLabel(),
+                'SortLink' => $sortable
+                    ? $this->Link() . '?' . http_build_query(array_merge($vars, ['sort' => $column->getName(), 'dir' => $next]))
+                    : null,
+                'SortDir' => $active ? $dir : null,
+                'AriaSort' => $active ? ($dir === 'asc' ? 'ascending' : 'descending') : null,
+            ]));
+        }
+        return $headers;
     }
 
     /**

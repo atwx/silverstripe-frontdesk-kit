@@ -85,3 +85,12 @@ de:
     YES: 'ja'
     NO: 'nein'
     CODE_HINT: 'Fester Schlüssel, z. B. für Importe; wird aus der Bezeichnung erzeugt, wenn leer. Später nicht änderbar.'
+  Atwx\SilverstripeFrontdeskKit\Controller\FrontdeskSubController:
+    BULK_EDIT_TITLE: 'Mehrere bearbeiten'
+    BULK_ENTRIES: 'Einträge'
+    BULK_UNCHANGED: '– unverändert –'
+    BULK_YES: 'Ja'
+    BULK_NO: 'Nein'
+    BULK_HINT: 'Nur ausgefüllte Felder werden für die gewählten Einträge übernommen; leere lassen die Werte unverändert.'
+    BULK_DONE: '{count} Einträge geändert.'
+    BULK_SKIPPED: 'Übersprungen: {list}'

@@ -33,6 +33,19 @@ class ColumnCollection extends ArrayList
         return new ColumnBuilder($column, $this);
     }
 
+    /**
+     * The column with this name (e.g. to make a scaffolded column sortable).
+     */
+    public function byName(string $name): ?Column
+    {
+        foreach ($this as $column) {
+            if ($column instanceof Column && $column->getName() === $name) {
+                return $column;
+            }
+        }
+        return null;
+    }
+
     public function addColumn(Column $col): static
     {
         parent::push($col);

@@ -2,11 +2,24 @@
 
 namespace Atwx\SilverstripeFrontdeskKit\Controller;
 
+use Atwx\SilverstripeFrontdeskKit\Catalog\CatalogFields;
+use Atwx\SilverstripeFrontdeskKit\Forms\FileUploadField;
 use Atwx\SilverstripeFrontdeskKit\Forms\RecordFieldNames;
+use Atwx\SilverstripeFrontdeskKit\Forms\SearchableDropdownField;
 use Atwx\SilverstripeFrontdeskKit\Filter\FilterCollection;
 use SilverStripe\Control\Controller;
 use SilverStripe\Control\HTTPRequest;
 use SilverStripe\Control\HTTPResponse;
+use SilverStripe\Core\Validation\ValidationException;
+use SilverStripe\Forms\CheckboxField;
+use SilverStripe\Forms\CheckboxSetField;
+use SilverStripe\Forms\DropdownField;
+use SilverStripe\Forms\FieldList;
+use SilverStripe\Forms\Form;
+use SilverStripe\Forms\FormAction;
+use SilverStripe\Forms\FormField;
+use SilverStripe\Forms\LiteralField;
+use SilverStripe\Forms\SingleSelectField;
 use SilverStripe\Model\List\PaginatedList;
 use SilverStripe\ORM\DataList;
 use SilverStripe\ORM\DataObject;
@@ -27,7 +40,18 @@ abstract class FrontdeskSubController extends FrontdeskController
     private static $allowed_actions = [
         'save'   => '->canEdit',
         'delete' => '->canEdit',
+        'bulkedit' => '->canBulkEdit',
+        'BulkEditForm' => '->canBulkEdit',
     ];
+
+    /**
+     * Fields that can be set for several entries at once ("Edit several"): only
+     * filled fields are applied, checkboxes have the choice unchanged/yes/no.
+     * Empty: no bulk editing.
+     *
+     * @var array<int, string>
+     */
+    private static $bulk_edit_fields = [];
     /**
      * Two rules are needed:
      * 1. "$ParentID/$Action//$ID/$OtherID" – handles edit/delete/save with a record ID
@@ -101,7 +125,7 @@ abstract class FrontdeskSubController extends FrontdeskController
      */
     protected function getQuery(): DataList
     {
-        return $this->defineFilters()->applyAll($this->getBaseList(), $this->getRequest());
+        return $this->applyColumnSort($this->defineFilters()->applyAll($this->getBaseList(), $this->getRequest()));
     }
 
     /**
@@ -200,6 +224,148 @@ abstract class FrontdeskSubController extends FrontdeskController
     protected function afterSaveLink(): string
     {
         return $this->isTab() ? $this->Link() : $this->parentController->Link('view/' . $this->parentID);
+    }
+
+    // ─── Bulk editing ─────────────────────────────────────────────────────────
+
+    /**
+     * Whether several entries can be edited at once (bulk_edit_fields set, edit permission).
+     */
+    public function canBulkEdit(): bool
+    {
+        return (array) static::config()->get('bulk_edit_fields') !== [] && $this->canEdit();
+    }
+
+    /**
+     * Form "Edit several" (in the modal): the entries, all preselected, and the
+     * bulk edit fields, empty.
+     */
+    public function bulkedit(HTTPRequest $request)
+    {
+        $form = $this->BulkEditForm();
+        $title = _t(self::class . '.BULK_EDIT_TITLE', 'Edit several');
+        if ($this->isHtmxRequest()) {
+            return $this->renderPartial(
+                'Atwx\\SilverstripeFrontdeskKit\\Includes\\EditFormModal',
+                ['Form' => $form, 'Title' => $title, 'Item' => null]
+            );
+        }
+        return ['Title' => $title, 'Form' => $form, 'Actions' => false];
+    }
+
+    public function BulkEditForm(): Form
+    {
+        $entries = [];
+        foreach ($this->getBaseList() as $record) {
+            if (!static::config()->get('check_record_permissions') || $record->canEdit()) {
+                $entries[(int) $record->ID] = (string) $record->getTitle();
+            }
+        }
+        $fields = FieldList::create(
+            CheckboxSetField::create('BulkEntries', _t(self::class . '.BULK_ENTRIES', 'Entries'), $entries)
+                ->setValue(array_keys($entries))
+        );
+        $unchanged = _t(self::class . '.BULK_UNCHANGED', '– unchanged –');
+        foreach ($this->bulkEditFieldList() as $field) {
+            if ($field instanceof CheckboxField) {
+                $field = DropdownField::create($field->getName(), $field->Title(), [
+                    '1' => _t(self::class . '.BULK_YES', 'Yes'),
+                    '0' => _t(self::class . '.BULK_NO', 'No'),
+                ])->setEmptyString($unchanged);
+            } elseif ($field instanceof SingleSelectField) {
+                $field->setHasEmptyDefault(true)->setEmptyString($unchanged);
+            }
+            $field->setValue(null);
+            $fields->push($field);
+        }
+        $fields->push(LiteralField::create('BulkHint', '<p class="text-sm opacity-70">' . htmlspecialchars(_t(
+            self::class . '.BULK_HINT',
+            'Only filled fields are applied to the chosen entries; empty ones leave the values unchanged.'
+        )) . '</p>'));
+        $form = Form::create($this, 'BulkEditForm', $fields, FieldList::create(
+            FormAction::create('doBulkEdit', _t(FrontdeskController::class . '.ACTION_SAVE', 'Save')),
+            LiteralField::create('Cancel', '<a href="javascript:void(0);" onclick="var d=this.closest(\'dialog\'); '
+                . 'if(d){d.close();return false;} history.back();" class="btn">'
+                . _t(FrontdeskController::class . '.ACTION_CANCEL', 'Cancel') . '</a>')
+        ));
+        $form->setFormAction($this->Link('BulkEditForm'));
+        return $form;
+    }
+
+    /**
+     * Applies the filled fields to the chosen entries the member may edit; fields
+     * locked by the field layout stay unchanged, entries that fail validation are
+     * skipped and reported.
+     *
+     * @param array<string, mixed> $data
+     */
+    public function doBulkEdit(array $data, Form $form): HTTPResponse
+    {
+        $ids = array_filter(array_map('intval', (array) ($data['BulkEntries'] ?? [])));
+        $apply = [];
+        foreach ($this->bulkEditFieldList() as $field) {
+            $name = $field->getName();
+            $value = $data[$name] ?? null;
+            $empty = $value === null || $value === '' || $value === [] || (is_array($value) && !array_filter($value));
+            if (!$empty) {
+                $apply[$name] = $field instanceof CheckboxField ? (bool) (int) $value : $value;
+            }
+        }
+        $changed = 0;
+        $skipped = [];
+        foreach ($ids && $apply ? $this->getBaseList()->filter('ID', $ids) : [] as $record) {
+            if (static::config()->get('check_record_permissions') && !$record->canEdit()) {
+                continue;
+            }
+            foreach ($apply as $name => $value) {
+                $field = $form->Fields()->dataFieldByName($name);
+                if ($field && !is_bool($value)) {
+                    $field->setSubmittedValue($value);
+                    $field->saveInto($record);
+                } else {
+                    $record->$name = $value;
+                }
+            }
+            $this->formLayout($record)?->resetLockedChanges($record);
+            try {
+                $record->write();
+                $changed++;
+            } catch (ValidationException $e) {
+                $skipped[] = $record->getTitle() . ' (' . $e->getMessage() . ')';
+            }
+        }
+        $message = _t(self::class . '.BULK_DONE', '{count} entries changed.', ['count' => $changed]);
+        if ($skipped) {
+            $message .= ' ' . _t(self::class . '.BULK_SKIPPED', 'Skipped: {list}', ['list' => implode('; ', $skipped)]);
+        }
+        $this->flash($message, $skipped ? 'error' : 'success');
+        return $this->redirect($this->afterSaveLink());
+    }
+
+    /**
+     * The edit form fields named in bulk_edit_fields (scaffolded like the edit form).
+     *
+     * @return array<int, FormField>
+     */
+    protected function bulkEditFieldList(): array
+    {
+        $names = (array) static::config()->get('bulk_edit_fields');
+        if (!$names) {
+            return [];
+        }
+        $item = DataObject::singleton($this->getManagedModel());
+        $scaffolded = $this->formFields(CatalogFields::apply(FileUploadField::replaceCmsFields(
+            SearchableDropdownField::replaceCmsFields($item->scaffoldFormFields()),
+            $item
+        ), $item));
+        $fields = [];
+        foreach ($names as $name) {
+            $field = $scaffolded->dataFieldByName($name);
+            if ($field) {
+                $fields[] = $field;
+            }
+        }
+        return $fields;
     }
 
     /**

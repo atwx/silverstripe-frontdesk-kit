@@ -29,6 +29,18 @@
             $Items.TotalItems <%t Atwx\SilverstripeFrontdeskKit\Controller\FrontdeskController.LABEL_RECORDS 'records' %>
         <% end_if %>
     </p>
+    <div class="flex items-center gap-2">
+    <% if $Top.canBulkEdit && $Items.TotalItems > 1 %>
+    <button type="button"
+            class="btn btn-ghost btn-sm"
+            hx-get="$Top.Link('bulkedit')"
+            hx-target="#fdk-modal-content"
+            hx-swap="innerHTML"
+            hx-indicator="#fdk-modal-spinner"
+            onclick="document.getElementById('fdk-modal').showModal()">
+        <%t Atwx\SilverstripeFrontdeskKit\Controller\FrontdeskSubController.BULK_EDIT_TITLE 'Edit several' %>
+    </button>
+    <% end_if %>
     <% if $Top.canAdd %>
     <button type="button"
             class="btn btn-primary btn-sm"
@@ -40,14 +52,19 @@
         <%t Atwx\SilverstripeFrontdeskKit\Controller\FrontdeskController.ACTION_NEW 'New' %>
     </button>
     <% end_if %>
+    </div>
 </div>
 
 <div class="fdk-table-wrapper">
     <table class="table table-zebra w-full">
         <thead>
             <tr>
-                <% loop $Columns %>
+                <% loop $Top.ColumnHeaders %>
+                    <% if $SortLink %>
+                    <th<% if $AriaSort %> aria-sort="$AriaSort"<% end_if %>><a href="$SortLink" hx-get="$SortLink" hx-target="$Top.HtmxTarget" hx-swap="innerHTML" class="fdk-sort-link inline-flex items-center gap-1">$Title<% if $SortDir == 'asc' %> <span aria-hidden="true">▲</span><% else_if $SortDir == 'desc' %> <span aria-hidden="true">▼</span><% end_if %></a></th>
+                    <% else %>
                     <th>$Title</th>
+                    <% end_if %>
                 <% end_loop %>
                 <th></th>
             </tr>

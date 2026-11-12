@@ -54,13 +54,29 @@ Overrides the column header text.
 ->make('FormatLastEdited')->label('Last updated')->end()
 ```
 
-### `->sortable(bool $v = true)`
+### `->sortable(bool|string|callable $v = true)`
 
-Marks the column as sortable (reserved for future sort implementation).
+Makes the header a link that sorts the list by this column. A second click
+reverses the direction. The choice travels as `?sort=<column>&dir=asc|desc`
+and keeps the filters. It works in lists and sub-lists; in sub-lists the link
+reloads only the sub-list.
 
 ```php
-->make('Surname')->sortable()->end()
+->make('Surname')->sortable()->end()                       // by the field Surname
+->make('Member.Name')->sortable('Member.Surname')->end()    // by another field or relation path
+->make('StartDate.Nice')->sortable('StartDate')->end()     // formatted column, sorted by the raw field
+->make('Length')
+    ->sortable(fn (DataList $list, string $dir) => $list->orderBy('LENGTH("Title") ' . $dir))
+    ->end()                                                // by a SQL expression
 ```
+
+The database does the sorting. A value computed in PHP (for example, a
+progress rank derived from several dates) can only be sorted if it is stored:
+write it into a field in `onBeforeWrite()` and sort by that field. Filters work
+on that field as well.
+
+Scaffolded columns are changed by name:
+`$columns->byName('Title')?->sortable();`.
 
 ### `->type(string $type)`
 
