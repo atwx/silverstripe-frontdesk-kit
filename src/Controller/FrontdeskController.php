@@ -4,6 +4,8 @@ namespace Atwx\SilverstripeFrontdeskKit\Controller;
 
 use Atwx\SilverstripeFrontdeskKit\Filter\FilterCollection;
 use Atwx\SilverstripeFrontdeskKit\Forms\FieldLayout;
+use Atwx\SilverstripeFrontdeskKit\Forms\FileUploadField;
+use Atwx\SilverstripeFrontdeskKit\Forms\RecordFiles;
 use Atwx\SilverstripeFrontdeskKit\Forms\SearchableDropdownField;
 use Atwx\SilverstripeFrontdeskKit\Table\BulkAction;
 use Atwx\SilverstripeFrontdeskKit\Table\ColumnCollection;
@@ -12,6 +14,7 @@ use Atwx\SilverstripeFrontdeskKit\Table\RowAction;
 use Atwx\SilverstripeFrontdeskKit\View\RecordPage;
 use PhpOffice\PhpSpreadsheet\Spreadsheet;
 use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
+use SilverStripe\Assets\File;
 use SilverStripe\Control\Controller;
 use SilverStripe\Control\Director;
 use SilverStripe\Control\HTTPRequest;
@@ -97,6 +100,7 @@ class FrontdeskController extends Controller implements PermissionProvider
         'recordaction',
         'saveview',
         'deleteview',
+        'file',
     ];
 
     public function init()
@@ -265,30 +269,23 @@ class FrontdeskController extends Controller implements PermissionProvider
         // has_one relations
         foreach ($record->config()->get('has_one') ?? [] as $name => $class) {
             $label = $labels[$name] ?? $name;
+            if (is_string($class) && is_a($class, File::class, true)) {
+                // Files (images with a preview), linked to the protected download
+                $file = RecordFiles::fileOf($record, $name);
+                if ($file) {
+                    $rows[$name . 'ID'] = RecordFiles::viewRow($label, $file, $this->fileLink($record, $name . 'ID'));
+                }
+                continue;
+            }
             $related = $record->$name();
             if (!$related || !$related->exists()) {
                 continue;
             }
-            // Image / File: render thumbnail or filename
-            if (is_a($related, 'SilverStripe\Assets\Image', true)) {
-                $rows[$name . 'ID'] = ArrayData::create([
-                    'Label' => $label,
-                    'Value' => $related->ScaleWidth(200)->forTemplate(),
-                    'Type'  => 'html',
-                ]);
-            } elseif (is_a($related, 'SilverStripe\Assets\File', true)) {
-                $rows[$name . 'ID'] = ArrayData::create([
-                    'Label' => $label,
-                    'Value' => $related->Name,
-                    'Type'  => 'text',
-                ]);
-            } else {
-                $rows[$name . 'ID'] = ArrayData::create([
-                    'Label' => $label,
-                    'Value' => (string) $related->getTitle(),
-                    'Type'  => 'text',
-                ]);
-            }
+            $rows[$name . 'ID'] = ArrayData::create([
+                'Label' => $label,
+                'Value' => (string) $related->getTitle(),
+                'Type'  => 'text',
+            ]);
         }
 
         // has_many relations: show the count, unless a sub-controller lists them
@@ -773,7 +770,10 @@ class FrontdeskController extends Controller implements PermissionProvider
             $item = DataObject::singleton($class);
         }
 
-        $scaffolded = SearchableDropdownField::replaceCmsFields($item->scaffoldFormFields());
+        $scaffolded = FileUploadField::replaceCmsFields(
+            SearchableDropdownField::replaceCmsFields($item->scaffoldFormFields()),
+            $item
+        );
         $fields = $this->formFields($scaffolded);
         $layout = $this->formLayout($item->isInDB() ? $item : null);
         if ($layout) {
@@ -793,6 +793,9 @@ class FrontdeskController extends Controller implements PermissionProvider
         ));
         $form->setValidationResponseCallback(fn (ValidationResult $result) => $this->validationErrorResponse($form, $result));
         $this->extend('updateEditForm', $form, $item);
+        if ($item->isInDB()) {
+            $this->linkFileFields($form->Fields(), $item);
+        }
         return $form;
     }
 
@@ -811,6 +814,47 @@ class FrontdeskController extends Controller implements PermissionProvider
             $link .= '?BackURL=' . urlencode($data['BackURL']);
         }
         return $this->redirect($link);
+    }
+
+    // ─── Files ────────────────────────────────────────────────────────────────
+
+    /**
+     * Download of a file of a record: file/<ID>/<FieldName> (e.g. file/12/CertificateID).
+     * The record must be in the list and viewable, the field a has_one File relation
+     * visible in the record's field layout. ?download forces a download.
+     */
+    public function file(HTTPRequest $request)
+    {
+        if (!$this->canView()) {
+            return $this->httpError(404);
+        }
+        $record = $this->findRecord((int) $request->param('ID'), 'canView');
+        $file = $record
+            ? RecordFiles::visibleFile($record, (string) $request->param('OtherID'), $this->defineFieldLayout($record))
+            : null;
+        if (!$file) {
+            return $this->httpError(404);
+        }
+        return RecordFiles::response($file, $request->getVar('download') !== null);
+    }
+
+    public function fileLink(DataObject $record, string $fieldName): string
+    {
+        return $this->Link('file/' . $record->ID . '/' . $fieldName);
+    }
+
+    /**
+     * Shows the current file (with download link) in the record's upload fields.
+     */
+    protected function linkFileFields(FieldList $fields, DataObject $record): void
+    {
+        foreach ($fields->dataFields() as $field) {
+            if ($field instanceof FileUploadField) {
+                $name = $field->getName();
+                $field->setValue((int) $record->$name);
+                $field->setDownloadLink($this->fileLink($record, $name));
+            }
+        }
     }
 
     // ─── Template data ────────────────────────────────────────────────────────
