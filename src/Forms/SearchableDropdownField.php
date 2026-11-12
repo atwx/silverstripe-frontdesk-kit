@@ -28,6 +28,19 @@ class SearchableDropdownField extends DropdownField
         return $fields;
     }
 
+    /**
+     * An empty has_one is 0: with an empty default, 0 means "none" (unless 0 is
+     * one of the options), like the empty string.
+     */
+    public function getValueForValidation(): mixed
+    {
+        $value = $this->getValue();
+        if ($this->getHasEmptyDefault() && in_array($value, [0, '0'], true) && !array_key_exists(0, $this->getSource())) {
+            return null;
+        }
+        return parent::getValueForValidation();
+    }
+
     public function Field($properties = [])
     {
         return $this->renderWith(self::class);

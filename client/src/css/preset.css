@@ -159,3 +159,11 @@
 .fdk-form-wrap .Actions {
     @apply flex gap-3 mt-6;
 }
+
+/* ── Field groups ─────────────────────────────────────────────────────────── */
+/* An open group must not clip the option lists of dropdowns and multiple
+   choices (DaisyUI's collapse hides its overflow). */
+details.fdk-collapse[open],
+details.fdk-collapse[open] > .collapse-content {
+    overflow: visible !important;
+}

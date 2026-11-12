@@ -39,6 +39,7 @@ See **[docs/quickstart.md](docs/quickstart.md)** for a step-by-step guide to set
 | [docs/record-pages.md](docs/record-pages.md) | Record view split into pages (sub views) with sidebar, header, page-wise editing |
 | [docs/list-views.md](docs/list-views.md) | Views of a list (in code and saved by members), optional and export-only columns |
 | [docs/files.md](docs/files.md) | File uploads into has_one File relations, protected storage and download |
+| [docs/catalogs.md](docs/catalogs.md) | Catalogs maintained by admins: single and multiple choice, inactive entries, filters, import |
 | [docs/templates.md](docs/templates.md) | Overriding templates, HTMX partial rendering |
 | [docs/charts.md](docs/charts.md) | Declarative Chart.js rendering via `Chart` include |
 | [docs/frontend.md](docs/frontend.md) | Building CSS/JS, theming via CSS custom properties |

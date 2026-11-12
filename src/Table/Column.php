@@ -2,6 +2,8 @@
 
 namespace Atwx\SilverstripeFrontdeskKit\Table;
 
+use Atwx\SilverstripeFrontdeskKit\Catalog\CatalogEntry;
+use SilverStripe\Model\List\SS_List;
 use SilverStripe\ORM\DataObject;
 use SilverStripe\ORM\FieldType\DBHTMLText;
 
@@ -160,7 +162,14 @@ class Column
             $rawValue = $this->resolveField($record, $name);
             $result = (string) ($this->formatter)($rawValue, $record);
         } else {
-            $result = (string) $this->resolveField($record, $name);
+            $value = $this->resolveField($record, $name);
+            // Lists (e.g. many_many catalog fields) show the titles of their records.
+            $result = $value instanceof SS_List
+                ? implode(', ', array_map(
+                    fn ($item) => $item instanceof CatalogEntry ? $item->getLabel() : (string) $item->getTitle(),
+                    $value->toArray()
+                ))
+                : (string) $value;
         }
 
         if ($this->type === 'html') {
@@ -183,7 +192,8 @@ class Column
                     return $record->$name();
                 }
             } catch (\ReflectionException $e) {
-                // fall through to property access
+                // A magic method (e.g. a relation): takes no arguments
+                return $record->$name();
             }
         }
 
