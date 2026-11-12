@@ -7,6 +7,7 @@ use Atwx\SilverstripeFrontdeskKit\Catalog\CatalogFields;
 use Atwx\SilverstripeFrontdeskKit\Catalog\Catalogs;
 use Atwx\SilverstripeFrontdeskKit\Forms\FieldLayout;
 use Atwx\SilverstripeFrontdeskKit\Forms\FileUploadField;
+use Atwx\SilverstripeFrontdeskKit\Forms\RecordFieldNames;
 use Atwx\SilverstripeFrontdeskKit\Forms\RecordFiles;
 use Atwx\SilverstripeFrontdeskKit\Forms\SearchableDropdownField;
 use Atwx\SilverstripeFrontdeskKit\Table\BulkAction;
@@ -255,7 +256,11 @@ class FrontdeskController extends Controller implements PermissionProvider
 
         // DB fields (respects field_labels)
         $labels = $record->fieldLabels(false);
+        $hidden = $this->hiddenFields($record);
         foreach ($record->config()->get('db') ?? [] as $name => $type) {
+            if (in_array($name, $hidden, true)) {
+                continue;
+            }
             $label = $labels[$name] ?? $name;
             $dbField = $record->dbObject($name);
             $value = $dbField
@@ -270,6 +275,9 @@ class FrontdeskController extends Controller implements PermissionProvider
 
         // has_one relations
         foreach ($record->config()->get('has_one') ?? [] as $name => $class) {
+            if (in_array($name, $hidden, true)) {
+                continue;
+            }
             $label = $labels[$name] ?? $name;
             if (is_string($class) && is_a($class, File::class, true)) {
                 // Files (images with a preview), linked to the protected download
@@ -381,6 +389,18 @@ class FrontdeskController extends Controller implements PermissionProvider
             'Atwx\\SilverstripeFrontdeskKit\\Includes\\ViewDetail',
             ['ViewFields' => $this->defineViewFields($record)]
         );
+    }
+
+    /**
+     * Fields left out of the form and the record view: the model's config
+     * `fdk_hidden_fields` (e.g. [LegacyID]). Names of db fields and has_one
+     * relations, given with or without "ID"; the result holds both spellings.
+     *
+     * @return array<int, string>
+     */
+    protected function hiddenFields(DataObject $record): array
+    {
+        return RecordFieldNames::withRelationNames((array) $record->config()->get('fdk_hidden_fields'));
     }
 
     protected function formFields(FieldList $fields): FieldList
@@ -788,7 +808,9 @@ class FrontdeskController extends Controller implements PermissionProvider
         }
 
         $scaffolded = CatalogFields::apply(FileUploadField::replaceCmsFields(
-            SearchableDropdownField::replaceCmsFields($item->scaffoldFormFields()),
+            SearchableDropdownField::replaceCmsFields(
+                $item->scaffoldFormFields(['ignoreFields' => $this->hiddenFields($item)])
+            ),
             $item
         ), $item);
         $fields = $this->formFields($scaffolded);

@@ -120,3 +120,15 @@ are sent with `Cache-Control: no-store` and `X-Robots-Tag: noindex`.
 
 The page uses the main template `FrontdeskStandalonePage` (loads the kit's
 prebuilt CSS); override it in the project to load the project's stylesheet.
+
+## Hidden fields
+
+Fields that never belong in frontdesk forms and views, such as import keys, are
+listed on the model:
+
+```php
+private static array $fdk_hidden_fields = ['LegacyID', 'ImportedBy'];   // db fields or has_one names
+```
+
+They are left out of the scaffolded form, the record view and standalone pages.
+A sub-controller also leaves out its `parent_field`, which is set on save anyway.

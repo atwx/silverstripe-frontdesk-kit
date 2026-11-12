@@ -6,6 +6,7 @@ use Atwx\SilverstripeFrontdeskKit\Catalog\CatalogFields;
 use Atwx\SilverstripeFrontdeskKit\Catalog\Catalogs;
 use Atwx\SilverstripeFrontdeskKit\Forms\FieldLayout;
 use Atwx\SilverstripeFrontdeskKit\Forms\FileUploadField;
+use Atwx\SilverstripeFrontdeskKit\Forms\RecordFieldNames;
 use Atwx\SilverstripeFrontdeskKit\Forms\RecordFiles;
 use Atwx\SilverstripeFrontdeskKit\Forms\SearchableDropdownField;
 use Atwx\SilverstripeFrontdeskKit\Table\RecordAction;
@@ -165,7 +166,9 @@ abstract class StandaloneRecordController extends Controller
         $fields = $layout->applyTo(
             $this->formFields(
                 CatalogFields::apply(FileUploadField::replaceCmsFields(
-                    SearchableDropdownField::replaceCmsFields($record->scaffoldFormFields()),
+                    SearchableDropdownField::replaceCmsFields($record->scaffoldFormFields([
+                        'ignoreFields' => RecordFieldNames::withRelationNames((array) $record->config()->get('fdk_hidden_fields')),
+                    ])),
                     $record
                 ), $record),
                 $record
@@ -257,7 +260,11 @@ abstract class StandaloneRecordController extends Controller
     {
         $rows = [];
         $labels = $record->fieldLabels(false);
+        $hidden = RecordFieldNames::withRelationNames((array) $record->config()->get('fdk_hidden_fields'));
         foreach ($record->config()->get('db') ?? [] as $name => $type) {
+            if (in_array($name, $hidden, true)) {
+                continue;
+            }
             $value = $record->dbObject($name);
             $rows[$name] = ArrayData::create([
                 'Label' => $labels[$name] ?? $name,
@@ -266,6 +273,9 @@ abstract class StandaloneRecordController extends Controller
             ]);
         }
         foreach ($record->config()->get('has_one') ?? [] as $name => $class) {
+            if (in_array($name, $hidden, true)) {
+                continue;
+            }
             if (is_string($class) && is_a($class, File::class, true)) {
                 $file = RecordFiles::fileOf($record, $name);
                 if ($file) {

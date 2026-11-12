@@ -40,7 +40,7 @@ de:
     ACTION_BACK: '← Zurück'
     # Seitentitel
     TITLE_EDIT: '{name} bearbeiten'
-    TITLE_NEW: 'Neues {name}'
+    TITLE_NEW: 'Neu: {name}'
     # Löschbestätigung
     CONFIRM_DELETE: 'Sind Sie sicher, dass Sie diesen Datensatz löschen möchten?'
     # Liste
