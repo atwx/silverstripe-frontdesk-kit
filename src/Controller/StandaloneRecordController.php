@@ -10,6 +10,7 @@ use Atwx\SilverstripeFrontdeskKit\Forms\RecordFieldNames;
 use Atwx\SilverstripeFrontdeskKit\Forms\RecordFiles;
 use Atwx\SilverstripeFrontdeskKit\Forms\SearchableDropdownField;
 use Atwx\SilverstripeFrontdeskKit\Table\RecordAction;
+use Atwx\SilverstripeFrontdeskKit\View\ViewRow;
 use SilverStripe\Assets\File;
 use SilverStripe\Control\Controller;
 use SilverStripe\Control\HTTPRequest;
@@ -265,12 +266,7 @@ abstract class StandaloneRecordController extends Controller
             if (in_array($name, $hidden, true)) {
                 continue;
             }
-            $value = $record->dbObject($name);
-            $rows[$name] = ArrayData::create([
-                'Label' => $labels[$name] ?? $name,
-                'Value' => $value && method_exists($value, 'Nice') ? $value->Nice() : (string) $record->$name,
-                'Type' => 'text',
-            ]);
+            $rows[$name] = ViewRow::forField($labels[$name] ?? $name, $record, $name);
         }
         foreach ($record->config()->get('has_one') ?? [] as $name => $class) {
             if (in_array($name, $hidden, true)) {
