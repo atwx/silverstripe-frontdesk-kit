@@ -15,15 +15,15 @@
     <% end_loop %>
     <% if $CanSaveListViews %>
         <button type="button" class="btn btn-sm btn-ghost"
-                onclick="var d=document.getElementById('fdk-save-view'); d.querySelector('[name=Query]').value=window.location.search.substring(1); d.showModal()">
+                onclick="var d=document.getElementById('fdk-save-view'); var box=d.querySelector('.modal-box'); box.replaceChildren(document.getElementById('fdk-save-view-form').content.cloneNode(true)); box.querySelector('[name=Query]').value=window.location.search.substring(1); d.showModal()">
             + <%t Atwx\SilverstripeFrontdeskKit\Controller\FrontdeskController.VIEW_SAVE 'Save view' %>
         </button>
     <% end_if %>
 </div>
 
 <% if $CanSaveListViews %>
-<dialog id="fdk-save-view" class="modal">
-    <div class="modal-box">
+<%-- The form is inserted when the dialog opens, so its labels (column names) are not in the page twice. --%>
+<template id="fdk-save-view-form">
         <h3 class="font-bold text-lg mb-4"><%t Atwx\SilverstripeFrontdeskKit\Controller\FrontdeskController.VIEW_SAVE 'Save view' %></h3>
         <form method="post" action="$Link('saveview')" class="space-y-4">
             <input type="hidden" name="SecurityID" value="$SecurityTokenValue">
@@ -55,7 +55,9 @@
                 <button type="button" class="btn" onclick="this.closest('dialog').close()"><%t Atwx\SilverstripeFrontdeskKit\Controller\FrontdeskController.ACTION_CANCEL 'Cancel' %></button>
             </div>
         </form>
-    </div>
+</template>
+<dialog id="fdk-save-view" class="modal">
+    <div class="modal-box"></div>
     <form method="dialog" class="modal-backdrop"><button>close</button></form>
 </dialog>
 <% end_if %>
