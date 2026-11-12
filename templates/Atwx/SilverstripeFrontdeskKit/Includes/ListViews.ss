@@ -15,7 +15,7 @@
     <% end_loop %>
     <% if $CanSaveListViews %>
         <button type="button" class="btn btn-sm btn-ghost"
-                onclick="var d=document.getElementById('fdk-save-view'); d.querySelector('[name=Query]').value=window.location.search.replace(/^\?/, ''); d.showModal()">
+                onclick="var d=document.getElementById('fdk-save-view'); d.querySelector('[name=Query]').value=window.location.search.substring(1); d.showModal()">
             + <%t Atwx\SilverstripeFrontdeskKit\Controller\FrontdeskController.VIEW_SAVE 'Save view' %>
         </button>
     <% end_if %>
