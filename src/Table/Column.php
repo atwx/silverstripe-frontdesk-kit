@@ -4,6 +4,7 @@ namespace Atwx\SilverstripeFrontdeskKit\Table;
 
 use Atwx\SilverstripeFrontdeskKit\Catalog\CatalogEntry;
 use SilverStripe\Model\List\SS_List;
+use SilverStripe\ORM\DataList;
 use SilverStripe\ORM\DataObject;
 use SilverStripe\ORM\FieldType\DBHTMLText;
 
@@ -17,6 +18,8 @@ class Column
     protected string $label = '';
     protected ?string $linkPattern = null;
     protected bool $sortable = false;
+    /** @var string|callable|null Field, relation path or callback used to sort */
+    protected $sortBy = null;
     protected string $type = 'text';
     protected $formatter = null;
     protected bool $visibleInExport = true;
@@ -64,10 +67,32 @@ class Column
         return $this->linkPattern;
     }
 
-    public function sortable(bool $v = true): static
+    /**
+     * Makes the column sortable by a click on its header: true sorts by the
+     * column name (a database field or a relation path like Member.Surname),
+     * a string by that field, a callable fn (DataList $list, string $dir):
+     * DataList sorts as it likes (e.g. by a SQL expression). Values computed in
+     * PHP cannot be sorted in the database: store them in a field (e.g. set in
+     * onBeforeWrite) and sort by that.
+     */
+    public function sortable(bool|string|callable $v = true): static
     {
-        $this->sortable = $v;
+        $this->sortable = $v !== false;
+        $this->sortBy = is_bool($v) ? null : $v;
         return $this;
+    }
+
+    /**
+     * The list sorted by this column; $dir is ASC or DESC.
+     */
+    public function applySort(DataList $list, string $dir): DataList
+    {
+        $dir = strtoupper($dir) === 'DESC' ? 'DESC' : 'ASC';
+        if (is_callable($this->sortBy)) {
+            return ($this->sortBy)($list, $dir);
+        }
+        $field = is_string($this->sortBy) ? $this->sortBy : $this->name;
+        return $list->sort([$field => $dir, 'ID' => $dir]);
     }
 
     public function isSortable(): bool

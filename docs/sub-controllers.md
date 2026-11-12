@@ -71,3 +71,31 @@ private static $allow_add = false;
 
 The "New" button is hidden (`canAdd()`), the `add` action and saving a new
 record answer 403. Editing and deleting are not affected.
+
+## Edit several at once
+
+With `bulk_edit_fields`, the sub-list gets the button *Mehrere bearbeiten*.
+It opens a form with:
+
+- the entries, all of them chosen; the member can deselect some,
+- the listed fields, all empty.
+
+Only filled fields are applied to the chosen entries. Empty fields leave the
+values unchanged. Checkboxes become a choice of *– unverändert –*, *Ja* or
+*Nein*, so an unticked box does not overwrite anything. Drop-downs start with
+*– unverändert –*.
+
+```php
+class SchoolApplicationSubController extends FrontdeskSubController
+{
+    private static array $bulk_edit_fields = ['Active', 'SentOn', 'ReactionID'];
+}
+```
+
+- Fields locked by the field layout of an entry stay unchanged.
+- An entry that fails validation is skipped and named in the message:
+  *2 Einträge geändert. Übersprungen: …*
+- With `check_record_permissions`, only the entries the member may edit are
+  offered and changed.
+- A field cannot be emptied this way.
+

@@ -29,7 +29,10 @@ class ColumnBuilder
         return $this;
     }
 
-    public function sortable(bool $v = true): static
+    /**
+     * @param bool|string|callable $v See Column::sortable()
+     */
+    public function sortable(bool|string|callable $v = true): static
     {
         $this->column->sortable($v);
         return $this;

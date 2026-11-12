@@ -25,8 +25,12 @@
                                onclick="document.querySelectorAll('input[name=&quot;ids[]&quot;]').forEach(c => c.checked = this.checked)">
                     </th>
                 <% end_if %>
-                <% loop $Columns %>
+                <% loop $Top.ColumnHeaders %>
+                    <% if $SortLink %>
+                    <th<% if $AriaSort %> aria-sort="$AriaSort"<% end_if %>><a href="$SortLink" class="fdk-sort-link inline-flex items-center gap-1">$Title<% if $SortDir == 'asc' %> <span aria-hidden="true">▲</span><% else_if $SortDir == 'desc' %> <span aria-hidden="true">▼</span><% end_if %></a></th>
+                    <% else %>
                     <th>$Title</th>
+                    <% end_if %>
                 <% end_loop %>
                 <th></th>
             </tr>

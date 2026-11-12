@@ -63,3 +63,12 @@ en:
     SINGULARNAME: 'Catalog entry'
     PLURALNAME: 'Catalog entries'
     INACTIVE_LABEL: '{title} (inactive)'
+  Atwx\SilverstripeFrontdeskKit\Controller\FrontdeskSubController:
+    BULK_EDIT_TITLE: 'Edit several'
+    BULK_ENTRIES: 'Entries'
+    BULK_UNCHANGED: '– unchanged –'
+    BULK_YES: 'Yes'
+    BULK_NO: 'No'
+    BULK_HINT: 'Only filled fields are applied to the chosen entries; empty ones leave the values unchanged.'
+    BULK_DONE: '{count} entries changed.'
+    BULK_SKIPPED: 'Skipped: {list}'
