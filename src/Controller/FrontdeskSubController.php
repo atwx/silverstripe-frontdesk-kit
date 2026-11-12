@@ -2,6 +2,7 @@
 
 namespace Atwx\SilverstripeFrontdeskKit\Controller;
 
+use Atwx\SilverstripeFrontdeskKit\Forms\RecordFieldNames;
 use Atwx\SilverstripeFrontdeskKit\Filter\FilterCollection;
 use SilverStripe\Control\Controller;
 use SilverStripe\Control\HTTPRequest;
@@ -69,6 +70,21 @@ abstract class FrontdeskSubController extends FrontdeskController
      * Return the base (unfiltered) query scoped to the parent record.
      */
     abstract protected function getBaseQuery(): DataList;
+
+    /**
+     * The parent field is set on save; it is neither shown in the form (a dropdown
+     * of all possible parents) nor in the view.
+     *
+     * @return array<int, string>
+     */
+    protected function hiddenFields(DataObject $record): array
+    {
+        $hidden = parent::hiddenFields($record);
+        $parentField = (string) static::config()->get('parent_field');
+        return $parentField === ''
+            ? $hidden
+            : array_values(array_unique(array_merge($hidden, RecordFieldNames::withRelationNames([$parentField]))));
+    }
 
     /**
      * Records are always loaded from the parent-scoped query.
