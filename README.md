@@ -38,6 +38,7 @@ See **[docs/quickstart.md](docs/quickstart.md)** for a step-by-step guide to set
 | [docs/sub-controllers.md](docs/sub-controllers.md) | Child lists of a record: inline sublists or tabs |
 | [docs/record-pages.md](docs/record-pages.md) | Record view split into pages (sub views) with sidebar, header, page-wise editing |
 | [docs/list-views.md](docs/list-views.md) | Views of a list (in code and saved by members), optional and export-only columns |
+| [docs/files.md](docs/files.md) | File uploads into has_one File relations, protected storage and download |
 | [docs/templates.md](docs/templates.md) | Overriding templates, HTMX partial rendering |
 | [docs/charts.md](docs/charts.md) | Declarative Chart.js rendering via `Chart` include |
 | [docs/frontend.md](docs/frontend.md) | Building CSS/JS, theming via CSS custom properties |

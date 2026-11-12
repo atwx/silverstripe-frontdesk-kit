@@ -55,3 +55,7 @@ en:
     SAVED: 'Your changes have been saved.'
   Atwx\SilverstripeFrontdeskKit\Forms\SearchableDropdownField:
     EMPTY: '– please choose –'
+  Atwx\SilverstripeFrontdeskKit\Forms\FileUploadField:
+    HINT: 'Allowed: {types}, at most {size}'
+    REMOVE: 'Remove file'
+    REQUIRED: 'Please choose a file.'

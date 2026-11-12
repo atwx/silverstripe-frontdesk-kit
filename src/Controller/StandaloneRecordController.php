@@ -3,8 +3,11 @@
 namespace Atwx\SilverstripeFrontdeskKit\Controller;
 
 use Atwx\SilverstripeFrontdeskKit\Forms\FieldLayout;
+use Atwx\SilverstripeFrontdeskKit\Forms\FileUploadField;
+use Atwx\SilverstripeFrontdeskKit\Forms\RecordFiles;
 use Atwx\SilverstripeFrontdeskKit\Forms\SearchableDropdownField;
 use Atwx\SilverstripeFrontdeskKit\Table\RecordAction;
+use SilverStripe\Assets\File;
 use SilverStripe\Control\Controller;
 use SilverStripe\Control\HTTPRequest;
 use SilverStripe\Control\HTTPResponse;
@@ -37,6 +40,7 @@ abstract class StandaloneRecordController extends Controller
         'index',
         'RecordForm',
         'recordaction',
+        'file',
     ];
 
     /**
@@ -157,7 +161,13 @@ abstract class StandaloneRecordController extends Controller
         $record = $this->currentRecord();
         $layout = $this->defineFieldLayout($record);
         $fields = $layout->applyTo(
-            $this->formFields(SearchableDropdownField::replaceCmsFields($record->scaffoldFormFields()), $record)
+            $this->formFields(
+                FileUploadField::replaceCmsFields(
+                    SearchableDropdownField::replaceCmsFields($record->scaffoldFormFields()),
+                    $record
+                ),
+                $record
+            )
         );
         if ($fields->saveableFields() === []) {
             return null;
@@ -169,7 +179,26 @@ abstract class StandaloneRecordController extends Controller
             FieldList::create(FormAction::create('save', _t(FrontdeskController::class . '.ACTION_SAVE', 'Save')))
         );
         $form->loadDataFrom($record);
+        foreach ($form->Fields()->dataFields() as $field) {
+            if ($field instanceof FileUploadField) {
+                $field->setDownloadLink($this->Link('file/' . $field->getName()));
+            }
+        }
         return $form;
+    }
+
+    /**
+     * Download of a file of the record: <key>/file/<FieldName>, for fields visible
+     * in the record's field layout.
+     */
+    public function file(HTTPRequest $request): HTTPResponse
+    {
+        $record = $this->currentRecord();
+        $file = RecordFiles::visibleFile($record, (string) $request->param('ID'), $this->defineFieldLayout($record));
+        if (!$file) {
+            return $this->httpError(404);
+        }
+        return RecordFiles::response($file, $request->getVar('download') !== null);
     }
 
     public function save(array $data, Form $form): HTTPResponse
@@ -235,6 +264,13 @@ abstract class StandaloneRecordController extends Controller
             ]);
         }
         foreach ($record->config()->get('has_one') ?? [] as $name => $class) {
+            if (is_string($class) && is_a($class, File::class, true)) {
+                $file = RecordFiles::fileOf($record, $name);
+                if ($file) {
+                    $rows[$name . 'ID'] = RecordFiles::viewRow($labels[$name] ?? $name, $file, $this->Link('file/' . $name . 'ID'));
+                }
+                continue;
+            }
             $related = $record->$name();
             if ($related && $related->exists()) {
                 $rows[$name . 'ID'] = ArrayData::create([

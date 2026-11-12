@@ -2,22 +2,19 @@
 
 namespace Atwx\SilverstripeFrontdeskKit\Controller;
 
-use Atwx\SilverstripeFrontdeskKit\Filter\DateRangeFilter;
 use Atwx\SilverstripeFrontdeskKit\Filter\FilterCollection;
 use Atwx\SilverstripeFrontdeskKit\Forms\FieldLayout;
+use Atwx\SilverstripeFrontdeskKit\Forms\FileUploadField;
+use Atwx\SilverstripeFrontdeskKit\Forms\RecordFiles;
 use Atwx\SilverstripeFrontdeskKit\Forms\SearchableDropdownField;
-use Atwx\SilverstripeFrontdeskKit\Model\SavedListView;
-use Atwx\SilverstripeFrontdeskKit\Table\ActionException;
 use Atwx\SilverstripeFrontdeskKit\Table\BulkAction;
 use Atwx\SilverstripeFrontdeskKit\Table\ColumnCollection;
-use Atwx\SilverstripeFrontdeskKit\Table\ListView;
 use Atwx\SilverstripeFrontdeskKit\Table\RecordAction;
 use Atwx\SilverstripeFrontdeskKit\Table\RowAction;
 use Atwx\SilverstripeFrontdeskKit\View\RecordPage;
-use Atwx\SilverstripeFrontdeskKit\View\RecordPages;
-use Atwx\SilverstripeFrontdeskKit\View\RecordSwitcher;
 use PhpOffice\PhpSpreadsheet\Spreadsheet;
 use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
+use SilverStripe\Assets\File;
 use SilverStripe\Control\Controller;
 use SilverStripe\Control\Director;
 use SilverStripe\Control\HTTPRequest;
@@ -44,6 +41,8 @@ use SilverStripe\Security\SecurityToken;
 class FrontdeskController extends Controller implements PermissionProvider
 {
     use RecordActionsTrait;
+    use RecordPagesTrait;
+    use ListViewsTrait;
 
     private static $managed_model = null;
     private static $url_segment = null;
@@ -101,6 +100,7 @@ class FrontdeskController extends Controller implements PermissionProvider
         'recordaction',
         'saveview',
         'deleteview',
+        'file',
     ];
 
     public function init()
@@ -269,30 +269,23 @@ class FrontdeskController extends Controller implements PermissionProvider
         // has_one relations
         foreach ($record->config()->get('has_one') ?? [] as $name => $class) {
             $label = $labels[$name] ?? $name;
+            if (is_string($class) && is_a($class, File::class, true)) {
+                // Files (images with a preview), linked to the protected download
+                $file = RecordFiles::fileOf($record, $name);
+                if ($file) {
+                    $rows[$name . 'ID'] = RecordFiles::viewRow($label, $file, $this->fileLink($record, $name . 'ID'));
+                }
+                continue;
+            }
             $related = $record->$name();
             if (!$related || !$related->exists()) {
                 continue;
             }
-            // Image / File: render thumbnail or filename
-            if (is_a($related, 'SilverStripe\Assets\Image', true)) {
-                $rows[$name . 'ID'] = ArrayData::create([
-                    'Label' => $label,
-                    'Value' => $related->ScaleWidth(200)->forTemplate(),
-                    'Type'  => 'html',
-                ]);
-            } elseif (is_a($related, 'SilverStripe\Assets\File', true)) {
-                $rows[$name . 'ID'] = ArrayData::create([
-                    'Label' => $label,
-                    'Value' => $related->Name,
-                    'Type'  => 'text',
-                ]);
-            } else {
-                $rows[$name . 'ID'] = ArrayData::create([
-                    'Label' => $label,
-                    'Value' => (string) $related->getTitle(),
-                    'Type'  => 'text',
-                ]);
-            }
+            $rows[$name . 'ID'] = ArrayData::create([
+                'Label' => $label,
+                'Value' => (string) $related->getTitle(),
+                'Type'  => 'text',
+            ]);
         }
 
         // has_many relations: show the count, unless a sub-controller lists them
@@ -391,60 +384,6 @@ class FrontdeskController extends Controller implements PermissionProvider
         return null;
     }
 
-    /**
-     * Pages ("sub views") of the record view, shown in a sidebar; null = one page
-     * with all fields (default). See RecordPage.
-     */
-    protected function defineRecordPages(DataObject $record): ?RecordPages
-    {
-        return null;
-    }
-
-    /**
-     * Label/value rows shown in the header of every page of a record view with
-     * record pages (e.g. status and phase). Null = none.
-     *
-     * @return ArrayList<ArrayData>|null
-     */
-    protected function defineHeaderFields(DataObject $record): ?ArrayList
-    {
-        return null;
-    }
-
-    /**
-     * URL of an image shown at the top of the record sidebar (e.g. a photo).
-     */
-    protected function defineRecordImage(DataObject $record): ?string
-    {
-        return null;
-    }
-
-    /**
-     * Field layout of the edit form and of saving: the record's layout, limited to
-     * the groups of the requested record page (?page=<segment> on the form,
-     * RecordPage in the submitted data), so a page edits only its own fields.
-     */
-    protected function formLayout(?DataObject $record): ?FieldLayout
-    {
-        $layout = $this->defineFieldLayout($record);
-        $page = $record ? $this->requestedRecordPage($record) : null;
-        if ($layout && $page) {
-            return $layout->onlyGroups($page->groupKeys());
-        }
-        return $layout;
-    }
-
-    protected function requestedRecordPage(DataObject $record): ?RecordPage
-    {
-        $request = $this->getRequest();
-        $segment = (string) ($request->isPOST() ? $request->postVar('RecordPage') : $request->getVar('page'));
-        if ($segment === '') {
-            return null;
-        }
-        $page = $this->defineRecordPages($record)?->find($segment);
-        return $page && $page->groupKeys() ? $page : null;
-    }
-
     // ─── CRUD Actions ─────────────────────────────────────────────────────────
 
     public function index(HTTPRequest $request)
@@ -486,233 +425,6 @@ class FrontdeskController extends Controller implements PermissionProvider
             'TimelineTitle'     => $this->timelineTitle(),
             'SubControllerData' => $this->getSubControllerData($item),
         ];
-    }
-
-    /**
-     * Data of a record view with record pages: sidebar, header and the blocks of
-     * the current page (404 for an unknown or hidden page).
-     *
-     * @return array<string, mixed>
-     */
-    protected function recordPageView(DataObject $item, RecordPages $pages, string $segment, string $title): array
-    {
-        $visible = array_values(array_filter(
-            $pages->getPages(),
-            fn (RecordPage $page) => $this->recordPageIsVisible($item, $page)
-        ));
-        $current = $visible[0] ?? null;
-        if ($segment !== '') {
-            $current = null;
-            foreach ($visible as $page) {
-                if ($page->getSegment() === $segment) {
-                    $current = $page;
-                }
-            }
-        }
-        if (!$current) {
-            $this->httpError(404);
-        }
-
-        $sidebar = ArrayList::create();
-        foreach ($pages->getItems() as $entry) {
-            if ($entry instanceof RecordPage) {
-                if (!in_array($entry, $visible, true)) {
-                    continue;
-                }
-                $sidebar->push(ArrayData::create([
-                    'Type' => 'page',
-                    'Title' => $entry->getTitle(),
-                    'Link' => $this->recordPageLink($item, $entry),
-                    'Active' => $entry === $current,
-                ]));
-            } elseif ($entry instanceof RecordSwitcher) {
-                $sidebar->push(ArrayData::create(['Type' => 'switcher', 'Switcher' => $entry]));
-            } else {
-                $sidebar->push(ArrayData::create(['Type' => 'separator']));
-            }
-        }
-
-        return [
-            'Item'             => $item,
-            'Title'            => $title,
-            'RecordPages'      => $sidebar,
-            'CurrentPage'      => ArrayData::create([
-                'Title' => $current->getTitle(),
-                'Segment' => $current->getSegment(),
-                'EditLink' => $this->recordPageEditLink($item, $current),
-            ]),
-            'PageContent'      => $this->renderRecordPage($item, $current),
-            'HeaderFields'     => $this->defineHeaderFields($item),
-            'RecordImage'      => $this->defineRecordImage($item),
-            'ViewActions'      => $this->defineViewActions($item)->exclude('Primary', true),
-            'RecordActions'    => $this->recordActionsFor($item),
-            'SubControllerData' => ArrayList::create(),
-        ];
-    }
-
-    /**
-     * Whether a sub-controller list is shown for the record on a record page
-     * (subclasses hide lists from some members, e.g. lists only editors may see).
-     *
-     * @param class-string $class
-     */
-    protected function canShowSubController(string $class, DataObject $record): bool
-    {
-        return true;
-    }
-
-        protected function recordPageLink(DataObject $record, RecordPage $page): string
-    {
-        return $this->Link('view/' . $record->ID . '/' . $page->getSegment());
-    }
-
-    /**
-     * Link to edit the fields of a page, null when it has none the member may write.
-     */
-    protected function recordPageEditLink(DataObject $record, RecordPage $page): ?string
-    {
-        $keys = $page->groupKeys();
-        if (!$keys || !$this->canEdit()) {
-            return null;
-        }
-        $layout = $this->defineFieldLayout($record);
-        if ($layout && !$layout->hasFieldsIn($keys, true)) {
-            return null;
-        }
-        return $this->Link('edit/' . $record->ID) . '?page=' . rawurlencode($page->getSegment())
-            . '&BackURL=' . rawurlencode($this->recordPageLink($record, $page));
-    }
-
-    protected function recordPageIsVisible(DataObject $record, RecordPage $page): bool
-    {
-        foreach ($page->getBlocks() as $block) {
-            switch ($block['type']) {
-                case RecordPage::GROUPS:
-                    $layout = $this->defineFieldLayout($record);
-                    if (!$layout || $layout->hasFieldsIn($block['keys'])) {
-                        return true;
-                    }
-                    break;
-                case RecordPage::RELATED:
-                    $related = ($block['resolver'])($record);
-                    if ($related instanceof DataObject && $related->exists()) {
-                        $controller = $this->embeddedController($block['class']);
-                        if ($controller->canView()) {
-                            return true;
-                        }
-                    }
-                    break;
-                case RecordPage::TIMELINE:
-                    if ($this->timelineFor($record) !== null) {
-                        return true;
-                    }
-                    break;
-                case RecordPage::SUBLIST:
-                    if ($this->canShowSubController($block['class'], $record)) {
-                        return true;
-                    }
-                    break;
-                default:
-                    return true;
-            }
-        }
-        return false;
-    }
-
-    protected function renderRecordPage(DataObject $record, RecordPage $page): DBHTMLText
-    {
-        $html = '';
-        $layout = $this->defineFieldLayout($record);
-        foreach ($page->getBlocks() as $block) {
-            switch ($block['type']) {
-                case RecordPage::GROUPS:
-                    if ($layout) {
-                        $html .= $this->renderWith(
-                            'Atwx\\SilverstripeFrontdeskKit\\Includes\\ViewGroups',
-                            ['ViewGroups' => $layout->onlyGroups($block['keys'])->viewGroups($this->viewFieldRows($record))]
-                        )->forTemplate();
-                    } else {
-                        $html .= $this->renderWith(
-                            'Atwx\\SilverstripeFrontdeskKit\\Includes\\ViewDetail',
-                            ['ViewFields' => $this->defineViewFields($record)]
-                        )->forTemplate();
-                    }
-                    break;
-                case RecordPage::SUBLIST:
-                    if (!$this->canShowSubController($block['class'], $record)) {
-                        break;
-                    }
-                    $sub = singleton($block['class']);
-                    $segment = (string) $sub->config()->get('url_segment');
-                    $html .= $this->renderWith('Atwx\\SilverstripeFrontdeskKit\\Includes\\SubListBlock', [
-                        'Title' => $block['title'] ?? $sub->config()->get('title'),
-                        'Segment' => $segment,
-                        'Url' => $this->Link($segment . '/' . $record->ID),
-                    ])->forTemplate();
-                    break;
-                case RecordPage::RELATED:
-                    $related = ($block['resolver'])($record);
-                    if ($related instanceof DataObject && $related->exists()) {
-                        $html .= (string) $this->embeddedController($block['class'])->embeddedView(
-                            (int) $related->ID,
-                            $this->recordPageLink($record, $page),
-                            (bool) $block['sublists']
-                        );
-                    }
-                    break;
-                case RecordPage::TIMELINE:
-                    $timeline = $this->timelineFor($record);
-                    if ($timeline !== null) {
-                        $html .= $this->renderWith('Atwx\\SilverstripeFrontdeskKit\\Includes\\Timeline', [
-                            'Timeline' => $timeline,
-                            'TimelineTitle' => $this->timelineTitle(),
-                        ])->forTemplate();
-                    }
-                    break;
-                case RecordPage::CONTENT:
-                    $html .= (string) ($block['renderer'])($record);
-                    break;
-            }
-        }
-        return DBHTMLText::create()->setValue($html);
-    }
-
-    /**
-     * Another frontdesk controller, set up to render a related record on this page.
-     *
-     * @param class-string $class
-     */
-    protected function embeddedController(string $class): FrontdeskController
-    {
-        /** @var FrontdeskController $controller */
-        $controller = $class::create();
-        $controller->setRequest($this->getRequest());
-        return $controller;
-    }
-
-    /**
-     * View of one of this controller's records embedded in another record's page:
-     * its fields, an edit button (back to $backUrl after saving) and its sub-lists.
-     * Null when the record is not in the base list or the member may not view it.
-     */
-    public function embeddedView(int $id, string $backUrl, bool $withSublists = true): ?DBHTMLText
-    {
-        if (!$this->canView()) {
-            return null;
-        }
-        $record = $this->findRecord($id, 'canView');
-        if (!$record) {
-            return null;
-        }
-        $editLink = $this->canEdit()
-            ? $this->Link('edit/' . $record->ID) . '?BackURL=' . rawurlencode($backUrl)
-            : null;
-        return $this->renderWith('Atwx\\SilverstripeFrontdeskKit\\Includes\\EmbeddedRecord', [
-            'Record' => $record,
-            'EditLink' => $editLink,
-            'Fields' => $this->defineViewContent($record),
-            'SubControllerData' => $withSublists ? $this->getSubControllerData($record) : ArrayList::create(),
-        ]);
     }
 
     protected function getSubControllerData(DataObject $record): ArrayList
@@ -1058,7 +770,10 @@ class FrontdeskController extends Controller implements PermissionProvider
             $item = DataObject::singleton($class);
         }
 
-        $scaffolded = SearchableDropdownField::replaceCmsFields($item->scaffoldFormFields());
+        $scaffolded = FileUploadField::replaceCmsFields(
+            SearchableDropdownField::replaceCmsFields($item->scaffoldFormFields()),
+            $item
+        );
         $fields = $this->formFields($scaffolded);
         $layout = $this->formLayout($item->isInDB() ? $item : null);
         if ($layout) {
@@ -1078,6 +793,9 @@ class FrontdeskController extends Controller implements PermissionProvider
         ));
         $form->setValidationResponseCallback(fn (ValidationResult $result) => $this->validationErrorResponse($form, $result));
         $this->extend('updateEditForm', $form, $item);
+        if ($item->isInDB()) {
+            $this->linkFileFields($form->Fields(), $item);
+        }
         return $form;
     }
 
@@ -1098,242 +816,52 @@ class FrontdeskController extends Controller implements PermissionProvider
         return $this->redirect($link);
     }
 
+    // ─── Files ────────────────────────────────────────────────────────────────
+
+    /**
+     * Download of a file of a record: file/<ID>/<FieldName> (e.g. file/12/CertificateID).
+     * The record must be in the list and viewable, the field a has_one File relation
+     * visible in the record's field layout. ?download forces a download.
+     */
+    public function file(HTTPRequest $request)
+    {
+        if (!$this->canView()) {
+            return $this->httpError(404);
+        }
+        $record = $this->findRecord((int) $request->param('ID'), 'canView');
+        $file = $record
+            ? RecordFiles::visibleFile($record, (string) $request->param('OtherID'), $this->defineFieldLayout($record))
+            : null;
+        if (!$file) {
+            return $this->httpError(404);
+        }
+        return RecordFiles::response($file, $request->getVar('download') !== null);
+    }
+
+    public function fileLink(DataObject $record, string $fieldName): string
+    {
+        return $this->Link('file/' . $record->ID . '/' . $fieldName);
+    }
+
+    /**
+     * Shows the current file (with download link) in the record's upload fields.
+     */
+    protected function linkFileFields(FieldList $fields, DataObject $record): void
+    {
+        foreach ($fields->dataFields() as $field) {
+            if ($field instanceof FileUploadField) {
+                $name = $field->getName();
+                $field->setValue((int) $record->$name);
+                $field->setDownloadLink($this->fileLink($record, $name));
+            }
+        }
+    }
+
     // ─── Template data ────────────────────────────────────────────────────────
 
     public function Items(): PaginatedList
     {
         return $this->getItems();
-    }
-
-    // ─── List views ───────────────────────────────────────────────────────────
-
-    /**
-     * Views of the list defined in code ("Ansichten"), shown above the filter bar.
-     *
-     * @return array<int, ListView>
-     */
-    protected function defineListViews(): array
-    {
-        return [];
-    }
-
-    /**
-     * Key under which members' saved views of this list are stored.
-     */
-    protected function listKey(): string
-    {
-        return (string) static::config()->get('url_segment');
-    }
-
-    /**
-     * Views defined in code, then saved views (shared and own).
-     *
-     * @return array<int, ListView>
-     */
-    protected function allListViews(): array
-    {
-        $views = $this->defineListViews();
-        $memberID = (int) Security::getCurrentUser()?->ID;
-        foreach (SavedListView::forList($this->listKey()) as $saved) {
-            $views[] = ListView::create('saved-' . $saved->ID, (string) $saved->Title)
-                ->filters($saved->filterValues())
-                ->columns($saved->columnNames() ?? [])
-                ->setSaved(
-                    (int) $saved->ID,
-                    (int) $saved->OwnerID === $memberID || ($saved->Shared && $this->canEdit())
-                );
-        }
-        return $views;
-    }
-
-    /**
-     * The view chosen with ?view=<key>, if any.
-     */
-    protected function currentListView(): ?ListView
-    {
-        $request = $this->getRequest();
-        $key = $request ? (string) $request->getVar('view') : '';
-        if ($key === '') {
-            return null;
-        }
-        foreach ($this->allListViews() as $view) {
-            if ($view->getKey() === $key) {
-                return $view;
-            }
-        }
-        return null;
-    }
-
-    /**
-     * The request the list is filtered with: when a view was just chosen (no
-     * filter values in the request), its filter values are used.
-     */
-    protected function listRequest(): HTTPRequest
-    {
-        $request = $this->getRequest();
-        $view = $this->currentListView();
-        if (!$view || !$view->getFilters() || $this->defineFilters()->hasAnyRequestParam($request)) {
-            return $request;
-        }
-        $listRequest = new HTTPRequest(
-            $request->httpMethod(),
-            $request->getURL(),
-            array_merge($request->getVars(), $view->getFilters())
-        );
-        $listRequest->setSession($request->getSession());
-        return $listRequest;
-    }
-
-    /**
-     * Columns of a collection by name, in the given order (null: all).
-     *
-     * @param array<int, string>|null $names
-     */
-    protected function selectColumns(ColumnCollection $columns, ?array $names): ColumnCollection
-    {
-        if (!$names) {
-            return $columns;
-        }
-        $byName = [];
-        foreach ($columns as $column) {
-            $byName[$column->getName()] = $column;
-        }
-        $selected = ColumnCollection::create();
-        foreach ($names as $name) {
-            if (isset($byName[$name])) {
-                $selected->addColumn($byName[$name]);
-            }
-        }
-        return $selected->count() ? $selected : $columns->forList();
-    }
-
-    /**
-     * Views for the view bar: "All" first, then the views of the list.
-     */
-    public function ListViews(): ArrayList
-    {
-        $current = (string) $this->getRequest()->getVar('view');
-        $views = $this->allListViews();
-        $result = ArrayList::create();
-        if (!$views && !$this->canSaveListViews()) {
-            return $result;
-        }
-        $result->push(ArrayData::create([
-            'Title' => _t(self::class . '.VIEW_ALL', 'All'),
-            'Link' => $this->Link(),
-            'Active' => $current === '',
-            'Saved' => false,
-            'DeleteLink' => null,
-        ]));
-        foreach ($views as $view) {
-            $result->push(ArrayData::create([
-                'Title' => $view->getTitle(),
-                'Link' => $this->Link() . '?view=' . rawurlencode($view->getKey()),
-                'Active' => $current === $view->getKey(),
-                'Saved' => $view->getSavedID() !== null,
-                'DeleteLink' => $view->isDeletable() ? $this->Link('deleteview/' . $view->getSavedID()) : null,
-            ]));
-        }
-        return $result;
-    }
-
-    public function canSaveListViews(): bool
-    {
-        return $this->canView() && Security::getCurrentUser() !== null;
-    }
-
-    public function CanShareListViews(): bool
-    {
-        return $this->canEdit();
-    }
-
-    /**
-     * Columns to choose from when saving a view (checked: shown now).
-     */
-    public function ListViewColumns(): ArrayList
-    {
-        $shown = [];
-        foreach ($this->Columns() as $column) {
-            $shown[$column->getName()] = true;
-        }
-        $result = ArrayList::create();
-        foreach ($this->defineColumns() as $column) {
-            $result->push(ArrayData::create([
-                'Name' => $column->getName(),
-                'Title' => $column->getLabel(),
-                'Checked' => isset($shown[$column->getName()]),
-            ]));
-        }
-        return $result;
-    }
-
-    /**
-     * Names of the request vars that belong to the filters.
-     *
-     * @return array<int, string>
-     */
-    protected function filterParamNames(): array
-    {
-        $names = [];
-        foreach ($this->defineFilters()->getFilters() as $filter) {
-            if ($filter instanceof DateRangeFilter) {
-                $names[] = $filter->getName() . '_From';
-                $names[] = $filter->getName() . '_To';
-            } else {
-                $names[] = $filter->getName();
-            }
-        }
-        return $names;
-    }
-
-    /**
-     * Saves the current filter values and the chosen columns as a view (POST).
-     */
-    public function saveview(HTTPRequest $request)
-    {
-        if (!$request->isPOST() || !SecurityToken::inst()->checkRequest($request) || !$this->canSaveListViews()) {
-            return $this->httpError(400);
-        }
-        $title = trim((string) $request->postVar('Title'));
-        if ($title === '') {
-            $this->flash(_t(self::class . '.VIEW_TITLE_REQUIRED', 'Please enter a name for the view.'), 'error');
-            return $this->redirect($this->Link());
-        }
-        parse_str((string) $request->postVar('Query'), $vars);
-        $filters = array_intersect_key($vars, array_flip($this->filterParamNames()));
-        $filters = array_filter($filters, fn ($value) => $value !== '' && $value !== null && $value !== []);
-        $known = array_map(fn ($column) => $column->getName(), $this->defineColumns()->toArray());
-        $columns = array_values(array_intersect((array) $request->postVar('Columns'), $known));
-        $view = SavedListView::create([
-            'ListKey' => $this->listKey(),
-            'Title' => $title,
-            'FilterQuery' => http_build_query($filters),
-            'Columns' => $columns && count($columns) < count($known) ? json_encode($columns) : null,
-            'Shared' => $this->CanShareListViews() && $request->postVar('Shared'),
-            'OwnerID' => (int) Security::getCurrentUser()?->ID,
-        ]);
-        $view->write();
-        return $this->redirect($this->Link() . '?view=saved-' . $view->ID);
-    }
-
-    /**
-     * Deletes a saved view (POST): own views, shared views by members who may edit.
-     */
-    public function deleteview(HTTPRequest $request)
-    {
-        if (!$request->isPOST() || !SecurityToken::inst()->checkRequest($request)) {
-            return $this->httpError(400);
-        }
-        $view = SavedListView::get()->filter([
-            'ID' => (int) $request->param('ID'),
-            'ListKey' => $this->listKey(),
-        ])->first();
-        $memberID = (int) Security::getCurrentUser()?->ID;
-        if (!$view || !((int) $view->OwnerID === $memberID || ($view->Shared && $this->canEdit()))) {
-            return $this->httpError(404);
-        }
-        $view->delete();
-        return $this->redirect($this->Link());
     }
 
     public function Columns(): ColumnCollection
