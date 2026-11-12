@@ -159,6 +159,7 @@ abstract class FrontdeskSubController extends FrontdeskController
         }
 
         $form->saveInto($item);
+        $this->formLayout($item->isInDB() ? $item : null)?->resetLockedChanges($item);
         if ($parentField = static::config()->get('parent_field')) {
             $item->$parentField = $this->parentID;
         }
