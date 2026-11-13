@@ -6,6 +6,7 @@ use Atwx\SilverstripeFrontdeskKit\Controller\FrontdeskController;
 use Atwx\SilverstripeFrontdeskKit\Controller\FrontdeskTemplateProvider;
 use Atwx\SilverstripeFrontdeskKit\Filter\FilterCollection;
 use Atwx\SilverstripeFrontdeskKit\Filter\TextFilter;
+use Atwx\SilverstripeFrontdeskKit\Model\LastView;
 use Atwx\SilverstripeFrontdeskKit\Model\RecentView;
 use Atwx\SilverstripeFrontdeskKit\Table\ColumnCollection;
 use SilverStripe\Control\HTTPRequest;
@@ -13,6 +14,7 @@ use SilverStripe\Control\Session;
 use SilverStripe\Dev\SapphireTest;
 use SilverStripe\Dev\TestOnly;
 use SilverStripe\ORM\DataObject;
+use SilverStripe\ORM\FieldType\DBDatetime;
 use SilverStripe\Security\Member;
 
 /**
@@ -299,5 +301,37 @@ class RecentViewsTest extends SapphireTest
         $this->assertSame(['Anna', 'Ben', 'Cem'], $all->names());
         $this->assertTrue((bool) $all->ListViews()->first()->Active);
         $this->assertSame('all', $all->FilterForm()?->Fields()->dataFieldByName('view')?->getValue());
+    }
+
+    public function testLastViewedByAnyoneStaysAndIsAColumn(): void
+    {
+        $this->viewOf('Ben');
+        $this->logInAs(Member::create(['Email' => 'lena@example.com', 'FirstName' => 'Lena', 'Surname' => 'Lesend']));
+        $this->viewOf('Anna');
+        $this->viewOf('Cem');
+        $this->viewOf('Ben');
+        $this->assertCount(2, RecentView::idsFor(RecentPupil::class), 'per-member cap of 2');
+
+        DBDatetime::set_mock_now('2026-11-13 14:05:00');
+        try {
+            $this->viewOf('Anna');
+        } finally {
+            DBDatetime::clear_mock_now();
+        }
+        $this->assertSame(4, LastView::get()->count(), 'one entry per record (3 pupils, the household), not capped');
+        $this->assertSame('13.11.2026 14:05, Lena Lesend', LastView::forRecord($this->pupils['Anna'])?->summary());
+
+        $columns = ColumnCollection::create();
+        $columns->lastViewed('Zuletzt angesehen');
+        $column = $columns->byName('LastViewed');
+        $this->assertNotNull($column);
+        $this->assertSame('13.11.2026 14:05, Lena Lesend', (string) $column->renderValue($this->pupils['Anna']));
+        $this->assertSame('', (string) $column->renderValue(RecentPupil::create(['Name' => 'Neu'])));
+        $sorted = $column->applySort(RecentPupil::get(), 'asc')->column('Name');
+        $this->assertSame('Anna', $sorted[0], 'mocked time is the oldest view');
+
+        $this->pupils['Cem']->delete();
+        RecentView::forget($this->pupils['Cem']);
+        $this->assertSame(3, LastView::get()->count());
     }
 }

@@ -97,6 +97,8 @@ class RecentView extends DataObject
             'ControllerClass' => $controllerClass,
         ])->write();
 
+        LastView::note($record, $member);
+
         $ids = static::get()->filter(['MemberID' => $member->ID, 'BaseClass' => $baseClass])->column('ID');
         $old = array_slice($ids, static::limitFor($controllerClass));
         if ($old) {
@@ -114,6 +116,7 @@ class RecentView extends DataObject
             // delete() sets the ID to 0 and keeps it as OldID
             'RecordID' => (int) ($record->ID ?: $record->OldID),
         ])->removeAll();
+        LastView::forget($record);
     }
 
     /**
