@@ -91,6 +91,17 @@ class FrontdeskController extends Controller implements PermissionProvider
     private static $main_navigation = [];
 
     /**
+     * Record actions per record page (defineRecordPages()): action name =>
+     * page segment or list of segments. Actions not listed (and without
+     * RecordAction::pages()) are shown on every page.
+     *
+     *   record_action_pages:
+     *     flowstatus: 'status'
+     *     flowdocument: ['letters', 'status']
+     */
+    private static array $record_action_pages = [];
+
+    /**
      * Further entries (administration, settings), same keys as main_navigation:
      * in the user menu on large screens and in the burger menu on small ones.
      */

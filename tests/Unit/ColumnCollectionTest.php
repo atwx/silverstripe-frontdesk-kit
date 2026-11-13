@@ -29,6 +29,19 @@ class ColumnCollectionTest extends SapphireTest
         $this->assertSame($collection, $builder->end());
     }
 
+    public function testMakeChangesAnExistingColumnInsteadOfAddingASecondOne(): void
+    {
+        $columns = ColumnCollection::create()
+            ->addColumn(Column::create('Name', 'Name'))
+            ->addColumn(Column::create('City', 'City'));
+        $columns->make('Name')->sortable()->end()->make('City', 'Ort')->width(20)->end();
+        $this->assertSame(['Name', 'City'], array_map(fn ($c) => $c->getName(), $columns->toArray()));
+        $this->assertTrue($columns->byName('Name')?->isSortable());
+        $this->assertSame('Name', $columns->byName('Name')?->getLabel(), 'no label given: kept');
+        $this->assertSame('Ort', $columns->byName('City')?->getLabel());
+        $this->assertSame(20.0, $columns->byName('City')?->getWidth());
+    }
+
     public function testMakeBuilderFluentChain(): void
     {
         $collection = ColumnCollection::create();
@@ -86,7 +99,7 @@ class ColumnCollectionTest extends SapphireTest
         $record = $this->makeRecord();
         $collection = ColumnCollection::create()
             ->make('ID')->end()
-            ->make('ID')->end();
+            ->make('ClassName')->end();
 
         $this->assertEquals(2, $collection->renderFor($record)->count());
     }
@@ -144,7 +157,7 @@ class ColumnCollectionTest extends SapphireTest
         $record = $this->makeRecord();
         $collection = ColumnCollection::create()
             ->make('ID')->end()
-            ->make('ID')->end();
+            ->make('ClassName')->end();
 
         $cells = $collection->renderFor($record);
 

@@ -50,6 +50,28 @@ blocks is visible: no visible field in its groups, no related record or no view
 permission on the related controller, no timeline, or a sub-list the controller
 hides (`canShowSubController()`).
 
+## Record actions per page
+
+Record actions (`defineRecordActions()`) are shown on every page unless they
+are bound to pages; then they appear only there:
+
+```php
+RecordAction::create('letter', 'Brief schreiben')->pages('letters');
+```
+
+or by name in the config (for actions of a parent class, e.g. those of a
+flow case controller):
+
+```yaml
+App\Controllers\StudentController:
+  record_action_pages:
+    flowstatus: 'status'
+    flownote: 'status'
+    flowdocument: ['letters', 'status']
+```
+
+Running an action does not depend on the page it was shown on.
+
 ## Switcher
 
 `RecordSwitcher` lists related records (e.g. the cases of the same child) between
