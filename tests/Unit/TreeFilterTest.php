@@ -38,7 +38,20 @@ class TreeFilterTest extends SapphireTest
         $filter = TreeFilter::create('Categories', 'Categories')
             ->apply(fn () => throw new \Exception('must not be called'));
 
-        $this->assertSame($list, $filter->applyToList($list, 'not json'));
+        $this->assertSame($list, $filter->applyToList($list, '[1, 2'));
+    }
+
+    public function testSingleValueCountsAsOneChosenValue(): void
+    {
+        $list = $this->createMock(DataList::class);
+        $received = null;
+        $filter = TreeFilter::create('Categories', 'Categories')
+            ->apply(function ($list, array $ids) use (&$received) {
+                $received = $ids;
+                return $list;
+            });
+        $filter->applyToList($list, '5');
+        $this->assertSame(['5'], $received, 'e.g. a view saved when the filter was a single choice');
     }
 
     public function testApplyToListDecodesJsonAndCallsApplyFn(): void

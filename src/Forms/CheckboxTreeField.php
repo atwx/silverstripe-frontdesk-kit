@@ -72,8 +72,13 @@ class CheckboxTreeField extends FormField
     public function FieldValue(): string
     {
         if (is_array($this->value)) {
-            return json_encode($this->value);
+            return (string) json_encode($this->value);
         }
-        return (string) ($this->value ?: '[]');
+        $value = trim((string) $this->value);
+        if ($value === '' || $value[0] === '[') {
+            return $value ?: '[]';
+        }
+        // A single value (e.g. from a view saved when the filter was a single choice).
+        return (string) json_encode([is_numeric($value) ? (int) $value : $value]);
     }
 }
