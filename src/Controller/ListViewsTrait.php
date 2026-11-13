@@ -68,12 +68,34 @@ trait ListViewsTrait
     }
 
     /**
-     * The view chosen with ?view=<key>, if any.
+     * Key of the view the list opens with (config default_list_view, e.g.
+     * 'recent'); '' = all records. "All" is then reached with ?view=all.
      */
-    protected function currentListView(): ?ListView
+    protected function defaultListViewKey(): string
+    {
+        return (string) static::config()->get('default_list_view');
+    }
+
+    /**
+     * Key of the current view: ?view=<key>, the default view without one,
+     * '' for all records (?view=all).
+     */
+    protected function currentListViewKey(): string
     {
         $request = $this->getRequest();
         $key = $request ? (string) $request->getVar('view') : '';
+        if ($key === 'all') {
+            return '';
+        }
+        return $key !== '' ? $key : $this->defaultListViewKey();
+    }
+
+    /**
+     * The view chosen with ?view=<key> (or the default view), if any.
+     */
+    protected function currentListView(): ?ListView
+    {
+        $key = $this->currentListViewKey();
         if ($key === '') {
             return null;
         }
@@ -133,7 +155,7 @@ trait ListViewsTrait
      */
     public function ListViews(): ArrayList
     {
-        $current = (string) $this->getRequest()->getVar('view');
+        $current = $this->currentListViewKey();
         $views = $this->allListViews();
         $result = ArrayList::create();
         if (!$views && !$this->canSaveListViews()) {
@@ -141,7 +163,7 @@ trait ListViewsTrait
         }
         $result->push(ArrayData::create([
             'Title' => _t(self::class . '.VIEW_ALL', 'All'),
-            'Link' => $this->Link(),
+            'Link' => $this->defaultListViewKey() !== '' ? $this->Link() . '?view=all' : $this->Link(),
             'Active' => $current === '',
             'Saved' => false,
             'DeleteLink' => null,

@@ -19,6 +19,12 @@ class SchoolController extends FrontdeskController
 - **List view:** the list gets the view "Zuletzt angesehen" (`?view=recent`),
   latest first. Filters and sortable columns still work on it, and it only
   shows records of the controller's base list.
+- **Recently viewed first:** with `private static bool $recent_first = true;`
+  the list shows the member's recently viewed records first (latest first),
+  then the rest in the model's `default_sort` (e.g. schools alphabetically).
+  A sort chosen in the column header or a list view replaces it.
+- **Open with them:** `private static string $default_list_view = 'recent';`
+  opens the list with the view "Zuletzt angesehen"; "Alle" is `?view=all`.
 - **Related records:** to note another record together with the viewed one
   (e.g. the family when a student is opened), return it from
   `recentViewRecords()`, or use the extension hook

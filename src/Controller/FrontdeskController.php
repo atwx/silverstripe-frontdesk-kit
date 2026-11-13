@@ -69,6 +69,19 @@ class FrontdeskController extends Controller implements PermissionProvider
     private static $recent_views = false;
 
     /**
+     * With recent_views: the list shows the member's recently viewed records
+     * first, then the rest in the default sort (unless a column sort or a
+     * list view is chosen).
+     */
+    private static bool $recent_first = false;
+
+    /**
+     * Key of the list view the list opens with (e.g. 'recent'); '' = all.
+     * "All" is then reached with ?view=all. See docs/list-views.md.
+     */
+    private static string $default_list_view = '';
+
+    /**
      * Main navigation entries, keyed by arbitrary identifier. Each entry:
      *   - title: label shown in the nav
      *   - segment: URL path (used for both link and active-match)
@@ -1033,7 +1046,9 @@ class FrontdeskController extends Controller implements PermissionProvider
         $requestVars = $request->getVars();
         $view = $this->currentListView();
         if ($view) {
-            $fields->push(HiddenField::create('view', 'view', (string) $this->getRequest()->getVar('view')));
+            $fields->push(HiddenField::create('view', 'view', $view->getKey()));
+        } elseif ($this->defaultListViewKey() !== '') {
+            $fields->push(HiddenField::create('view', 'view', 'all'));
         }
         if ($filterCollection->hasAnyRequestParam($request)) {
             $form->loadDataFrom($requestVars);
@@ -1360,7 +1375,7 @@ class FrontdeskController extends Controller implements PermissionProvider
     {
         $name = (string) $this->getRequest()->getVar('sort');
         if ($name === '') {
-            return $list;
+            return $this->applyRecentFirst($list);
         }
         foreach ($this->Columns() as $column) {
             if ($column->getName() === $name && $column->isSortable()) {
@@ -1368,6 +1383,35 @@ class FrontdeskController extends Controller implements PermissionProvider
             }
         }
         return $list;
+    }
+
+    /**
+     * With config recent_first (and recent_views): the member's recently
+     * viewed records first (latest first), then the rest in the list's
+     * default sort. Only without a chosen column sort and outside list views.
+     *
+     * @template T of DataObject
+     * @param DataList<T> $list
+     * @return DataList<T>
+     */
+    protected function applyRecentFirst(DataList $list): DataList
+    {
+        if (!static::config()->get('recent_first') || !static::config()->get('recent_views')
+            || $this->currentListView()) {
+            return $list;
+        }
+        $ids = RecentView::idsFor($list->dataClass());
+        if (!$ids) {
+            return $list;
+        }
+        $table = DataObject::getSchema()->baseDataTable($list->dataClass());
+        $cases = '';
+        foreach ($ids as $position => $id) {
+            $cases .= ' WHEN ' . (int) $id . ' THEN ' . (int) $position;
+        }
+        $rest = (string) DataObject::singleton($list->dataClass())->config()->get('default_sort');
+        $rest = $rest !== '' ? $rest : '"' . $table . '"."ID" ASC';
+        return $list->orderBy("CASE \"{$table}\".\"ID\"{$cases} ELSE " . count($ids) . " END ASC, {$rest}");
     }
 
     /**

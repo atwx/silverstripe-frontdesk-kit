@@ -3,6 +3,15 @@
 A list can offer views ("Ansichten") above the filter bar: views defined in
 code and views members save themselves. A view is chosen with `?view=<key>`.
 
+A list can open with a view instead of all records:
+
+```php
+private static string $default_list_view = 'recent';   // e.g. "Zuletzt angesehen"
+```
+
+"All" then links to `?view=all`, and the filter bar keeps the current view
+(`view=all` when all records are shown).
+
 ## Views in code
 
 ```php
