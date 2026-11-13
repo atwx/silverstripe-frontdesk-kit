@@ -55,7 +55,18 @@ class RecordPagesTestController extends FrontdeskController implements TestOnly
     private static array $record_action_pages = [
         'remind' => ['notes', 'basics'],
         'archive' => 'secret',
+        'pdf' => 'notes',
     ];
+
+    protected function defineViewActions(DataObject $record): \SilverStripe\Model\List\ArrayList
+    {
+        $actions = parent::defineViewActions($record);
+        $actions->push(\SilverStripe\Model\ArrayData::create(['Title' => 'PDF', 'Link' => '#pdf', 'Name' => 'pdf']));
+        $actions->push(\SilverStripe\Model\ArrayData::create([
+            'Title' => 'Portal', 'Link' => '#portal', 'Pages' => ['basics', 'secret'],
+        ]));
+        return $actions;
+    }
 
     /**
      * @return array<int, RecordAction>
@@ -162,6 +173,13 @@ class RecordPagesTest extends SapphireTest
         };
         $this->assertSame(['everywhere', 'remind'], $names('basics'), 'config, more than one page');
         $this->assertSame(['everywhere', 'notesonly', 'remind'], $names('notes'), 'pages() on the action');
+
+        $links = function (string $page) use ($record): array {
+            $controller = $this->controller('GET', 'x', ['ID' => $record->ID, 'OtherID' => $page]);
+            return $controller->view($controller->getRequest())['ViewActions']->column('Title');
+        };
+        $this->assertSame(['← Back', 'Portal'], $links('basics'), 'view action with Pages');
+        $this->assertSame(['← Back', 'PDF'], $links('notes'), 'view action by Name and config');
 
         $action = RecordAction::create('x', 'X');
         $this->assertTrue($action->isOnPage('any'), 'no pages: everywhere');
