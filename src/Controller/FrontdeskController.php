@@ -1339,8 +1339,7 @@ class FrontdeskController extends Controller implements PermissionProvider
         $value = $this->listRequest()->getVar($name);
         foreach ($this->defineFilters()->getFilters() as $filter) {
             if ($filter->getName() === $name && $filter instanceof TreeFilter) {
-                $decoded = is_array($value) ? $value : json_decode((string) $value, true);
-                return is_array($decoded) ? array_values($decoded) : [];
+                return TreeFilter::values($value);
             }
         }
         return $value;

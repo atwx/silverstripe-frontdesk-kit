@@ -56,13 +56,38 @@ class TreeFilter extends Filter
     }
 
     /**
+     * The chosen values of a request value: the field's JSON array, an array,
+     * or a single value (e.g. from a link or a view saved when the filter
+     * was a single choice). Empty values are dropped.
+     *
+     * @return array<int, string>
+     */
+    public static function values(mixed $value): array
+    {
+        if (is_array($value)) {
+            $values = $value;
+        } else {
+            $string = trim((string) $value);
+            if ($string !== '' && $string[0] === '[') {
+                // The field's JSON array; broken JSON chooses nothing.
+                $decoded = json_decode($string, true);
+                $values = is_array($decoded) ? $decoded : [];
+            } else {
+                $values = [$string];
+            }
+        }
+        $values = array_map(fn ($one) => is_scalar($one) ? (string) $one : '', $values);
+        return array_values(array_filter($values, fn (string $one) => $one !== ''));
+    }
+
+    /**
      * Decode the JSON value and skip empty selections — note that the
      * field posts the truthy string "[]" when nothing is selected.
      */
     public function applyToList(DataList $list, mixed $value): DataList
     {
-        $ids = is_array($value) ? $value : json_decode((string) $value, true);
-        if (!is_array($ids) || $ids === []) {
+        $ids = static::values($value);
+        if ($ids === []) {
             return $list;
         }
 

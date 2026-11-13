@@ -115,11 +115,10 @@ class MultiSelectFilter extends TreeFilter
      */
     public function applyToList(DataList $list, mixed $value): DataList
     {
-        $values = is_array($value) ? $value : json_decode((string) $value, true);
-        if (!is_array($values) || $values === []) {
+        $values = static::values($value);
+        if ($values === []) {
             return $list;
         }
-        $values = array_values(array_map('strval', $values));
         $all = $this->matchesAll();
         if ($this->applyFn) {
             return ($this->applyFn)($list, $values, $all);

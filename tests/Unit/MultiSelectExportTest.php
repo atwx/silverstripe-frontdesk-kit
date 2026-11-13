@@ -147,6 +147,9 @@ class MultiSelectExportTest extends SapphireTest
             'AND'
         );
         $this->assertSame(['Alpha', 'Beta', 'Gamma'], $this->controller(['Sports' => '[]'])->names(), 'nothing chosen');
+        $this->assertSame(['Gamma'], $this->controller(['Sports' => 'rowing'])->names(), 'single value (old view)');
+        $form = $this->controller(['Sports' => 'rowing'])->FilterForm();
+        $this->assertSame('["rowing"]', $form?->Fields()->dataFieldByName('Sports')?->FieldValue());
         $this->assertSame(
             ['Alpha', 'Gamma'],
             $this->controller(['Fees' => json_encode(['low'])])->names(),
