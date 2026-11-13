@@ -2,6 +2,7 @@
 
 namespace Atwx\SilverstripeFrontdeskKit\Controller;
 
+use Atwx\SilverstripeFrontdeskKit\Navigation\FrontdeskNavigation;
 use Atwx\SilverstripeFrontdeskKit\Filter\FilterCollection;
 use Atwx\SilverstripeFrontdeskKit\Filter\TreeFilter;
 use Atwx\SilverstripeFrontdeskKit\Catalog\CatalogFields;
@@ -82,14 +83,18 @@ class FrontdeskController extends Controller implements PermissionProvider
     private static string $default_list_view = '';
 
     /**
-     * Main navigation entries, keyed by arbitrary identifier. Each entry:
-     *   - title: label shown in the nav
-     *   - segment: URL path (used for both link and active-match)
-     *   - controller: FQCN of the target controller; used for canView() filtering
-     * Configure via YAML on FrontdeskController. Entries are rendered in the
-     * order they appear in the merged config.
+     * Main navigation entries, keyed by arbitrary identifier, in the header
+     * (horizontal on large screens, in the burger menu on small ones). Entry
+     * keys: title, segment, link, controller, permission, badge, default; see
+     * FrontdeskNavigation.
      */
     private static $main_navigation = [];
+
+    /**
+     * Further entries (administration, settings), same keys as main_navigation:
+     * in the user menu on large screens and in the burger menu on small ones.
+     */
+    private static $secondary_navigation = [];
 
     /**
      * When true, records are checked with their own canView/canEdit/canDelete/
@@ -1216,37 +1221,12 @@ class FrontdeskController extends Controller implements PermissionProvider
         return Security::getCurrentUser();
     }
 
+    /**
+     * @return ArrayList<\SilverStripe\Model\ArrayData>
+     */
     public function MainNavigation(): ArrayList
     {
-        $navigation = ArrayList::create();
-        $request = $this->getRequest();
-        $url = $request ? (string) $request->getURL() : '';
-        $entries = (array) self::config()->get('main_navigation');
-
-        foreach ($entries as $entry) {
-            $class = $entry['controller'] ?? null;
-            $segment = (string) ($entry['segment'] ?? '');
-            $title = (string) ($entry['title'] ?? $segment);
-            if (!$class || !class_exists($class)) {
-                continue;
-            }
-            $controller = singleton($class);
-            if (!$controller->canView()) {
-                continue;
-            }
-            $active = $segment !== ''
-                && ($url === $segment || str_starts_with($url, $segment . '/'));
-            if (!$active && !empty($entry['default']) && $url === '') {
-                $active = true;
-            }
-            $navigation->push(ArrayData::create([
-                'Title' => $title,
-                'Link' => $segment,
-                'Active' => $active,
-            ]));
-        }
-
-        return $navigation;
+        return FrontdeskNavigation::singleton()->main();
     }
 
     public function CurrentUserInitials(): string

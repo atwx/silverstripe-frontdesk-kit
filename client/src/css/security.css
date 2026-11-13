@@ -1,0 +1,108 @@
+/* ── Security pages (log in, MFA, passwords) and error pages ─────────────────
+   templates/Security.ss and FrontdeskErrorPage.ss. The silverstripe/mfa React
+   app renders Bootstrap markup (form-control, btn-secondary, btn-link); it is
+   mapped to the DaisyUI look here. */
+.fdk-security-card {
+    @apply mx-auto w-full max-w-md;
+}
+
+/* The MFA screens need more room (method tiles, QR code) */
+.fdk-security-card:has(.mfa-app) {
+    @apply max-w-3xl;
+}
+
+.fdk-security #ForgotPassword {
+    @apply mt-3 text-sm;
+}
+
+.fdk-security #ForgotPassword a,
+.fdk-security .prose a,
+.fdk-security .mfa-app a:not(.btn) {
+    @apply link link-primary;
+}
+
+.fdk-security form .message:not(:empty) {
+    @apply alert mb-4;
+}
+
+.fdk-security form .message.bad,
+.fdk-security form .message.error,
+.fdk-security form .message.required,
+.fdk-security form .message.validation {
+    @apply alert-error;
+}
+
+.fdk-security form .message.good {
+    @apply alert-success;
+}
+
+.fdk-security form .message.warning {
+    @apply alert-warning;
+}
+
+.fdk-security .btn-toolbar {
+    @apply flex flex-col items-start gap-2;
+}
+
+/* silverstripe/mfa */
+.fdk-security .mfa-app {
+    @apply min-w-0 max-w-none text-base-content;
+}
+
+.fdk-security .mfa-app .mfa-app-title {
+    @apply text-sm uppercase tracking-wide opacity-60 mb-2;
+}
+
+.fdk-security .mfa-app .mfa-section-title {
+    @apply text-xl font-semibold text-base-content;
+}
+
+.fdk-security .mfa-app .mfa-feature-list-title,
+.fdk-security .mfa-app .mfa-feature-list-item,
+.fdk-security .mfa-app .mfa-feature-list-item__title,
+.fdk-security .mfa-app pre {
+    @apply text-base-content;
+}
+
+.fdk-security .mfa-app .form-group {
+    @apply mb-4;
+}
+
+.fdk-security .mfa-app .control-label,
+.fdk-security .mfa-app .form-label {
+    @apply block mb-1 text-sm font-medium;
+}
+
+.fdk-security .mfa-app .form-control {
+    @apply input w-full max-w-xs;
+}
+
+.fdk-security .mfa-app .btn-secondary {
+    @apply btn-ghost text-base-content;
+}
+
+.fdk-security .mfa-app .btn-link {
+    @apply btn-link text-primary;
+}
+
+.fdk-security .mfa-app .mfa-action-list {
+    @apply flex-wrap gap-2 mt-4;
+}
+
+.fdk-security .mfa-app .mfa-method-tile__content {
+    @apply rounded-box;
+}
+
+.fdk-security .mfa-app .mfa-method-tile--active .mfa-method-tile__content {
+    box-shadow: 0 0 0 2px var(--color-primary) inset;
+}
+
+/* QR code: keep it scannable on small screens */
+.fdk-security .mfa-app svg,
+.fdk-security .mfa-app img {
+    @apply max-w-full h-auto;
+}
+
+.fdk-security .mfa-app .mfa-register-backup-codes__code-grid {
+    @apply font-mono;
+}

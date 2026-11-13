@@ -16,7 +16,7 @@
 <% end_if %>
 
 <div class="fdk-table-wrapper">
-    <table class="table table-zebra w-full">
+    <table class="table table-zebra w-full fdk-stack">
         <thead>
             <tr>
                 <% if $Top.BulkActions.Count %>
@@ -43,13 +43,13 @@
                     <% end_if %>
                     <tr id="fdk-row-$ID">
                         <% if $Top.BulkActions.Count %>
-                            <td>
+                            <td class="fdk-row-select">
                                 <input type="checkbox" class="checkbox checkbox-sm" name="ids[]" value="$ID" form="fdk-bulk-form"
                                        aria-label="<%t Atwx\SilverstripeFrontdeskKit\Controller\FrontdeskController.LABEL_SELECT_RECORD 'Select record' %> $ID">
                             </td>
                         <% end_if %>
                         <% loop $Cells %>
-                            <td>
+                            <td data-label="$Label.ATT"<% if $IsEmpty %> class="fdk-cell-empty"<% end_if %>>
                                 <% if $HasLink %><a href="$Link">$Value</a><% else %>$Value<% end_if %>
                             </td>
                         <% end_loop %>

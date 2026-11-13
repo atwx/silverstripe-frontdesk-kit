@@ -18,6 +18,10 @@
     <% include Atwx\\SilverstripeFrontdeskKit\\Includes\\ListViews %>
 
     <% if $FilterForm %>
+    <button type="button" class="fdk-filter-toggle btn btn-sm btn-outline mb-3 md:hidden" aria-expanded="false"
+            onclick="this.setAttribute('aria-expanded', this.nextElementSibling.classList.toggle('fdk-filter-open'))">
+        <%t Atwx\SilverstripeFrontdeskKit\Controller\FrontdeskController.ACTION_FILTER 'Filter' %><% if $FilterIsActive %> <span class="badge badge-sm badge-primary">●</span><% end_if %>
+    </button>
     <form class="fdk-filter-bar"
           hx-get="$Link"
           hx-target="#fdk-list-region"

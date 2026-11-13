@@ -41,6 +41,7 @@ See **[docs/quickstart.md](docs/quickstart.md)** for a step-by-step guide to set
 | [docs/recent-views.md](docs/recent-views.md) | Recently viewed records per member: list view and start page block |
 | [docs/files.md](docs/files.md) | File uploads into has_one File relations, protected storage and download |
 | [docs/catalogs.md](docs/catalogs.md) | Catalogs maintained by admins: single and multiple choice, inactive entries, filters, import |
+| [docs/navigation.md](docs/navigation.md) | Header with burger menu, badges and secondary navigation; login, MFA and error pages; phones |
 | [docs/templates.md](docs/templates.md) | Overriding templates, HTMX partial rendering |
 | [docs/charts.md](docs/charts.md) | Declarative Chart.js rendering via `Chart` include |
 | [docs/frontend.md](docs/frontend.md) | Building CSS/JS, theming via CSS custom properties |

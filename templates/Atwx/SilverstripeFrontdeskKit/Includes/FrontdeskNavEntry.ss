@@ -1,0 +1,1 @@
+<li<% if $ExtraClass %> class="$ExtraClass"<% end_if %>><a href="$Link"<% if $Active %> class="menu-active" aria-current="page"<% end_if %><% if $External %> target="_blank" rel="noopener"<% end_if %>>$Title<% if $Badge %> <span class="badge badge-sm badge-primary">$Badge</span><% end_if %></a></li>
