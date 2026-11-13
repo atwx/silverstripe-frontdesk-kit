@@ -5,6 +5,7 @@ namespace Atwx\SilverstripeFrontdeskKitTests\Unit;
 use Atwx\SilverstripeFrontdeskKit\Controller\FrontdeskController;
 use Atwx\SilverstripeFrontdeskKit\Forms\FieldLayout;
 use Atwx\SilverstripeFrontdeskKit\Table\ActionException;
+use Atwx\SilverstripeFrontdeskKit\Table\ActionResult;
 use Atwx\SilverstripeFrontdeskKit\Table\RecordAction;
 use Atwx\SilverstripeFrontdeskKit\Table\TimelineEntry;
 use SilverStripe\Control\HTTPRequest;
@@ -52,6 +53,11 @@ class RecordActionTestController extends FrontdeskController implements TestOnly
                 }),
             RecordAction::create('assign', 'Assign')
                 ->select('lead', 'Lead', [3 => 'Ann', 5 => 'Bob'], '5'),
+            RecordAction::create('links', 'Links')
+                ->handle(fn () => ActionResult::create('Added 2 schools.')
+                    ->link('Eton', '/schools/view/1')
+                    ->link('Evil', 'https://evil.example/x')
+                    ->link('Harrow', 'schools/view/2')),
             RecordAction::create('plan', 'Plan')
                 ->multiSelect('schools', 'Schools', [1 => 'Eton', 2 => 'Harrow', 3 => 'Rugby'], [2])
                 ->input('due', 'Due', 'date', '2026-12-01', true)
@@ -181,7 +187,7 @@ class RecordActionControllerTest extends SapphireTest
 
         $data = $ctrl->view($request);
 
-        $this->assertSame(['state', 'assign', 'plan'], $data['RecordActions']->column('Name'));
+        $this->assertSame(['state', 'assign', 'links', 'plan'], $data['RecordActions']->column('Name'));
         $select = $data['RecordActions']->find('Name', 'assign')->Selects->first();
         $this->assertSame(['5'], $select->Options->filter('Selected', true)->column('Value'), 'numeric current value is preselected');
         $this->assertSame(['open', 'closed'], $data['RecordActions']->first()->Options->column('Value'));
@@ -223,5 +229,18 @@ class RecordActionControllerTest extends SapphireTest
             ->renderWith('Atwx\\SilverstripeFrontdeskKit\\Includes\\RecordActionDialogs');
         $this->assertStringContainsString('name="Select[schools][]" value="2" checked', $html);
         $this->assertStringContainsString('type="date" name="Input[due]" value="2026-12-01"', $html);
+    }
+
+    public function testResultWithLinksIsFlashed(): void
+    {
+        $record = $this->record();
+        $ctrl = RecordActionTestController::create();
+        $this->post($ctrl, $record->ID, ['RecordAction' => 'links']);
+        $flash = $ctrl->FlashMessage();
+        $this->assertSame('Added 2 schools.', $flash?->Text);
+        $this->assertSame(['Eton', 'Harrow'], $flash?->Links->column('Title'), 'only links within the site');
+        $html = (string) $ctrl->customise(['FlashMessage' => $flash])
+            ->renderWith('Atwx\\SilverstripeFrontdeskKit\\Includes\\FlashMessage');
+        $this->assertStringContainsString('href="/schools/view/1"', $html);
     }
 }

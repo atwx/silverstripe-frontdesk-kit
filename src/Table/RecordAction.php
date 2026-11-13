@@ -212,7 +212,7 @@ class RecordAction
      * The handler gets the record, the chosen option, the comment and the
      * values of the selects and inputs (strings) and multi-selects (lists).
      *
-     * @param callable(DataObject, ?string, string, array<string, string|array<int, string>>): (string|HTTPResponse|null) $handler
+     * @param callable(DataObject, ?string, string, array<string, string|array<int, string>>): (string|ActionResult|HTTPResponse|null) $handler
      */
     public function handle(callable $handler): static
     {
@@ -268,7 +268,12 @@ class RecordAction
      *
      * @param array<string, mixed> $values Submitted values of the selects
      */
-    public function run(DataObject $record, ?string $option, string $comment, array $values = []): string|HTTPResponse|null
+    public function run(
+        DataObject $record,
+        ?string $option,
+        string $comment,
+        array $values = []
+    ): string|ActionResult|HTTPResponse|null
     {
         $selected = [];
         foreach ($this->selects as $name => $select) {
