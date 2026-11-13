@@ -5,7 +5,8 @@
             <% loop $Actions %>
                 <a href="$Link"
                    class="btn btn-sm<% if $Primary %> btn-primary<% else %> btn-ghost<% end_if %>"
-                   <% if $Target %>target="$Target"<% end_if %>>$Title</a>
+                   <% if $Target %>target="$Target"<% end_if %>
+                   <% if $KeepQuery %>data-fdk-keep-query="$ExtraQuery.ATT"<% end_if %>>$Title</a>
             <% end_loop %>
         </div>
     </div>

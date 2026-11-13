@@ -137,3 +137,52 @@ protected function defineColumns(): ColumnCollection
 ## Export
 
 The XLSX export (available at `/contacts/export`) uses the same `ColumnCollection`, filtered to `visibleInExport() === true`. The export link appears automatically in the page actions bar.
+It exports the list as filtered on screen (also after filtering with htmx).
+
+### Additional exports
+
+A list can offer more export buttons, each with its own title, file name and
+columns, optionally only in some list views:
+
+```php
+use Atwx\SilverstripeFrontdeskKit\Table\Export;
+
+protected function defineExports(): array
+{
+    $year = (int) date('Y') + 1;
+    return [
+        Export::create('fees', 'Fees ' . $year)
+            ->fileName('Fees ' . $year)                    // ".xlsx" is added
+            ->columns(['Title', 'Fee', 'City']),           // names of the list's columns
+        Export::create('schools', 'Schulexport')
+            ->columns(fn () => $this->schoolExportColumns())   // ColumnCollection, any number of columns
+            ->query(fn (DataList $list) => $list->filter('Active', 1)),
+        Export::create('y11', 'Details Y11 Entry')
+            ->columns([...])
+            ->views(['y11']),                              // only in the view "y11" ('' = no view)
+    ];
+}
+```
+
+Each export runs on the filtered list (filters, view, column sort), then its own
+`query()`. Without `columns()` it uses the list's columns.
+
+## Columns that depend on the filters
+
+`filterValue('<filter name>')` returns a filter's value as the list is filtered
+with it (also when it comes from the chosen view), as an array for
+`TreeFilter` and `MultiSelectFilter`. Use it in `defineColumns()`, e.g. a
+rating column per chosen sport:
+
+```php
+protected function defineColumns(): ColumnCollection
+{
+    $columns = ColumnCollection::create()->make('Title', 'Schule')->end();
+    foreach ($this->filterValue('Sports') as $code) {
+        $columns->make('Rating_' . $code, 'Rating ' . $code)
+            ->format(fn ($value, School $school) => $school->ratingFor($code))
+            ->end();
+    }
+    return $columns;
+}
+```

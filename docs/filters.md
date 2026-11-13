@@ -66,6 +66,30 @@ The callable is deferred — it is only invoked when the filter bar is rendered,
 
 ---
 
+## MultiSelectFilter
+
+Several fixed options (value => label) to choose, as a searchable checkbox
+list. Records match any of the chosen values (OR) or, with `matchAll()`, all of
+them (AND). `choosableMatch()` adds a field "Verknüpfung" where the member picks
+OR/AND (request var `<Name>_Match` = `any`|`all`; kept in saved views).
+
+```php
+use Atwx\SilverstripeFrontdeskKit\Filter\MultiSelectFilter;
+
+MultiSelectFilter::create('Sports', 'Sportarten')
+    ->options(['tennis' => 'Tennis', 'golf' => 'Golf'])   // or a callable returning the array
+    ->field('Sports.Code')                                // filter on a field or relation path
+    ->choosableMatch();
+
+// Own logic: the callable gets the chosen values and whether all must match.
+MultiSelectFilter::create('Offers', 'Angebote')
+    ->options($offers)
+    ->apply(fn (DataList $list, array $values, bool $all) => ...);
+```
+
+With `field()`, AND means: the record matches each value (for relations, each
+value may be on a different related record).
+
 ## DateRangeFilter
 
 Renders two date inputs (`From` / `To`). The `apply` callable receives an array with `from` and `to` keys.

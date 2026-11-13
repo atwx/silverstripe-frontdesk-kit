@@ -37,6 +37,11 @@ class CatalogMultiField extends CheckboxTreeField
 
     public function setValue($value, $data = null)
     {
+        // Form::loadDataFrom($record) passes null for a many_many relation:
+        // read the relation, else saving the form would empty it.
+        if ($value === null && $data instanceof DataObject && $data->hasMethod($this->getName())) {
+            $value = $data->{$this->getName()}();
+        }
         if ($value instanceof SS_List) {
             $value = $value->column('ID');
         } elseif (is_string($value)) {

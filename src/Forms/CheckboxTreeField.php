@@ -52,7 +52,10 @@ class CheckboxTreeField extends FormField
             : $item->{$this->titleField};
 
         $children = [];
-        foreach ($item->{$this->childrenField}() as $child) {
+        $childItems = $item->hasMethod($this->childrenField)
+            ? $item->{$this->childrenField}()
+            : ($item->{$this->childrenField} ?? []);
+        foreach ($childItems as $child) {
             $children[] = $this->buildNode($child);
         }
 

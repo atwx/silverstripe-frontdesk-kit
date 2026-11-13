@@ -46,6 +46,9 @@ class FilterCollection
                 }
             } else {
                 $value = $request->getVar($filter->getName());
+                if ($filter instanceof MultiSelectFilter) {
+                    $filter->setRequestMatch($request->getVar($filter->matchParamName()));
+                }
                 if ($value === null && !$hasAnyFilterParam && $filter->getDefault() !== null) {
                     $value = $filter->getDefault();
                 }
@@ -75,6 +78,8 @@ class FilterCollection
                     return true;
                 }
             } elseif ($request->getVar($filter->getName()) !== null) {
+                return true;
+            } elseif ($filter instanceof MultiSelectFilter && $request->getVar($filter->matchParamName()) !== null) {
                 return true;
             }
         }
