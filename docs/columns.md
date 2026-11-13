@@ -19,7 +19,7 @@ protected function defineColumns(): ColumnCollection
 
 ## Fluent builder
 
-Use `->make()` to configure individual columns. `->end()` returns the collection so further `->make()` calls can be chained:
+Use `->make()` to configure individual columns. `->end()` returns the collection so further `->make()` calls can be chained. `make()` on a name that already exists (e.g. from `fromSummaryFields()`) changes that column instead of adding a second one; a label given replaces its label:
 
 ```php
 protected function defineColumns(): ColumnCollection

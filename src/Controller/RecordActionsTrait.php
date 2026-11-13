@@ -76,12 +76,21 @@ trait RecordActionsTrait
     }
 
     /**
-     * Template data for the record actions of a record.
+     * Template data for the record actions of a record; with a record page
+     * only the actions of that page (RecordAction::pages() or the config
+     * record_action_pages).
      */
-    protected function recordActionsFor(DataObject $record): ArrayList
+    protected function recordActionsFor(DataObject $record, ?string $page = null): ArrayList
     {
         $result = ArrayList::create();
+        $configured = (array) static::config()->get('record_action_pages');
         foreach ($this->defineRecordActions($record) as $action) {
+            if ($page !== null && !$action->getPages() && isset($configured[$action->getName()])) {
+                $action->pages(...array_map('strval', (array) $configured[$action->getName()]));
+            }
+            if (!$action->isOnPage($page)) {
+                continue;
+            }
             $options = ArrayList::create();
             foreach ($action->getOptions() as $value => $label) {
                 $options->push(ArrayData::create(['Value' => $value, 'Label' => $label]));

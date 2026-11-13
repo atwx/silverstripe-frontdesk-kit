@@ -70,11 +70,20 @@ class ColumnCollection extends ArrayList
     }
 
     /**
-     * Start building a new column fluently. Returns a ColumnBuilder.
-     * Call ->end() on the builder to return to this collection.
+     * Start building a column fluently. Returns a ColumnBuilder; call ->end()
+     * on the builder to return to this collection. A column of that name that
+     * already exists (e.g. from fromSummaryFields()) is changed instead of
+     * added a second time; a label given replaces its label.
      */
     public function make(string $name, string $label = ''): ColumnBuilder
     {
+        $column = $this->byName($name);
+        if ($column) {
+            if ($label !== '') {
+                $column->label($label);
+            }
+            return new ColumnBuilder($column, $this);
+        }
         $column = Column::create($name, $label);
         $this->addColumn($column);
         return new ColumnBuilder($column, $this);

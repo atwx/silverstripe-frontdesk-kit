@@ -68,6 +68,13 @@ class RecordAction
      */
     private $handler = null;
 
+    /**
+     * Record pages (segments) the action is shown on; empty: all pages.
+     *
+     * @var array<int, string>
+     */
+    private array $pages = [];
+
     public function __construct(private readonly string $name, private readonly string $label)
     {
         if (!preg_match('/^[A-Za-z0-9_-]+$/', $name)) {
@@ -200,6 +207,32 @@ class RecordAction
     {
         $this->submitLabel = $label;
         return $this;
+    }
+
+    /**
+     * Shows the action only on these record pages (defineRecordPages()
+     * segments); without pages it is shown on every page.
+     */
+    public function pages(string ...$segments): static
+    {
+        $this->pages = array_values(array_filter($segments, fn ($segment) => $segment !== ''));
+        return $this;
+    }
+
+    /**
+     * @return array<int, string>
+     */
+    public function getPages(): array
+    {
+        return $this->pages;
+    }
+
+    /**
+     * Whether the action is shown on the record page (null: no record pages).
+     */
+    public function isOnPage(?string $segment): bool
+    {
+        return $segment === null || !$this->pages || in_array($segment, $this->pages, true);
     }
 
     public function description(string $text): static

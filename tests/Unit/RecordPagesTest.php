@@ -4,6 +4,7 @@ namespace Atwx\SilverstripeFrontdeskKitTests\Unit;
 
 use Atwx\SilverstripeFrontdeskKit\Controller\FrontdeskController;
 use Atwx\SilverstripeFrontdeskKit\Forms\FieldLayout;
+use Atwx\SilverstripeFrontdeskKit\Table\RecordAction;
 use Atwx\SilverstripeFrontdeskKit\View\RecordPage;
 use Atwx\SilverstripeFrontdeskKit\View\RecordPages;
 use Atwx\SilverstripeFrontdeskKit\View\RecordSwitcher;
@@ -49,6 +50,24 @@ class RecordPagesTestController extends FrontdeskController implements TestOnly
             ->group('Notes', ['Note'], true, 'notes')
             ->group('Secret', ['Secret'], true, 'secret')
             ->setLevels(['Secret' => $this->secretVisible ? FieldLayout::WRITE : FieldLayout::HIDDEN]);
+    }
+
+    private static array $record_action_pages = [
+        'remind' => ['notes', 'basics'],
+        'archive' => 'secret',
+    ];
+
+    /**
+     * @return array<int, RecordAction>
+     */
+    protected function defineRecordActions(DataObject $record): array
+    {
+        return [
+            RecordAction::create('everywhere', 'Everywhere'),
+            RecordAction::create('notesonly', 'Notes only')->pages('notes'),
+            RecordAction::create('remind', 'Remind'),
+            RecordAction::create('archive', 'Archive'),
+        ];
     }
 
     protected function defineRecordPages(DataObject $record): ?RecordPages
@@ -132,6 +151,22 @@ class RecordPagesTest extends SapphireTest
         $this->assertStringContainsString('own content', (string) $data['PageContent']);
         $this->assertStringContainsString('old', (string) $data['PageContent']);
         $this->assertStringNotContainsString('>n<', (string) $data['PageContent']);
+    }
+
+    public function testRecordActionsPerPage(): void
+    {
+        $record = $this->record();
+        $names = function (string $page) use ($record): array {
+            $controller = $this->controller('GET', 'x', ['ID' => $record->ID, 'OtherID' => $page]);
+            return $controller->view($controller->getRequest())['RecordActions']->column('Name');
+        };
+        $this->assertSame(['everywhere', 'remind'], $names('basics'), 'config, more than one page');
+        $this->assertSame(['everywhere', 'notesonly', 'remind'], $names('notes'), 'pages() on the action');
+
+        $action = RecordAction::create('x', 'X');
+        $this->assertTrue($action->isOnPage('any'), 'no pages: everywhere');
+        $this->assertTrue($action->pages('a')->isOnPage(null), 'no record pages: shown');
+        $this->assertFalse($action->isOnPage('b'));
     }
 
     public function testHiddenPageAnswers404(): void

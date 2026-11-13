@@ -129,7 +129,7 @@ trait RecordPagesTrait
             'HeaderFields'     => $this->defineHeaderFields($item),
             'RecordImage'      => $this->defineRecordImage($item),
             'ViewActions'      => $this->defineViewActions($item)->exclude('Primary', true),
-            'RecordActions'    => $this->recordActionsFor($item),
+            'RecordActions'    => $this->recordActionsFor($item, $current->getSegment()),
             'SubControllerData' => ArrayList::create(),
         ];
     }
