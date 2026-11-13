@@ -14,6 +14,8 @@ class Column
 
     private bool $exportOnly = false;
 
+    private ?float $width = null;
+
     protected string $name;
     protected string $label = '';
     protected ?string $linkPattern = null;
@@ -162,6 +164,21 @@ class Column
     public function isExportOnly(): bool
     {
         return $this->exportOnly;
+    }
+
+    /**
+     * Column width in the Excel export (characters, as in Excel); without it
+     * the width follows the content.
+     */
+    public function width(?float $width): static
+    {
+        $this->width = $width;
+        return $this;
+    }
+
+    public function getWidth(): ?float
+    {
+        return $this->width;
     }
 
     public function visibleInExport(bool $v): static
