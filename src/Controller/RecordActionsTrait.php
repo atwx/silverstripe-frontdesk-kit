@@ -58,7 +58,7 @@ trait RecordActionsTrait
                 $record,
                 $option === null ? null : (string) $option,
                 (string) $request->postVar('Comment'),
-                (array) $request->postVar('Select')
+                array_merge((array) $request->postVar('Input'), (array) $request->postVar('Select'))
             );
         } catch (ActionException $e) {
             $this->flash($e->getMessage(), 'error');
@@ -103,7 +103,35 @@ trait RecordActionsTrait
                     'Options' => $selectOptions,
                 ]));
             }
+            $multiSelects = ArrayList::create();
+            foreach ($action->getMultiSelects() as $name => $multi) {
+                $multiOptions = ArrayList::create();
+                foreach ($multi['options'] as $value => $label) {
+                    $multiOptions->push(ArrayData::create([
+                        'Value' => (string) $value,
+                        'Label' => $label,
+                        'Checked' => in_array((string) $value, $multi['values'], true),
+                    ]));
+                }
+                $multiSelects->push(ArrayData::create([
+                    'Name' => $name,
+                    'Label' => $multi['label'],
+                    'Options' => $multiOptions,
+                ]));
+            }
+            $inputs = ArrayList::create();
+            foreach ($action->getInputs() as $name => $input) {
+                $inputs->push(ArrayData::create([
+                    'Name' => $name,
+                    'Label' => $input['label'],
+                    'Type' => $input['type'],
+                    'Value' => $input['value'],
+                    'Required' => $input['required'],
+                ]));
+            }
             $result->push(ArrayData::create([
+                'MultiSelects'    => $multiSelects,
+                'Inputs'          => $inputs,
                 'Selects'         => $selects,
                 'Name'            => $action->getName(),
                 'Label'           => $action->getLabel(),

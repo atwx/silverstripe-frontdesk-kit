@@ -29,6 +29,9 @@ class RecordActionTestController extends FrontdeskController implements TestOnly
     /** @var array<int, array{int, ?string, string}> */
     public array $calls = [];
 
+    /** @var array<string, mixed> */
+    public array $planned = [];
+
     protected function defineRecordActions(DataObject $record): array
     {
         if ($record->State === 'closed') {
@@ -49,6 +52,14 @@ class RecordActionTestController extends FrontdeskController implements TestOnly
                 }),
             RecordAction::create('assign', 'Assign')
                 ->select('lead', 'Lead', [3 => 'Ann', 5 => 'Bob'], '5'),
+            RecordAction::create('plan', 'Plan')
+                ->multiSelect('schools', 'Schools', [1 => 'Eton', 2 => 'Harrow', 3 => 'Rugby'], [2])
+                ->input('due', 'Due', 'date', '2026-12-01', true)
+                ->input('hours', 'Hours', 'number')
+                ->handle(function (DataObject $record, ?string $option, string $comment, array $values) {
+                    $this->planned = $values;
+                    return null;
+                }),
         ];
     }
 
@@ -170,13 +181,47 @@ class RecordActionControllerTest extends SapphireTest
 
         $data = $ctrl->view($request);
 
-        $this->assertSame(['state', 'assign'], $data['RecordActions']->column('Name'));
-        $select = $data['RecordActions']->last()->Selects->first();
+        $this->assertSame(['state', 'assign', 'plan'], $data['RecordActions']->column('Name'));
+        $select = $data['RecordActions']->find('Name', 'assign')->Selects->first();
         $this->assertSame(['5'], $select->Options->filter('Selected', true)->column('Value'), 'numeric current value is preselected');
         $this->assertSame(['open', 'closed'], $data['RecordActions']->first()->Options->column('Value'));
         $this->assertSame(['new', 'old'], $data['Timeline']->column('Title'), 'newest first');
         $html = (string) $data['ViewContent'];
         $this->assertStringContainsString('Main', $html);
         $this->assertStringNotContainsString('>s<', $html, 'hidden field not shown');
+    }
+
+    public function testMultiSelectAndInputsReachTheHandler(): void
+    {
+        $record = $this->record();
+        $ctrl = RecordActionTestController::create();
+        $this->post($ctrl, $record->ID, [
+            'RecordAction' => 'plan',
+            'Select' => ['schools' => ['1', '3', '3']],
+            'Input' => ['due' => '2026-12-24', 'hours' => ' 2.5 '],
+        ]);
+        $this->assertSame(['schools' => ['1', '3'], 'due' => '2026-12-24', 'hours' => '2.5'], $ctrl->planned);
+
+        foreach ([
+            [['schools' => ['9']], ['due' => '2026-12-24']],
+            [[], ['due' => '24.12.2026']],
+            [[], ['due' => '']],
+            [[], ['due' => '2026-12-24', 'hours' => 'many']],
+        ] as [$select, $input]) {
+            $ctrl = RecordActionTestController::create();
+            $this->post($ctrl, $record->ID, ['RecordAction' => 'plan', 'Select' => $select, 'Input' => $input]);
+            $this->assertSame([], $ctrl->planned, json_encode([$select, $input]));
+            $this->assertSame('error', $ctrl->FlashMessage()?->Type);
+        }
+
+        $ctrl = RecordActionTestController::create();
+        $request = new HTTPRequest('GET', 'ra-items/view/' . $record->ID);
+        $request->setRouteParams(['ID' => $record->ID]);
+        $request->setSession(new Session([]));
+        $ctrl->setRequest($request);
+        $html = (string) $ctrl->customise(['RecordActions' => $ctrl->view($request)['RecordActions']])
+            ->renderWith('Atwx\\SilverstripeFrontdeskKit\\Includes\\RecordActionDialogs');
+        $this->assertStringContainsString('name="Select[schools][]" value="2" checked', $html);
+        $this->assertStringContainsString('type="date" name="Input[due]" value="2026-12-01"', $html);
     }
 }

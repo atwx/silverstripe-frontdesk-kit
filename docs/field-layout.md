@@ -55,7 +55,18 @@ protected function defineRecordActions(DataObject $record): array
 
 Selects ask for several values at once (`->select($name, $label, $options, $current)`);
 the handler receives them as fourth argument (`['name' => value or '']`), only
-declared selects with one of their options. After the action the dialog returns
+declared selects with one of their options.
+
+More fields in the dialog, in the same array:
+
+- `->multiSelect('schools', 'Schulen', $options, $checked)`: checkboxes, the
+  handler gets a list of chosen values (only declared options).
+- `->input('due', 'Termin', 'date', $current, $required)`: types `text`,
+  `date` (`YYYY-MM-DD`), `datetime-local` (`YYYY-MM-DDTHH:MM`), `time` and
+  `number`; the handler gets the value as a string, `''` when empty.
+  Invalid or missing required values refuse the action with a message.
+
+After the action the dialog returns
 to the page it was opened on (BackURL), e.g. a record page.
 
 Only the actions returned for the record are executed, and only with one of
