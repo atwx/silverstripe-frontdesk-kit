@@ -32,3 +32,13 @@ protected function defineBulkActions(): array
   value is passed as second argument and validated against the options.
 - The `bulk` action requires POST with CSRF token and `canEdit()` on the
   controller. Without bulk actions nothing changes in the list.
+
+## Confirmation
+
+`->confirm('Wirklich löschen?')` asks before the action runs (browser
+confirmation when the form is submitted), e.g. for deleting:
+
+```php
+BulkAction::create('delete', 'Löschen', fn (DataList $records) => …)->confirm('Die ausgewählten Einträge löschen?');
+```
+

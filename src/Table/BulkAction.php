@@ -24,6 +24,8 @@ class BulkAction
 
     protected bool $newWindow = false;
 
+    protected string $confirmText = '';
+
     /** @var callable */
     protected $handler;
 
@@ -54,6 +56,20 @@ class BulkAction
     {
         $this->newWindow = $newWindow;
         return $this;
+    }
+
+    /**
+     * Asks before running the action (e.g. deleting), with this text.
+     */
+    public function confirm(string $text): static
+    {
+        $this->confirmText = $text;
+        return $this;
+    }
+
+    public function getConfirm(): string
+    {
+        return $this->confirmText;
     }
 
     public function opensNewWindow(): bool
@@ -104,6 +120,7 @@ class BulkAction
                 'Value' => $this->name,
                 'Title' => $this->label,
                 'NewWindow' => $this->newWindow,
+                'Confirm' => $this->confirmText,
             ]));
         }
         foreach ($this->options as $value => $label) {
@@ -111,6 +128,7 @@ class BulkAction
                 'Value' => $this->name . ':' . $value,
                 'Title' => $label,
                 'NewWindow' => $this->newWindow,
+                'Confirm' => $this->confirmText,
             ]));
         }
         return $choices;
