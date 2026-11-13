@@ -128,9 +128,13 @@ class ColumnCollection extends ArrayList
             } else {
                 $link = $rawLink;
             }
+            $value = $col->renderValue($record);
             $rows->push(ArrayData::create([
                 'Column'  => $col,
-                'Value'   => $col->renderValue($record),
+                'Label'   => $col->getLabel(),
+                'Value'   => $value,
+                // Hidden in the stacked phone layout
+                'IsEmpty' => trim(strip_tags((string) $value)) === '',
                 'Link'    => $link,
                 'HasLink' => (bool) $rawLink,
                 'IsFirst' => $isFirst,

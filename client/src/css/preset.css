@@ -37,6 +37,9 @@
 /* treeselectjs styles for the fdk checkbox-tree component */
 @import "./treeselectjs.css";
 
+/* Log in, MFA and error pages */
+@import "./security.css";
+
 /* Truncate long tag names so multi-selections don't blow up the layout;
    the full name stays available via the tag's title tooltip. */
 .fdk-checkbox-tree .treeselect-input__tags-element {
@@ -71,7 +74,7 @@
 
 /* ── Layout ───────────────────────────────────────────────────────────────── */
 .fdk-page-header {
-    @apply flex items-center justify-between mb-6;
+    @apply flex flex-wrap items-center justify-between gap-2 mb-6;
 }
 
 .fdk-page-title {
@@ -79,7 +82,7 @@
 }
 
 .fdk-page-actions {
-    @apply flex gap-2;
+    @apply flex flex-wrap gap-2;
 }
 
 /* ── Filter bar ───────────────────────────────────────────────────────────── */
@@ -166,4 +169,90 @@
 details.fdk-collapse[open],
 details.fdk-collapse[open] > .collapse-content {
     overflow: visible !important;
+}
+
+/* ── Phones ───────────────────────────────────────────────────────────────── */
+@media (max-width: 767px) {
+    .fdk-main {
+        @apply px-3 py-4;
+    }
+
+    .fdk-form-wrap {
+        @apply p-3;
+    }
+
+    /* Filters behind the "Filter" button */
+    .fdk-filter-bar:not(.fdk-filter-open) {
+        display: none;
+    }
+
+    .fdk-filter-field {
+        @apply w-full;
+    }
+
+    /* List tables as stacked cards: one row per record, label before each value */
+    table.fdk-stack thead {
+        display: none;
+    }
+
+    table.fdk-stack,
+    table.fdk-stack tbody,
+    table.fdk-stack tr,
+    table.fdk-stack td,
+    table.fdk-stack th {
+        display: block;
+        width: 100%;
+    }
+
+    table.fdk-stack tr {
+        @apply relative py-2 border-b border-base-200;
+    }
+
+    table.fdk-stack td {
+        @apply flex gap-3 px-4 py-0.5 border-0;
+        overflow-wrap: anywhere;
+    }
+
+    table.fdk-stack td[data-label]:not([data-label=""])::before {
+        content: attr(data-label);
+        @apply shrink-0 w-2/5 text-base-content/60 text-sm;
+    }
+
+    table.fdk-stack td.fdk-cell-empty {
+        display: none;
+    }
+
+    /* The first column is the card's title, without label */
+    table.fdk-stack tr > td:first-child::before,
+    table.fdk-stack tr > td.fdk-row-select + td::before {
+        display: none;
+    }
+
+    /* Room for the actions in the top right corner */
+    table.fdk-stack tr > td:first-child,
+    table.fdk-stack tr > td.fdk-row-select + td {
+        @apply pr-24 font-semibold;
+    }
+
+    table.fdk-stack td.fdk-row-select {
+        @apply absolute left-auto right-14 top-2 w-auto p-0;
+    }
+
+    table.fdk-stack td.fdk-row-actions {
+        @apply absolute right-1 top-1 w-auto p-0;
+    }
+
+    table.fdk-stack .fdk-group-row th {
+        @apply px-4;
+    }
+
+    .fdk-table-wrapper .join,
+    .fdk-pagination {
+        @apply flex-wrap;
+    }
+
+    /* Dialogs use the full width */
+    .modal-box {
+        @apply w-[calc(100vw-1rem)] max-w-none p-4;
+    }
 }

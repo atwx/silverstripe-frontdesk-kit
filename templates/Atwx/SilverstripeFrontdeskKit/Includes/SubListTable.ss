@@ -56,7 +56,7 @@
 </div>
 
 <div class="fdk-table-wrapper">
-    <table class="table table-zebra w-full">
+    <table class="table table-zebra w-full fdk-stack">
         <thead>
             <tr>
                 <% loop $Top.ColumnHeaders %>
@@ -74,7 +74,7 @@
                 <% loop $Top.ItemRows %>
                     <tr id="fdk-row-$ID">
                         <% loop $Cells %>
-                            <td>
+                            <td data-label="$Label.ATT"<% if $IsEmpty %> class="fdk-cell-empty"<% end_if %>>
                                 <% if $HasLink %><a href="$Link">$Value</a><% else %>$Value<% end_if %>
                             </td>
                         <% end_loop %>
