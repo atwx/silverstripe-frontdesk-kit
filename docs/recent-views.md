@@ -41,6 +41,19 @@ class SchoolController extends FrontdeskController
   (one with `recent_views` on first). They are only noted if the member may
   view them.
 
+## Last viewed by anyone
+
+Every noted view also updates one entry per record: when it was last viewed
+by anyone, and by whom (`LastView`). It does not drop out of the per-member
+limit. Show it as a list column, sortable:
+
+```php
+$columns->lastViewed('Zuletzt angesehen')->optional()->end();
+```
+
+The value reads "13.11.2026 14:05, Olga Organisation". In PHP:
+`LastView::forRecord($record)?->ViewedAt`, `->Member()`, `->summary()`.
+
 ## Block on a start page
 
 ```ss

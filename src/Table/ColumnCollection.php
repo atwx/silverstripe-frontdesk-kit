@@ -2,9 +2,11 @@
 
 namespace Atwx\SilverstripeFrontdeskKit\Table;
 
+use Atwx\SilverstripeFrontdeskKit\Model\LastView;
 use SilverStripe\Control\Controller;
 use SilverStripe\Model\ArrayData;
 use SilverStripe\Model\List\ArrayList;
+use SilverStripe\ORM\DataList;
 use SilverStripe\ORM\DataObject;
 
 class ColumnCollection extends ArrayList
@@ -31,6 +33,18 @@ class ColumnCollection extends ArrayList
         $column = Column::create($name, $label);
         $this->addColumn($column);
         return new ColumnBuilder($column, $this);
+    }
+
+    /**
+     * Column "last viewed by anyone": date, time and member of the latest
+     * view of the record page (LastView, noted in controllers with
+     * recent_views), sortable.
+     */
+    public function lastViewed(string $label = '', string $name = 'LastViewed'): ColumnBuilder
+    {
+        return $this->make($name, $label ?: _t(LastView::class . '.COLUMN', 'Last viewed'))
+            ->format(fn ($value, DataObject $record) => LastView::forRecord($record)?->summary() ?? '')
+            ->sortable(fn (DataList $list, string $dir) => LastView::sortList($list, $dir));
     }
 
     /**
