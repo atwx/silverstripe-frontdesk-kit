@@ -4,6 +4,8 @@ namespace Atwx\SilverstripeFrontdeskKitTests\Unit;
 
 use Atwx\SilverstripeFrontdeskKit\Controller\FrontdeskController;
 use Atwx\SilverstripeFrontdeskKit\Controller\FrontdeskTemplateProvider;
+use Atwx\SilverstripeFrontdeskKit\Filter\FilterCollection;
+use Atwx\SilverstripeFrontdeskKit\Filter\TextFilter;
 use Atwx\SilverstripeFrontdeskKit\Model\RecentView;
 use Atwx\SilverstripeFrontdeskKit\Table\ColumnCollection;
 use SilverStripe\Control\HTTPRequest;
@@ -23,6 +25,7 @@ class RecentPupil extends DataObject implements TestOnly
     private static string $table_name = 'FDK_RecentPupil';
     private static array $db = ['Name' => 'Varchar', 'Hidden' => 'Boolean'];
     private static array $has_one = ['Household' => RecentHousehold::class];
+    private static string $default_sort = '"Name" ASC';
 
     public function getTitle(): string
     {
@@ -108,6 +111,35 @@ class RecentHouseholdController extends FrontdeskController implements TestOnly
     protected function defineColumns(): ColumnCollection
     {
         return ColumnCollection::create()->make('Name', 'Name')->end();
+    }
+}
+
+/**
+ * Pupils sorted by name, recently viewed ones first; opens with "Zuletzt
+ * angesehen".
+ */
+class RecentFirstPupilController extends RecentPupilController implements TestOnly
+{
+    private static string $url_segment = 'pupils-first';
+    private static bool $recent_first = true;
+
+    protected function defineColumns(): ColumnCollection
+    {
+        return ColumnCollection::create()->make('Name', 'Name')->sortable()->end();
+    }
+}
+
+class RecentDefaultPupilController extends RecentPupilController implements TestOnly
+{
+    private static string $url_segment = 'pupils-default';
+    private static string $default_list_view = 'recent';
+
+    protected function defineFilters(): FilterCollection
+    {
+        return FilterCollection::create()->add(
+            TextFilter::create('Query', 'Search')
+                ->apply(fn ($list, $value) => $list->filter('Name:PartialMatch', $value))
+        );
     }
 }
 
@@ -236,5 +268,36 @@ class RecentViewsTest extends SapphireTest
         $this->assertStringNotContainsString('view=recent', implode(' ', $controller->ListViews()->column('Link')));
         $pupils = $this->controller();
         $this->assertStringContainsString('view=recent', implode(' ', $pupils->ListViews()->column('Link')));
+    }
+
+    public function testRecentlyViewedFirstThenTheDefaultSort(): void
+    {
+        $this->assertSame(['Anna', 'Ben', 'Cem'], $this->controller(RecentFirstPupilController::class)->names());
+        $this->viewOf('Cem');
+        $this->viewOf('Ben');
+        $this->assertSame(['Ben', 'Cem', 'Anna'], $this->controller(RecentFirstPupilController::class)->names());
+        $this->assertSame(
+            ['Cem', 'Ben', 'Anna'],
+            $this->controller(RecentFirstPupilController::class, ['sort' => 'Name', 'dir' => 'desc'])->names(),
+            'a chosen column sort wins'
+        );
+        $this->assertSame(['Anna', 'Ben', 'Cem'], $this->controller()->names(), 'off without recent_first');
+    }
+
+    public function testDefaultListViewWithAllReachable(): void
+    {
+        $this->viewOf('Cem');
+        $controller = $this->controller(RecentDefaultPupilController::class);
+        $this->assertSame(['Cem'], $controller->names(), 'opens with recently viewed');
+        $views = $controller->ListViews();
+        $this->assertSame('pupils-default?view=all', $views->first()->Link);
+        $this->assertFalse((bool) $views->first()->Active);
+        $this->assertTrue((bool) $views->find('Title', 'Recently viewed')?->Active);
+        $this->assertSame('recent', $controller->FilterForm()?->Fields()->dataFieldByName('view')?->getValue());
+
+        $all = $this->controller(RecentDefaultPupilController::class, ['view' => 'all']);
+        $this->assertSame(['Anna', 'Ben', 'Cem'], $all->names());
+        $this->assertTrue((bool) $all->ListViews()->first()->Active);
+        $this->assertSame('all', $all->FilterForm()?->Fields()->dataFieldByName('view')?->getValue());
     }
 }
