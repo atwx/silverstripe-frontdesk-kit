@@ -57,6 +57,11 @@ class SecurityPagesTest extends FunctionalTest
         $this->assertSame('alert-warning', $extension->FrontdeskAlertClass('warning'));
         $this->assertSame('alert-info', $extension->FrontdeskAlertClass(null));
 
+        $this->assertStringContainsString(
+            class_exists('Atwx\\SilverGateClient\\Controllers\\LoginController') ? 'href="https://intra.atw.io"' : 'fdk-security',
+            (string) $this->get('Security/login')->getBody(),
+            'default: the Silvergate manager'
+        );
         Config::modify()->set(FrontdeskSecurityExtension::class, 'silvergate_login_url', 'https://gate.example.org/');
         $body = (string) $this->get('Security/login')->getBody();
         if (class_exists('Atwx\\SilverGateClient\\Controllers\\LoginController')) {
@@ -66,6 +71,8 @@ class SecurityPagesTest extends FunctionalTest
         } else {
             $this->assertStringNotContainsString('gate.example.org', $body, 'no gate client');
         }
+        Config::modify()->set(FrontdeskSecurityExtension::class, 'silvergate_login_url', '');
+        $this->assertStringNotContainsString('Silvergate', (string) $this->get('Security/login')->getBody(), 'off');
     }
 
     public function testErrorPagesForBrowsersOnly(): void

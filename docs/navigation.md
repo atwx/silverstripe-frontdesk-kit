@@ -66,11 +66,10 @@ the kit switches it back to the site's themes:
 ```yaml
 Atwx\SilverstripeFrontdeskKit\Security\FrontdeskSecurityExtension:
   replace_login_forms: true          # false: keep the login-forms look
-  silvergate_login_url: 'https://…'  # or FRONTDESK_SILVERGATE_URL in .env
+  silvergate_login_url: 'https://intra.atw.io'  # default; or FRONTDESK_SILVERGATE_URL in .env
 ```
 
-With atwx/silverstripe-gate-client installed and a URL set, the login page
-shows "Über Silvergate anmelden" below the form.
+With atwx/silverstripe-gate-client installed, the login page shows "Über Silvergate anmelden" below the form.
 
 ## Error pages
 
