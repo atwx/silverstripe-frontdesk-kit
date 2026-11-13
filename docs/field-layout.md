@@ -69,6 +69,15 @@ More fields in the dialog, in the same array:
 After the action the dialog returns
 to the page it was opened on (BackURL), e.g. a record page.
 
+A handler may return an `ActionResult` instead of a string to add links to the
+message, e.g. to each record the action created (only links within the site):
+
+```php
+return ActionResult::create('2 Schulen hinzugefügt.')
+    ->link('Eton College', $eton->Link())
+    ->link('Harrow School', $harrow->Link());
+```
+
 Only the actions returned for the record are executed, and only with one of
 their options. The endpoint is open to everyone who can view the list, so
 return only the actions the current user may run. Messages are shown once on

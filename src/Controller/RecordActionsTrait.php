@@ -3,6 +3,7 @@
 namespace Atwx\SilverstripeFrontdeskKit\Controller;
 
 use Atwx\SilverstripeFrontdeskKit\Table\ActionException;
+use Atwx\SilverstripeFrontdeskKit\Table\ActionResult;
 use Atwx\SilverstripeFrontdeskKit\Table\RecordAction;
 use SilverStripe\Control\Director;
 use SilverStripe\Control\HTTPRequest;
@@ -67,7 +68,7 @@ trait RecordActionsTrait
         if ($result instanceof HTTPResponse) {
             return $result;
         }
-        if (is_string($result) && $result !== '') {
+        if ($result instanceof ActionResult || (is_string($result) && $result !== '')) {
             $this->flash($result);
         }
         $back = (string) $request->postVar('BackURL');
@@ -151,9 +152,12 @@ trait RecordActionsTrait
     /**
      * Message shown once on the next page (type: success, error, info).
      */
-    protected function flash(string $message, string $type = 'success'): void
+    protected function flash(string|ActionResult $message, string $type = 'success'): void
     {
-        $this->getRequest()->getSession()->set('FrontdeskFlash', ['Text' => $message, 'Type' => $type]);
+        $data = $message instanceof ActionResult
+            ? ['Text' => $message->getText(), 'Type' => $message->getType(), 'Links' => $message->getLinks()]
+            : ['Text' => $message, 'Type' => $type, 'Links' => []];
+        $this->getRequest()->getSession()->set('FrontdeskFlash', $data);
     }
 
     public function FlashMessage(): ?ArrayData
@@ -162,6 +166,12 @@ trait RecordActionsTrait
             $session = $this->getRequest()->getSession();
             $data = $session->get('FrontdeskFlash');
             $session->clear('FrontdeskFlash');
+            if (is_array($data)) {
+                $data['Links'] = ArrayList::create(array_map(
+                    fn ($link) => ArrayData::create($link),
+                    is_array($data['Links'] ?? null) ? $data['Links'] : []
+                ));
+            }
             $this->flashMessage = is_array($data) ? ArrayData::create($data) : null;
         }
         return $this->flashMessage;
