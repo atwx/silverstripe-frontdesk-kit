@@ -44,7 +44,7 @@
 
     <% if $BulkActions.Count %>
     <form id="fdk-bulk-form" class="fdk-bulk-bar flex flex-wrap items-center gap-2 mb-2" method="post" action="$Link('bulk')"
-          onsubmit="this.BackURL.value = window.location.pathname + window.location.search; this.target = this.BulkAction.selectedOptions[0]?.dataset.newWindow ? '_blank' : ''">
+          onsubmit="var o = this.BulkAction.selectedOptions[0]; if (o && o.dataset.confirm && !confirm(o.dataset.confirm)) { return false; } this.BackURL.value = window.location.pathname + window.location.search; this.target = o?.dataset.newWindow ? '_blank' : ''">
         <input type="hidden" name="SecurityID" value="$SecurityTokenValue">
         <input type="hidden" name="BackURL" value="">
         <label for="fdk-bulk-action" class="text-sm"><%t Atwx\SilverstripeFrontdeskKit\Controller\FrontdeskController.LABEL_BULK 'Selected records' %>:</label>
@@ -53,10 +53,10 @@
             <% loop $BulkActions %>
                 <% if $HasOptions %>
                     <optgroup label="$Label">
-                        <% loop $Choices %><option value="$Value"<% if $NewWindow %> data-new-window="1"<% end_if %>>$Title</option><% end_loop %>
+                        <% loop $Choices %><option value="$Value"<% if $NewWindow %> data-new-window="1"<% end_if %><% if $Confirm %> data-confirm="$Confirm.ATT"<% end_if %>>$Title</option><% end_loop %>
                     </optgroup>
                 <% else %>
-                    <% loop $Choices %><option value="$Value"<% if $NewWindow %> data-new-window="1"<% end_if %>>$Title</option><% end_loop %>
+                    <% loop $Choices %><option value="$Value"<% if $NewWindow %> data-new-window="1"<% end_if %><% if $Confirm %> data-confirm="$Confirm.ATT"<% end_if %>>$Title</option><% end_loop %>
                 <% end_if %>
             <% end_loop %>
         </select>
