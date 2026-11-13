@@ -29,9 +29,10 @@ class FrontdeskSecurityExtension extends Extension
     /**
      * Where a "Log in via Silvergate" button links to (the Silvergate manager),
      * shown on the login page when atwx/silverstripe-gate-client is installed.
-     * The environment variable FRONTDESK_SILVERGATE_URL takes precedence.
+     * The environment variable FRONTDESK_SILVERGATE_URL takes precedence; an
+     * empty value hides the button.
      */
-    private static string $silvergate_login_url = '';
+    private static string $silvergate_login_url = 'https://intra.atw.io';
 
     private const string LOGIN_FORMS = 'SilverStripe\\LoginForms\\EnablerExtension';
 
