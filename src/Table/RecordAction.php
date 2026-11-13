@@ -54,6 +54,16 @@ class RecordAction
     private array $selects = [];
 
     /**
+     * @var array<string, array{label: string, options: array<string, string>, values: array<int, string>}>
+     */
+    private array $multiSelects = [];
+
+    /**
+     * @var array<string, array{label: string, type: string, value: string, required: bool}>
+     */
+    private array $inputs = [];
+
+    /**
      * @var callable|null
      */
     private $handler = null;
@@ -89,9 +99,7 @@ class RecordAction
      */
     public function select(string $name, string $label, array $options, ?string $value = null, string $emptyLabel = '–'): static
     {
-        if (!preg_match('/^[A-Za-z0-9_-]+$/', $name)) {
-            throw new \InvalidArgumentException("Invalid select name '{$name}'");
-        }
+        $this->assertFreeName($name);
         $map = [];
         foreach ($options as $key => $optionLabel) {
             $map[(string) $key] = (string) $optionLabel;
@@ -106,6 +114,79 @@ class RecordAction
     public function getSelects(): array
     {
         return $this->selects;
+    }
+
+    /**
+     * Checkboxes in the dialog: several of the options (e.g. several schools
+     * at once). The handler gets the chosen values as a list.
+     *
+     * @param array<int|string, string> $options value => label
+     * @param array<int, int|string> $values Checked at first
+     */
+    public function multiSelect(string $name, string $label, array $options, array $values = []): static
+    {
+        $this->assertFreeName($name);
+        $map = [];
+        foreach ($options as $key => $optionLabel) {
+            $map[(string) $key] = (string) $optionLabel;
+        }
+        $this->multiSelects[$name] = [
+            'label' => $label,
+            'options' => $map,
+            'values' => array_map('strval', array_values($values)),
+        ];
+        return $this;
+    }
+
+    /**
+     * @return array<string, array{label: string, options: array<string, string>, values: array<int, string>}>
+     */
+    public function getMultiSelects(): array
+    {
+        return $this->multiSelects;
+    }
+
+    /**
+     * An input in the dialog: text, date (YYYY-MM-DD), datetime-local
+     * (YYYY-MM-DDTHH:MM), time (HH:MM) or number. The handler gets the value
+     * as a string ('' = empty).
+     */
+    public function input(
+        string $name,
+        string $label,
+        string $type = 'text',
+        ?string $value = null,
+        bool $required = false
+    ): static {
+        $this->assertFreeName($name);
+        if (!in_array($type, ['text', 'date', 'datetime-local', 'time', 'number'], true)) {
+            throw new \InvalidArgumentException("Invalid input type '{$type}'");
+        }
+        $this->inputs[$name] = [
+            'label' => $label,
+            'type' => $type,
+            'value' => (string) $value,
+            'required' => $required,
+        ];
+        return $this;
+    }
+
+    /**
+     * @return array<string, array{label: string, type: string, value: string, required: bool}>
+     */
+    public function getInputs(): array
+    {
+        return $this->inputs;
+    }
+
+    private function assertFreeName(string $name): void
+    {
+        if (!preg_match('/^[A-Za-z0-9_-]+$/', $name)) {
+            throw new \InvalidArgumentException("Invalid field name '{$name}'");
+        }
+        if (isset($this->selects[$name]) || isset($this->multiSelects[$name]) || isset($this->inputs[$name])) {
+            throw new \InvalidArgumentException("Field name '{$name}' is used twice");
+        }
     }
 
     public function withComment(string $label, bool $required = false): static
@@ -128,7 +209,10 @@ class RecordAction
     }
 
     /**
-     * @param callable(DataObject, ?string, string, array<string, string>): (string|HTTPResponse|null) $handler
+     * The handler gets the record, the chosen option, the comment and the
+     * values of the selects and inputs (strings) and multi-selects (lists).
+     *
+     * @param callable(DataObject, ?string, string, array<string, string|array<int, string>>): (string|HTTPResponse|null) $handler
      */
     public function handle(callable $handler): static
     {
@@ -194,6 +278,36 @@ class RecordAction
             }
             $selected[$name] = $value;
         }
+        foreach ($this->multiSelects as $name => $multi) {
+            $chosen = array_values(array_unique(array_map('strval', array_filter(
+                is_array($values[$name] ?? null) ? $values[$name] : [],
+                'is_scalar'
+            ))));
+            foreach ($chosen as $value) {
+                if (!array_key_exists($value, $multi['options'])) {
+                    throw new ActionException(_t(self::class . '.CHOOSE_OPTION', 'Please choose an option.'));
+                }
+            }
+            $selected[$name] = $chosen;
+        }
+        foreach ($this->inputs as $name => $input) {
+            $value = is_scalar($values[$name] ?? null) ? trim((string) $values[$name]) : '';
+            if ($value === '' && $input['required']) {
+                throw new ActionException(_t(
+                    self::class . '.FIELD_REQUIRED',
+                    'Please fill in "{field}".',
+                    ['field' => $input['label']]
+                ));
+            }
+            if ($value !== '' && !self::validInput($input['type'], $value)) {
+                throw new ActionException(_t(
+                    self::class . '.FIELD_INVALID',
+                    '"{field}" is not valid.',
+                    ['field' => $input['label']]
+                ));
+            }
+            $selected[$name] = $value;
+        }
         if ($this->options !== [] && ($option === null || !array_key_exists($option, $this->options))) {
             throw new ActionException(_t(self::class . '.CHOOSE_OPTION', 'Please choose an option.'));
         }
@@ -208,5 +322,24 @@ class RecordAction
             return null;
         }
         return ($this->handler)($record, $option, $comment, $selected);
+    }
+
+    private static function validInput(string $type, string $value): bool
+    {
+        $formats = [
+            'date' => ['Y-m-d'],
+            'datetime-local' => ['Y-m-d\\TH:i', 'Y-m-d\\TH:i:s'],
+            'time' => ['H:i', 'H:i:s'],
+        ];
+        if ($type === 'number') {
+            return is_numeric($value);
+        }
+        foreach ($formats[$type] ?? [] as $format) {
+            $parsed = \DateTimeImmutable::createFromFormat('!' . $format, $value);
+            if ($parsed !== false && $parsed->format($format) === $value) {
+                return true;
+            }
+        }
+        return !isset($formats[$type]);
     }
 }

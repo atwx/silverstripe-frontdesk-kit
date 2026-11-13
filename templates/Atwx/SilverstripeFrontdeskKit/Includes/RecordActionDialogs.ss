@@ -30,6 +30,25 @@
                 </select>
             </label>
             <% end_loop %>
+            <% loop $MultiSelects %>
+            <fieldset class="block">
+                <legend class="label-text">$Label</legend>
+                <div class="max-h-56 overflow-y-auto mt-1 space-y-1">
+                    <% loop $Options %>
+                    <label class="flex items-center gap-2 cursor-pointer">
+                        <input type="checkbox" class="checkbox checkbox-sm" name="Select[$Up.Name][]" value="$Value"<% if $Checked %> checked<% end_if %>>
+                        <span>$Label</span>
+                    </label>
+                    <% end_loop %>
+                </div>
+            </fieldset>
+            <% end_loop %>
+            <% loop $Inputs %>
+            <label class="block">
+                <span class="label-text">$Label</span>
+                <input type="$Type" name="Input[$Name]" value="$Value" class="input input-bordered w-full mt-1"<% if $Required %> required<% end_if %><% if $Type == 'number' %> step="any"<% end_if %>>
+            </label>
+            <% end_loop %>
             <% if $CommentLabel %>
             <label class="block">
                 <span class="label-text">$CommentLabel</span>
