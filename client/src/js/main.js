@@ -137,3 +137,17 @@ document.addEventListener('htmx:afterSwap', (e) => {
     initFdkCheckboxTrees(e.target || document);
     initFdkToggleAll(e.target || document);
 });
+
+// Export links: use the filters currently in the address bar (htmx updates
+// them without reloading the page header), plus the link's own parameters.
+document.addEventListener('click', (e) => {
+    const link = e.target instanceof Element ? e.target.closest('a[data-fdk-keep-query]') : null;
+    if (!link) {
+        return;
+    }
+    const params = new URLSearchParams(window.location.search);
+    params.delete('export');
+    new URLSearchParams(link.getAttribute('data-fdk-keep-query') || '').forEach((value, key) => params.set(key, value));
+    const query = params.toString();
+    link.href = link.href.split('?')[0] + (query ? '?' + query : '');
+});

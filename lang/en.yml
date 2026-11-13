@@ -74,3 +74,7 @@ en:
     BULK_HINT: 'Only filled fields are applied to the chosen entries; empty ones leave the values unchanged.'
     BULK_DONE: '{count} entries changed.'
     BULK_SKIPPED: 'Skipped: {list}'
+  Atwx\SilverstripeFrontdeskKit\Filter\MultiSelectFilter:
+    MATCH: 'Combine'
+    MATCH_ANY: 'any (or)'
+    MATCH_ALL: 'all (and)'

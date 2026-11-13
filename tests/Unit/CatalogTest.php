@@ -16,6 +16,7 @@ use SilverStripe\Core\Validation\ValidationException;
 use SilverStripe\Dev\SapphireTest;
 use SilverStripe\Dev\TestOnly;
 use SilverStripe\Forms\FieldList;
+use SilverStripe\Forms\Form;
 use SilverStripe\i18n\i18n;
 use SilverStripe\ORM\DataObject;
 
@@ -157,6 +158,21 @@ class CatalogTest extends SapphireTest
         $field = CatalogFields::apply(FieldList::create(), $record)->dataFieldByName('Sports');
         $field->setValue(json_encode([$hockey->ID, $polo->ID]));
         $this->assertFalse($field->validate()->isValid(), 'an inactive entry cannot be added');
+    }
+
+    public function testEditFormLoadsTheCurrentEntries(): void
+    {
+        $hockey = $this->entry('sports', 'Hockey');
+        $record = CatalogTestRecord::create();
+        $record->write();
+        $record->Sports()->add($hockey);
+
+        $fields = CatalogFields::apply(FieldList::create(), $record);
+        $form = Form::create(null, 'Form', $fields, FieldList::create());
+        $form->loadDataFrom($record);
+        $field = $form->Fields()->dataFieldByName('Sports');
+        $this->assertSame([(int) $hockey->ID], $field->selectedIDs(), 'loadDataFrom keeps the relation');
+        $this->assertSame('[' . $hockey->ID . ']', $field->FieldValue());
     }
 
     public function testEntriesInUseCannotBeDeleted(): void

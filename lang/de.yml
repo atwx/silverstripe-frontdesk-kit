@@ -96,3 +96,7 @@ de:
     BULK_HINT: 'Nur ausgefüllte Felder werden für die gewählten Einträge übernommen; leere lassen die Werte unverändert.'
     BULK_DONE: '{count} Einträge geändert.'
     BULK_SKIPPED: 'Übersprungen: {list}'
+  Atwx\SilverstripeFrontdeskKit\Filter\MultiSelectFilter:
+    MATCH: 'Verknüpfung'
+    MATCH_ANY: 'eines davon (oder)'
+    MATCH_ALL: 'alle (und)'

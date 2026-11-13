@@ -3,6 +3,7 @@
 namespace Atwx\SilverstripeFrontdeskKit\Controller;
 
 use Atwx\SilverstripeFrontdeskKit\Filter\FilterCollection;
+use Atwx\SilverstripeFrontdeskKit\Filter\TreeFilter;
 use Atwx\SilverstripeFrontdeskKit\Catalog\CatalogFields;
 use Atwx\SilverstripeFrontdeskKit\Catalog\Catalogs;
 use Atwx\SilverstripeFrontdeskKit\Forms\FieldLayout;
@@ -13,6 +14,7 @@ use Atwx\SilverstripeFrontdeskKit\Forms\SearchableDropdownField;
 use Atwx\SilverstripeFrontdeskKit\Model\RecentView;
 use Atwx\SilverstripeFrontdeskKit\Table\BulkAction;
 use Atwx\SilverstripeFrontdeskKit\Table\ColumnCollection;
+use Atwx\SilverstripeFrontdeskKit\Table\Export;
 use Atwx\SilverstripeFrontdeskKit\Table\RecordAction;
 use Atwx\SilverstripeFrontdeskKit\Table\RowAction;
 use Atwx\SilverstripeFrontdeskKit\View\RecordPage;
@@ -796,21 +798,91 @@ class FrontdeskController extends Controller implements PermissionProvider
 
     public function export(HTTPRequest $request)
     {
+        $data = $this->exportData((string) $request->getVar('export'));
+        if (!$data) {
+            return $this->httpError(404);
+        }
+        $this->writeXlsx($data['items'], $data['columns'], $data['fileName']);
+        return null;
+    }
+
+    /**
+     * Records, columns and file name of the default export ($key = '') or of
+     * an additional export (defineExports()); null if that export is not
+     * offered in the current view.
+     *
+     * @return array{items: DataList<DataObject>, columns: ColumnCollection, fileName: string}|null
+     */
+    protected function exportData(string $key): ?array
+    {
+        $items = $this->getQuery();
+        if ($key !== '') {
+            $export = $this->currentExport($key);
+            if (!$export) {
+                return null;
+            }
+            $spec = $export->getColumns();
+            if (is_callable($spec)) {
+                $columns = $spec();
+            } elseif (is_array($spec)) {
+                $columns = $this->selectColumns($this->defineColumns(), $spec);
+            } else {
+                $columns = $this->defineColumns()->withoutOptional();
+            }
+            return [
+                'items' => $export->applyTo($items),
+                'columns' => $columns->forExport(),
+                'fileName' => $export->getFileName(),
+            ];
+        }
+        $names = $this->currentListView()?->getExportColumns();
+        $columns = $names ? $this->selectColumns($this->defineColumns(), $names) : $this->defineColumns()->withoutOptional();
+        $plural = strtolower(DataObject::singleton($this->getManagedModel())->i18n_plural_name());
+        return [
+            'items' => $items,
+            'columns' => $columns->forExport(),
+            'fileName' => 'export-' . $plural . '-' . date('Y-m-d') . '.xlsx',
+        ];
+    }
+
+    /**
+     * Additional exports of the list, each with its own button, file name and
+     * columns (see Export and docs/columns.md).
+     *
+     * @return array<int, Export>
+     */
+    protected function defineExports(): array
+    {
+        return [];
+    }
+
+    /**
+     * The additional export with the key, if it is offered in the current view.
+     */
+    protected function currentExport(string $key): ?Export
+    {
+        $view = $this->currentListView()?->getKey();
+        foreach ($this->defineExports() as $export) {
+            if ($export->getKey() === $key && $export->isAvailableIn($view)) {
+                return $export;
+            }
+        }
+        return null;
+    }
+
+    /**
+     * Writes the records with the columns as xlsx download.
+     */
+    protected function writeXlsx(iterable $items, ColumnCollection $columns, string $fileName): void
+    {
         $spreadsheet = new Spreadsheet();
         $sheet = $spreadsheet->getActiveSheet();
-        $row = 2;
-
-        $items = $this->getQuery();
-        $names = $this->currentListView()?->getExportColumns();
-        $columns = ($names ? $this->selectColumns($this->defineColumns(), $names) : $this->defineColumns()->withoutOptional())
-            ->forExport();
-
         $col = 'A';
         foreach ($columns as $column) {
             $sheet->setCellValue($col . '1', $column->getLabel());
             $col++;
         }
-
+        $row = 2;
         foreach ($items as $item) {
             $col = 'A';
             foreach ($columns as $column) {
@@ -819,14 +891,9 @@ class FrontdeskController extends Controller implements PermissionProvider
             }
             $row++;
         }
-
-        $class = $this->getManagedModel();
-        $className = strtolower(DataObject::singleton($class)->i18n_plural_name());
-        $fileName = 'export-' . $className . '-' . date('Y-m-d') . '.xlsx';
-
         $writer = new Xlsx($spreadsheet);
         header('Content-Type: application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
-        header('Content-Disposition: attachment; filename="' . urlencode($fileName) . '"');
+        header('Content-Disposition: attachment; filename="' . rawurlencode($fileName) . '"');
         $writer->save('php://output');
     }
 
@@ -997,7 +1064,25 @@ class FrontdeskController extends Controller implements PermissionProvider
             'Primary' => false,
             'Link' => $this->Link('export') . '?' . $this->CurrentQuery(),
             'Target' => '_blank',
+            'KeepQuery' => true,
+            'ExtraQuery' => '',
         ]));
+        $view = $this->currentListView()?->getKey();
+        foreach ($this->defineExports() as $export) {
+            if (!$export->isAvailableIn($view)) {
+                continue;
+            }
+            $extra = http_build_query(['export' => $export->getKey()]);
+            $query = $this->CurrentQuery();
+            $actions->push(ArrayData::create([
+                'Title' => $export->getTitle(),
+                'Primary' => false,
+                'Link' => $this->Link('export') . '?' . ($query !== '' ? $query . '&' : '') . $extra,
+                'Target' => '_blank',
+                'KeepQuery' => true,
+                'ExtraQuery' => $extra,
+            ]));
+        }
         return $actions;
     }
 
@@ -1241,6 +1326,24 @@ class FrontdeskController extends Controller implements PermissionProvider
     public function getManagedModel(): string
     {
         return (string) self::config()->get('managed_model');
+    }
+
+    /**
+     * The value of a filter as the list is filtered with it (also when it
+     * comes from the chosen view): arrays for TreeFilter and
+     * MultiSelectFilter, else the request value. Use it in defineColumns()
+     * for columns that depend on the chosen filters.
+     */
+    protected function filterValue(string $name): mixed
+    {
+        $value = $this->listRequest()->getVar($name);
+        foreach ($this->defineFilters()->getFilters() as $filter) {
+            if ($filter->getName() === $name && $filter instanceof TreeFilter) {
+                $decoded = is_array($value) ? $value : json_decode((string) $value, true);
+                return is_array($decoded) ? array_values($decoded) : [];
+            }
+        }
+        return $value;
     }
 
     protected function getQuery()

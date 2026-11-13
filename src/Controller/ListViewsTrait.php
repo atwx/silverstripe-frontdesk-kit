@@ -3,6 +3,7 @@
 namespace Atwx\SilverstripeFrontdeskKit\Controller;
 
 use Atwx\SilverstripeFrontdeskKit\Filter\DateRangeFilter;
+use Atwx\SilverstripeFrontdeskKit\Filter\MultiSelectFilter;
 use Atwx\SilverstripeFrontdeskKit\Model\RecentView;
 use Atwx\SilverstripeFrontdeskKit\Model\SavedListView;
 use Atwx\SilverstripeFrontdeskKit\Table\ColumnCollection;
@@ -201,6 +202,9 @@ trait ListViewsTrait
                 $names[] = $filter->getName() . '_To';
             } else {
                 $names[] = $filter->getName();
+            }
+            if ($filter instanceof MultiSelectFilter && $filter->hasChoosableMatch()) {
+                $names[] = $filter->matchParamName();
             }
         }
         return $names;
