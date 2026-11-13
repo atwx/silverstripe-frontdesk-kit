@@ -3,6 +3,7 @@
 namespace Atwx\SilverstripeFrontdeskKit\Controller;
 
 use Atwx\SilverstripeFrontdeskKit\Filter\DateRangeFilter;
+use Atwx\SilverstripeFrontdeskKit\Model\RecentView;
 use Atwx\SilverstripeFrontdeskKit\Model\SavedListView;
 use Atwx\SilverstripeFrontdeskKit\Table\ColumnCollection;
 use Atwx\SilverstripeFrontdeskKit\Table\ListView;
@@ -46,6 +47,12 @@ trait ListViewsTrait
     protected function allListViews(): array
     {
         $views = $this->defineListViews();
+        if (static::config()->get('recent_views')) {
+            array_unshift($views, ListView::create(
+                'recent',
+                _t(FrontdeskController::class . '.RECENT_VIEWS', 'Recently viewed')
+            )->query(fn ($list) => RecentView::applyTo($list)));
+        }
         $memberID = (int) Security::getCurrentUser()?->ID;
         foreach (SavedListView::forList($this->listKey()) as $saved) {
             $views[] = ListView::create('saved-' . $saved->ID, (string) $saved->Title)

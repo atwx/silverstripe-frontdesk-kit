@@ -2,6 +2,8 @@ de:
   Atwx\SilverstripeFrontdeskKit\Controller\FrontdeskController:
     VIEW_ALL: 'Alle'
     VIEW_SAVE: 'Ansicht speichern'
+    RECENT_VIEWS: 'Zuletzt angesehen'
+    RECENT_VIEWS_EMPTY: 'Noch nichts angesehen.'
     VIEW_TITLE: 'Name'
     VIEW_SHARED: 'Für alle'
     VIEW_COLUMNS: 'Spalten (Liste und Export)'
