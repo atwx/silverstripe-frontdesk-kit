@@ -115,6 +115,22 @@ Controls whether the column appears in the XLSX export. Defaults to `true`.
 
 ---
 
+## Grouped rows
+
+A list can show a heading row per value of one field, e.g. schools by state:
+
+```php
+return ColumnCollection::create()
+    ->make('Name', 'Schule')->sortable()->end()
+    ->groupBy('State', 'Ohne Bundesland');          // field or has_one path ("Region.Title")
+```
+
+Records without a value are listed under the empty label. On a database field
+of the model the list is sorted by it first (empty values last), then by the
+chosen column sort; for a has_one path or a computed title
+(`groupBy('Region', '–', fn ($record) => …)`) sort the list yourself, e.g. with
+`default_sort`. Each page starts with the heading of its first group.
+
 ## Building a collection manually
 
 You can build a collection without `fromSummaryFields`:

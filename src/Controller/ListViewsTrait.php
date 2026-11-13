@@ -142,6 +142,10 @@ trait ListViewsTrait
             $byName[$column->getName()] = $column;
         }
         $selected = ColumnCollection::create();
+        $grouping = $columns->getGrouping();
+        if ($grouping) {
+            $selected->groupBy($grouping['field'], $grouping['empty'], $grouping['value']);
+        }
         foreach ($names as $name) {
             if (isset($byName[$name])) {
                 $selected->addColumn($byName[$name]);

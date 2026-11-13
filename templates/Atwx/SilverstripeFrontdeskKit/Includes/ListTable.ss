@@ -38,6 +38,9 @@
         <tbody>
             <% if $ItemRows.Count %>
                 <% loop $ItemRows %>
+                    <% if $GroupTitle %>
+                    <tr class="fdk-group-row"><th colspan="99" class="bg-base-200">$GroupTitle</th></tr>
+                    <% end_if %>
                     <tr id="fdk-row-$ID">
                         <% if $Top.BulkActions.Count %>
                             <td>

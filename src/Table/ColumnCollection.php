@@ -12,6 +12,51 @@ use SilverStripe\ORM\DataObject;
 class ColumnCollection extends ArrayList
 {
     /**
+     * @var array{field: string, empty: string, value: callable|null}|null
+     */
+    private ?array $grouping = null;
+
+    /**
+     * Rows of the list grouped by a field: a heading row per value, e.g.
+     * schools by state. $field is a field or has_one path ("State",
+     * "Region.Title"); records without a value go under $emptyLabel. A database
+     * field of the model itself also sorts the list by it first; for other
+     * paths sort the list yourself (default_sort). $value(record) may compute
+     * the group title instead.
+     */
+    public function groupBy(string $field, string $emptyLabel = '–', ?callable $value = null): static
+    {
+        $this->grouping = ['field' => $field, 'empty' => $emptyLabel, 'value' => $value];
+        return $this;
+    }
+
+    /**
+     * @return array{field: string, empty: string, value: callable|null}|null
+     */
+    public function getGrouping(): ?array
+    {
+        return $this->grouping;
+    }
+
+    /**
+     * Title of the record's group ('' when the list is not grouped).
+     */
+    public function groupTitle(DataObject $record): string
+    {
+        if (!$this->grouping) {
+            return '';
+        }
+        $value = $this->grouping['value']
+            ? ($this->grouping['value'])($record)
+            : $record->relField($this->grouping['field']);
+        if ($value instanceof DataObject) {
+            $value = $value->exists() ? $value->getTitle() : '';
+        }
+        $title = is_scalar($value) ? trim((string) $value) : '';
+        return $title !== '' ? $title : $this->grouping['empty'];
+    }
+
+    /**
      * Build a ColumnCollection from a model's $summary_fields config.
      */
     public static function fromSummaryFields(string $modelClass): static
@@ -102,6 +147,7 @@ class ColumnCollection extends ArrayList
     public function forList(): static
     {
         $collection = new static();
+        $collection->grouping = $this->grouping;
         foreach ($this->items as $col) {
             if (!$col->isOptional() && !$col->isExportOnly()) {
                 $collection->addColumn($col);
@@ -116,6 +162,7 @@ class ColumnCollection extends ArrayList
     public function withoutOptional(): static
     {
         $collection = new static();
+        $collection->grouping = $this->grouping;
         foreach ($this->items as $col) {
             if (!$col->isOptional()) {
                 $collection->addColumn($col);
@@ -130,6 +177,7 @@ class ColumnCollection extends ArrayList
     public function forExport(): static
     {
         $collection = new static();
+        $collection->grouping = $this->grouping;
         foreach ($this->items as $col) {
             if ($col->isVisibleInExport()) {
                 $collection->addColumn($col);
