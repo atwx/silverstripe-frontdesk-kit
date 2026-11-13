@@ -1170,13 +1170,17 @@ class FrontdeskController extends Controller implements PermissionProvider
         $rows = ArrayList::create();
         $columns = $this->Columns();
         $baseUrl = $this->Link();
+        $group = null;
         foreach ($this->getItems() as $record) {
+            $title = $columns->getGrouping() ? $columns->groupTitle($record) : null;
             $rows->push(ArrayData::create([
+                'GroupTitle' => $title !== null && $title !== $group ? $title : null,
                 'Record'     => $record,
                 'Cells'      => $columns->renderFor($record, $baseUrl),
                 'RowActions' => $this->RowActionsFor($record),
                 'ID'         => $record->ID,
             ]));
+            $group = $title;
         }
         return $rows;
     }
@@ -1392,7 +1396,36 @@ class FrontdeskController extends Controller implements PermissionProvider
     {
         $list = $this->defineFilters()->applyAll($this->getBaseList(), $this->listRequest());
         $list = $this->currentListView()?->applyTo($list) ?? $list;
-        return $this->applyColumnSort($list);
+        return $this->applyGroupSort($this->applyColumnSort($list));
+    }
+
+    /**
+     * Grouped lists (ColumnCollection::groupBy()) on a database field of the
+     * model: sorted by that field first, then as before.
+     *
+     * @template T of DataObject
+     * @param DataList<T> $list
+     * @return DataList<T>
+     */
+    protected function applyGroupSort(DataList $list): DataList
+    {
+        $grouping = $this->Columns()->getGrouping();
+        if (!$grouping || $grouping['value']) {
+            return $list;
+        }
+        $field = $grouping['field'];
+        $table = DataObject::getSchema()->tableForField($list->dataClass(), $field);
+        if (!$table) {
+            return $list;
+        }
+        $order = [];
+        foreach ($list->dataQuery()->query()->getOrderBy() as $expression => $dir) {
+            $order[] = $expression . ' ' . $dir;
+        }
+        // Records without a value last
+        $column = '"' . $table . '"."' . $field . '"';
+        array_unshift($order, "CASE WHEN {$column} IS NULL OR {$column} = '' THEN 1 ELSE 0 END ASC", $column . ' ASC');
+        return $list->orderBy(implode(', ', $order));
     }
 
     /**

@@ -80,6 +80,18 @@ class ListViewsTestController extends FrontdeskController implements TestOnly
     }
 }
 
+class GroupedListController extends ListViewsTestController implements TestOnly
+{
+    private static string $url_segment = 'grouped';
+
+    protected function defineColumns(): ColumnCollection
+    {
+        return ColumnCollection::create()
+            ->make('Name', 'Name')->sortable()->end()
+            ->groupBy('Kind', 'Ohne Art');
+    }
+}
+
 class ListViewsTest extends SapphireTest
 {
     protected $usesDatabase = true;
@@ -215,5 +227,19 @@ class ListViewsTest extends SapphireTest
         $titles = $controller->ListViews()->column('Title');
         $this->assertContains('Shared', $titles);
         $this->assertNull($controller->ListViews()->find('Title', 'Shared')->DeleteLink);
+    }
+
+    public function testRowsGroupedByAFieldWithHeadings(): void
+    {
+        ListViewsTestModel::create(['Name' => 'w', 'Kind' => '', 'Score' => 1])->write();
+        ListViewsTestModel::create(['Name' => 'v', 'Kind' => 'b', 'Score' => 1])->write();
+        $controller = GroupedListController::create();
+        $request = new HTTPRequest('GET', 'grouped', ['sort' => 'Name', 'dir' => 'desc']);
+        $request->setSession(new Session([]));
+        $controller->setRequest($request);
+
+        $this->assertSame(['z', 'x', 'y', 'v', 'w'], $controller->names(), 'by group, then the chosen sort');
+        $rows = $controller->ItemRows();
+        $this->assertSame(['a', null, 'b', null, 'Ohne Art'], $rows->column('GroupTitle'));
     }
 }
