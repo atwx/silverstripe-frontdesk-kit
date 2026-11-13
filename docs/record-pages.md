@@ -72,6 +72,15 @@ App\Controllers\StudentController:
 
 Running an action does not depend on the page it was shown on.
 
+View actions (links from `defineViewActions()`, e.g. a PDF) are bound the
+same way: a key `Pages` (segment or list) on the entry, or a `Name` listed in
+`record_action_pages`:
+
+```php
+$actions->push(ArrayData::create(['Title' => 'PDF', 'Link' => $pdfLink, 'Pages' => ['letters']]));
+$actions->push(ArrayData::create(['Title' => 'Vorschau Elternportal', 'Link' => $portal, 'Name' => 'portal']));
+```
+
 ## Switcher
 
 `RecordSwitcher` lists related records (e.g. the cases of the same child) between

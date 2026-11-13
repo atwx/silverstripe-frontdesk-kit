@@ -128,10 +128,32 @@ trait RecordPagesTrait
             'PageContent'      => $this->renderRecordPage($item, $current),
             'HeaderFields'     => $this->defineHeaderFields($item),
             'RecordImage'      => $this->defineRecordImage($item),
-            'ViewActions'      => $this->defineViewActions($item)->exclude('Primary', true),
+            'ViewActions'      => $this->viewActionsOnPage($item, $current->getSegment()),
             'RecordActions'    => $this->recordActionsFor($item, $current->getSegment()),
             'SubControllerData' => ArrayList::create(),
         ];
+    }
+
+    /**
+     * View actions (links) of a record page: without the primary "Edit", and
+     * only those for the page. An action is bound to pages by its key "Pages"
+     * (segment or list) or, if it has a "Name", by record_action_pages.
+     */
+    protected function viewActionsOnPage(DataObject $item, string $segment): ArrayList
+    {
+        $configured = (array) static::config()->get('record_action_pages');
+        return $this->defineViewActions($item)->exclude('Primary', true)->filterByCallback(
+            function ($action) use ($configured, $segment): bool {
+                $map = $action instanceof ArrayData ? $action->toMap() : [];
+                $pages = $map['Pages'] ?? null;
+                $name = (string) ($map['Name'] ?? '');
+                if (!$pages && $name !== '' && isset($configured[$name])) {
+                    $pages = $configured[$name];
+                }
+                $pages = is_array($pages) ? $pages : array_filter(array_map('trim', explode(',', (string) $pages)));
+                return !$pages || in_array($segment, array_map('strval', $pages), true);
+            }
+        );
     }
 
     /**
