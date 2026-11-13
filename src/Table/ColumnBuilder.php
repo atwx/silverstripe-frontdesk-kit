@@ -62,6 +62,15 @@ class ColumnBuilder
         return $this;
     }
 
+    /**
+     * Column width in the Excel export (characters).
+     */
+    public function width(?float $width): static
+    {
+        $this->column->width($width);
+        return $this;
+    }
+
     public function visibleInExport(bool $v): static
     {
         $this->column->visibleInExport($v);

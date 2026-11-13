@@ -888,26 +888,54 @@ class FrontdeskController extends Controller implements PermissionProvider
      */
     protected function writeXlsx(iterable $items, ColumnCollection $columns, string $fileName): void
     {
-        $spreadsheet = new Spreadsheet();
-        $sheet = $spreadsheet->getActiveSheet();
-        $col = 'A';
-        foreach ($columns as $column) {
-            $sheet->setCellValue($col . '1', $column->getLabel());
-            $col++;
-        }
-        $row = 2;
-        foreach ($items as $item) {
-            $col = 'A';
-            foreach ($columns as $column) {
-                $sheet->setCellValue($col . $row, $column->renderValue($item));
-                $col++;
-            }
-            $row++;
-        }
+        $spreadsheet = $this->buildSpreadsheet($items, $columns);
         $writer = new Xlsx($spreadsheet);
         header('Content-Type: application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
         header('Content-Disposition: attachment; filename="' . rawurlencode($fileName) . '"');
         $writer->save('php://output');
+    }
+
+    /**
+     * The export sheet: a bold, frozen header row with an autofilter, column
+     * widths from Column::width() (otherwise fitted to the content), values as
+     * text. Hook updateSpreadsheet(Spreadsheet, ColumnCollection).
+     *
+     * @param iterable<DataObject> $items
+     */
+    protected function buildSpreadsheet(iterable $items, ColumnCollection $columns): Spreadsheet
+    {
+        $spreadsheet = new Spreadsheet();
+        $sheet = $spreadsheet->getActiveSheet();
+        $index = 1;
+        foreach ($columns as $column) {
+            $sheet->setCellValue([$index, 1], $column->getLabel());
+            $dimension = $sheet->getColumnDimensionByColumn($index);
+            if ($column->getWidth() !== null) {
+                $dimension->setWidth($column->getWidth());
+            } else {
+                $dimension->setAutoSize(true);
+            }
+            $index++;
+        }
+        $row = 2;
+        foreach ($items as $item) {
+            $index = 1;
+            foreach ($columns as $column) {
+                $value = $column->renderValue($item);
+                $text = $value instanceof DBHTMLText ? trim(strip_tags((string) $value)) : $value;
+                $sheet->setCellValue([$index, $row], $text);
+                $index++;
+            }
+            $row++;
+        }
+        $last = $sheet->getHighestColumn();
+        if ($index > 1) {
+            $sheet->getStyle('A1:' . $last . '1')->getFont()->setBold(true);
+            $sheet->freezePane('A2');
+            $sheet->setAutoFilter('A1:' . $last . max(1, $row - 1));
+        }
+        $this->extend('updateSpreadsheet', $spreadsheet, $columns);
+        return $spreadsheet;
     }
 
     // ─── Form ─────────────────────────────────────────────────────────────────

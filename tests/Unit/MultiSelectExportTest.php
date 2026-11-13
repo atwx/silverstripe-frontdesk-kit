@@ -53,9 +53,14 @@ class MultiSelectSchoolController extends FrontdeskController implements TestOnl
         return $this->exportData($key);
     }
 
+    public function sheet(): \PhpOffice\PhpSpreadsheet\Spreadsheet
+    {
+        return $this->buildSpreadsheet($this->getQuery()->sort('Name'), $this->Columns());
+    }
+
     protected function defineColumns(): ColumnCollection
     {
-        $columns = ColumnCollection::create()->make('Name', 'Name')->end()->make('Fee', 'Fee')->end();
+        $columns = ColumnCollection::create()->make('Name', 'Name')->width(30)->end()->make('Fee', 'Fee')->end();
         foreach ((array) $this->filterValue('Sports') as $sport) {
             $columns->make('Rating_' . $sport, 'Rating ' . $sport)
                 ->format(fn ($value, $record) => str_contains((string) $record->Sports, $sport) ? 'yes' : 'no')
@@ -199,5 +204,17 @@ class MultiSelectExportTest extends SapphireTest
         $beta = MultiSelectSchool::get()->find('Name', 'Beta');
         $this->assertSame('1501', (string) $years['columns']->byName('Fee2027')?->renderValue($beta));
         $this->assertMatchesRegularExpression('/^export-years-\d{4}-\d{2}-\d{2}\.xlsx$/', $years['fileName']);
+    }
+
+    public function testSpreadsheetHeaderWidthsAndFilter(): void
+    {
+        $sheet = $this->controller()->sheet()->getActiveSheet();
+        $this->assertSame('Name', $sheet->getCell('A1')->getValue());
+        $this->assertSame('Alpha', $sheet->getCell('A2')->getValue());
+        $this->assertTrue($sheet->getStyle('A1')->getFont()->getBold());
+        $this->assertSame(30.0, $sheet->getColumnDimension('A')->getWidth());
+        $this->assertTrue($sheet->getColumnDimension('B')->getAutoSize(), 'no width: fitted');
+        $this->assertSame('A2', $sheet->getFreezePane());
+        $this->assertSame('A1:B4', $sheet->getAutoFilter()->getRange());
     }
 }

@@ -139,6 +139,16 @@ protected function defineColumns(): ColumnCollection
 The XLSX export (available at `/contacts/export`) uses the same `ColumnCollection`, filtered to `visibleInExport() === true`. The export link appears automatically in the page actions bar.
 It exports the list as filtered on screen (also after filtering with htmx).
 
+The sheet has a bold, frozen header row with an autofilter. Columns fit their
+content unless they set a width (in characters, as in Excel):
+
+```php
+$columns->make('Name', 'Schule')->width(40)->end();
+```
+
+HTML values are exported as plain text. To change the sheet further, use the
+extension hook `updateSpreadsheet(Spreadsheet $spreadsheet, ColumnCollection $columns)`.
+
 ### Additional exports
 
 A list can offer more export buttons, each with its own title, file name and
