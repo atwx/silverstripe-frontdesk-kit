@@ -10,6 +10,7 @@ use Atwx\SilverstripeFrontdeskKit\Forms\FileUploadField;
 use Atwx\SilverstripeFrontdeskKit\Forms\RecordFieldNames;
 use Atwx\SilverstripeFrontdeskKit\Forms\RecordFiles;
 use Atwx\SilverstripeFrontdeskKit\Forms\SearchableDropdownField;
+use Atwx\SilverstripeFrontdeskKit\Model\RecentView;
 use Atwx\SilverstripeFrontdeskKit\Table\BulkAction;
 use Atwx\SilverstripeFrontdeskKit\Table\ColumnCollection;
 use Atwx\SilverstripeFrontdeskKit\Table\RecordAction;
@@ -37,6 +38,7 @@ use SilverStripe\Model\List\PaginatedList;
 use SilverStripe\ORM\DataList;
 use SilverStripe\ORM\DataObject;
 use SilverStripe\ORM\FieldType\DBHTMLText;
+use SilverStripe\Security\Member;
 use SilverStripe\Security\Permission;
 use SilverStripe\Security\PermissionProvider;
 use SilverStripe\Security\Security;
@@ -53,6 +55,16 @@ class FrontdeskController extends Controller implements PermissionProvider
     private static $title = '';
     private static $logo = null; // Configured via YAML; read by FrontdeskTemplateProvider
     private static $page_length = 30;
+
+    /**
+     * "Recently viewed": true notes every view of a record page per member and
+     * offers the list view "Zuletzt angesehen"; a number also sets how many
+     * records of this type are kept per member (default
+     * RecentView.max_per_class). See docs/recent-views.md.
+     *
+     * @var bool|int
+     */
+    private static $recent_views = false;
 
     /**
      * Main navigation entries, keyed by arbitrary identifier. Each entry:
@@ -435,6 +447,7 @@ class FrontdeskController extends Controller implements PermissionProvider
         if (!$item) {
             return $this->httpError(404);
         }
+        $this->noteRecentView($item);
         $title = $item->hasMethod('Title') ? $item->Title() : ($item->getTitle() ?: $item->singular_name() . ' #' . $item->ID);
         $pages = $this->defineRecordPages($item);
         if ($pages) {
@@ -451,6 +464,40 @@ class FrontdeskController extends Controller implements PermissionProvider
             'TimelineTitle'     => $this->timelineTitle(),
             'SubControllerData' => $this->getSubControllerData($item),
         ];
+    }
+
+    /**
+     * Notes the view of the record and of its related records
+     * (recentViewRecords()) for the current member, if `recent_views` is on.
+     */
+    protected function noteRecentView(DataObject $record): void
+    {
+        if (!static::config()->get('recent_views') || $this->isHtmxRequest()) {
+            return;
+        }
+        RecentView::note($record, static::class);
+        $related = $this->recentViewRecords($record);
+        $this->extend('updateRecentViewRecords', $related, $record);
+        foreach ($related as $other) {
+            if (!$other instanceof DataObject || !$other->exists()) {
+                continue;
+            }
+            $controller = RecentView::controllerFor($other::class);
+            if ($controller ? singleton($controller)->canViewRecord($other) : $other->canView()) {
+                RecentView::note($other, (string) $controller);
+            }
+        }
+    }
+
+    /**
+     * Records noted as viewed together with the record, e.g. the family of a
+     * student. They are listed under their own controller.
+     *
+     * @return array<int, DataObject>
+     */
+    protected function recentViewRecords(DataObject $record): array
+    {
+        return [];
     }
 
     protected function getSubControllerData(DataObject $record): ArrayList
@@ -642,6 +689,7 @@ class FrontdeskController extends Controller implements PermissionProvider
             if ($item) {
                 $this->beforeDelete($item);
                 $item->delete();
+                RecentView::forget($item);
                 $this->afterDelete($item);
             }
         }
@@ -1272,6 +1320,19 @@ class FrontdeskController extends Controller implements PermissionProvider
      *
      * @param string $permission canView, canEdit or canDelete
      */
+    /**
+     * Whether the member (default: current) may open the record here: access
+     * to this controller, the record in its base list, and with
+     * check_record_permissions the record's own canView().
+     */
+    public function canViewRecord(DataObject $record, ?Member $member = null): bool
+    {
+        if (!$this->canView($member) || !$this->getBaseList()->filter('ID', $record->ID)->exists()) {
+            return false;
+        }
+        return !static::config()->get('check_record_permissions') || $record->canView($member);
+    }
+
     protected function findRecord(int $id, string $permission = 'canView'): ?DataObject
     {
         $item = $id ? $this->getBaseList()->byID($id) : null;
