@@ -67,9 +67,13 @@ the kit switches it back to the site's themes:
 Atwx\SilverstripeFrontdeskKit\Security\FrontdeskSecurityExtension:
   replace_login_forms: true          # false: keep the login-forms look
   silvergate_login_url: 'https://intra.atw.io'  # default; or FRONTDESK_SILVERGATE_URL in .env
+  silvergate_login_path: '/websites/website-login?domain={host}'  # default
 ```
 
 With atwx/silverstripe-gate-client installed, the login page shows "Über Silvergate anmelden" below the form.
+It links straight to the manager's login for the site's domain,
+e.g. `https://intra.atw.io/websites/website-login?domain=flow-demo.atw.cx`; the manager checks the
+member's permission for the domain and logs them in. A `silvergate_login_url` containing `{host}` is used as is.
 
 ## Error pages
 

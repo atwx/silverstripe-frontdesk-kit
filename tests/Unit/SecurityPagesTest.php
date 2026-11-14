@@ -5,6 +5,7 @@ namespace Atwx\SilverstripeFrontdeskKitTests\Unit;
 use Atwx\SilverstripeFrontdeskKit\Security\FrontdeskErrorExtension;
 use Atwx\SilverstripeFrontdeskKit\Security\FrontdeskSecurityExtension;
 use SilverStripe\Control\Controller;
+use SilverStripe\Control\Director;
 use SilverStripe\Core\Config\Config;
 use SilverStripe\Dev\FunctionalTest;
 use SilverStripe\Dev\TestOnly;
@@ -56,16 +57,32 @@ class SecurityPagesTest extends FunctionalTest
         $this->assertSame('alert-error', $extension->FrontdeskAlertClass('bad'));
         $this->assertSame('alert-warning', $extension->FrontdeskAlertClass('warning'));
         $this->assertSame('alert-info', $extension->FrontdeskAlertClass(null));
+        $host = rawurlencode((string) parse_url(Director::absoluteBaseURL(), PHP_URL_HOST));
 
         $this->assertStringContainsString(
-            class_exists('Atwx\\SilverGateClient\\Controllers\\LoginController') ? 'href="https://intra.atw.io"' : 'fdk-security',
+            class_exists('Atwx\\SilverGateClient\\Controllers\\LoginController')
+                ? 'href="https://intra.atw.io/websites/website-login?domain=' . $host . '"'
+                : 'fdk-security',
             (string) $this->get('Security/login')->getBody(),
-            'default: the Silvergate manager'
+            'default: the manager\'s login for this domain'
         );
         Config::modify()->set(FrontdeskSecurityExtension::class, 'silvergate_login_url', 'https://gate.example.org/');
         $body = (string) $this->get('Security/login')->getBody();
         if (class_exists('Atwx\\SilverGateClient\\Controllers\\LoginController')) {
-            $this->assertStringContainsString('href="https://gate.example.org/"', $body);
+            $this->assertStringContainsString(
+                'href="https://gate.example.org/websites/website-login?domain=' . $host . '"',
+                $body
+            );
+            Config::modify()->set(
+                FrontdeskSecurityExtension::class,
+                'silvergate_login_url',
+                'https://gate.example.org/in/{host}'
+            );
+            $this->assertStringContainsString(
+                'href="https://gate.example.org/in/' . $host . '"',
+                (string) $this->get('Security/login')->getBody(),
+                'own URL pattern'
+            );
             $lost = (string) $this->get('Security/lostpassword')->getBody();
             $this->assertStringNotContainsString('gate.example.org', $lost, 'only on the login page');
         } else {
