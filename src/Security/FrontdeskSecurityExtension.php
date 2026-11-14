@@ -2,6 +2,7 @@
 
 namespace Atwx\SilverstripeFrontdeskKit\Security;
 
+use SilverStripe\Control\Director;
 use SilverStripe\Core\Config\Config;
 use SilverStripe\Core\Environment;
 use SilverStripe\Core\Extension;
@@ -27,12 +28,20 @@ class FrontdeskSecurityExtension extends Extension
     private static bool $replace_login_forms = true;
 
     /**
-     * Where a "Log in via Silvergate" button links to (the Silvergate manager),
-     * shown on the login page when atwx/silverstripe-gate-client is installed.
-     * The environment variable FRONTDESK_SILVERGATE_URL takes precedence; an
-     * empty value hides the button.
+     * Where a "Log in via Silvergate" button links to, shown on the login page
+     * when atwx/silverstripe-gate-client is installed: the Silvergate manager.
+     * The button goes straight to the manager's login for this site's domain
+     * ({host} is replaced by it); a plain manager URL gets the path
+     * silvergate_login_path appended. The environment variable
+     * FRONTDESK_SILVERGATE_URL takes precedence; an empty value hides the button.
      */
     private static string $silvergate_login_url = 'https://intra.atw.io';
+
+    /**
+     * Path of the manager's direct login for a domain, appended to a
+     * silvergate_login_url without {host}.
+     */
+    private static string $silvergate_login_path = '/websites/website-login?domain={host}';
 
     private const string LOGIN_FORMS = 'SilverStripe\\LoginForms\\EnablerExtension';
 
@@ -72,6 +81,10 @@ class FrontdeskSecurityExtension extends Extension
         if ($url === '' || strtolower((string) $this->getOwner()->getAction()) !== 'login' || $request->param('ID')) {
             return null;
         }
-        return $url;
+        if (!str_contains($url, '{host}')) {
+            $url = rtrim($url, '/') . (string) Config::inst()->get(self::class, 'silvergate_login_path');
+        }
+        $host = (string) parse_url(Director::absoluteBaseURL(), PHP_URL_HOST);
+        return str_replace('{host}', rawurlencode($host), $url);
     }
 }
