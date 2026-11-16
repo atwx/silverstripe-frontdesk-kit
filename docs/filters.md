@@ -117,6 +117,14 @@ Request parameters are `Created_From` and `Created_To`.
 
 ---
 
+## When the list reloads
+
+Selects, checkboxes, dates and searchable dropdowns reload the list on change;
+text fields reload it 400 ms after typing (and on Enter), but not again when
+the field is left. A newer request replaces one still running (`hx-sync`).
+
+---
+
 ## Combining multiple filters
 
 All active filters are applied in sequence. The result is the intersection (AND logic):

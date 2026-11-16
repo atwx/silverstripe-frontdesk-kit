@@ -754,7 +754,17 @@ class FrontdeskController extends Controller implements PermissionProvider
             return $this->httpError(400);
         }
         $ids = array_filter(array_map('intval', (array) $request->postVar('ids')));
-        $records = $this->getBaseList()->filter('ID', $ids ?: [0]);
+        $back = (string) $request->postVar('BackURL');
+        $backURL = Director::is_site_url($back) ? $back : $this->Link();
+        if (!$ids) {
+            // Nothing chosen (e.g. the list was reloaded meanwhile): do not run the action.
+            $request->getSession()->set(
+                'FrontdeskBulkMessage',
+                _t(self::class . '.BULK_NONE_SELECTED', 'No records selected.')
+            );
+            return $this->redirect($backURL);
+        }
+        $records = $this->getBaseList()->filter('ID', $ids);
         if (static::config()->get('check_record_permissions')) {
             $allowed = [];
             foreach ($records as $record) {
@@ -772,8 +782,7 @@ class FrontdeskController extends Controller implements PermissionProvider
         if (is_string($result) && $result !== '') {
             $request->getSession()->set('FrontdeskBulkMessage', $result);
         }
-        $back = (string) $request->postVar('BackURL');
-        return $this->redirect(Director::is_site_url($back) ? $back : $this->Link());
+        return $this->redirect($backURL);
     }
 
     /**
@@ -804,9 +813,13 @@ class FrontdeskController extends Controller implements PermissionProvider
         return ArrayList::create($entries);
     }
 
+    /**
+     * Bulk actions of the list; none for members who may not edit (the bulk
+     * action itself requires canEdit()), so they get no checkboxes either.
+     */
     public function BulkActions(): ArrayList
     {
-        return ArrayList::create($this->defineBulkActions());
+        return ArrayList::create($this->canEdit() ? $this->defineBulkActions() : []);
     }
 
     /**

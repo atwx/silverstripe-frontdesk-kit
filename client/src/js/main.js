@@ -46,6 +46,17 @@ window.fdkSearchable = () => ({
     },
 });
 
+// ─── Filter bar triggers ─────────────────────────────────────────────────────
+// Text fields reload the list while typing (delayed "input"); their "change" on
+// leaving the field must not reload it a second time, or a row checkbox clicked
+// right then is replaced. The search box of a searchable dropdown never reloads
+// (its hidden input fires "change" when an option is picked).
+
+const fdkTypedFields = 'input[type=text], input[type=search], input:not([type]), textarea';
+
+window.fdkFilterChange = (el) => !(el instanceof Element && el.matches(fdkTypedFields));
+window.fdkFilterInput = (el) => el instanceof Element && el.matches(fdkTypedFields) && !el.closest('.fdk-searchable');
+
 const fdkIcons = { Pencil, Trash2, ExternalLink, Github, KeyRound, Download, FileText, Printer, Minimize2, Maximize2 };
 
 // ─── Checkbox tree ([data-fdk-checkbox-tree]) ────────────────────────────────
@@ -109,6 +120,77 @@ function initFdkToggleAll(root = document) {
     });
 }
 
+// ─── Searchable record switcher ([data-fdk-switcher-search]) ────────────────
+// A search box above the options filters them; Enter opens the first match,
+// Escape closes the list.
+
+document.addEventListener('toggle', (e) => {
+    const details = e.target;
+    if (details instanceof HTMLDetailsElement && details.open && details.matches('[data-fdk-switcher-search]')) {
+        const input = details.querySelector('input[type=search]');
+        input.value = '';
+        input.dispatchEvent(new Event('input', { bubbles: true }));
+        // The list is still hidden while daisyUI's open transition starts.
+        requestAnimationFrame(() => input.focus());
+    }
+}, true);
+
+document.addEventListener('input', (e) => {
+    const details = e.target instanceof Element ? e.target.closest('[data-fdk-switcher-search]') : null;
+    if (!details) return;
+    const q = e.target.value.trim().toLowerCase();
+    let shown = 0;
+    details.querySelectorAll('li[data-search]').forEach((li) => {
+        const match = !q || li.dataset.search.includes(q);
+        li.hidden = !match;
+        shown += match ? 1 : 0;
+    });
+    details.querySelector('.fdk-switcher-empty').hidden = shown > 0;
+});
+
+document.addEventListener('keydown', (e) => {
+    const details = e.target instanceof Element ? e.target.closest('[data-fdk-switcher-search]') : null;
+    if (!details) return;
+    if (e.key === 'Escape') {
+        details.open = false;
+        details.querySelector('summary').focus();
+    } else if (e.key === 'Enter' && e.target.matches('input[type=search]')) {
+        e.preventDefault();
+        const first = details.querySelector('li[data-search]:not([hidden]) a');
+        if (first) window.location.href = first.href;
+    }
+});
+
+// ─── Select all / none for checkbox sets ([data-fdk-select-all]) ────────────
+// The attribute holds the label of "all", data-fdk-select-none the one of
+// "none"; disabled checkboxes are left as they are.
+
+function initFdkSelectAll(root = document) {
+    root.querySelectorAll('[data-fdk-select-all]').forEach((set) => {
+        if (set.__fdkSelectAll) return;
+        set.__fdkSelectAll = true;
+        const button = (label, checked) => {
+            const b = document.createElement('button');
+            b.type = 'button';
+            b.className = 'link link-hover link-primary';
+            b.textContent = label;
+            b.addEventListener('click', () => {
+                set.querySelectorAll('input[type=checkbox]:not(:disabled)').forEach((c) => {
+                    if (c.checked !== checked) {
+                        c.checked = checked;
+                        c.dispatchEvent(new Event('change', { bubbles: true }));
+                    }
+                });
+            });
+            return b;
+        };
+        const bar = document.createElement('div');
+        bar.className = 'fdk-select-all flex gap-3 mb-1 text-sm';
+        bar.append(button(set.dataset.fdkSelectAll, true), button(set.dataset.fdkSelectNone || '–', false));
+        set.parentNode.insertBefore(bar, set);
+    });
+}
+
 function initFdkCharts(root = document) {
     root.querySelectorAll('[data-fdk-chart]').forEach((canvas) => {
         if (canvas.__fdkChart) {
@@ -129,6 +211,17 @@ document.addEventListener('DOMContentLoaded', () => {
     initFdkCharts();
     initFdkCheckboxTrees();
     initFdkToggleAll();
+    initFdkSelectAll();
+});
+
+// Keep the chosen rows when the list is reloaded (filters, paging): the bulk
+// form posts the checkboxes of the rows, so a reload must not lose them.
+let fdkKeptIds = null;
+document.addEventListener('htmx:beforeSwap', (e) => {
+    const target = e.detail.target;
+    if (target && target.id === 'fdk-list-region') {
+        fdkKeptIds = new Set(Array.from(target.querySelectorAll('input[name="ids[]"]:checked'), (c) => c.value));
+    }
 });
 
 document.addEventListener('htmx:afterSwap', (e) => {
@@ -136,6 +229,15 @@ document.addEventListener('htmx:afterSwap', (e) => {
     initFdkCharts(e.target || document);
     initFdkCheckboxTrees(e.target || document);
     initFdkToggleAll(e.target || document);
+    initFdkSelectAll(e.target || document);
+    if (fdkKeptIds && e.target && e.target.id === 'fdk-list-region') {
+        e.target.querySelectorAll('input[name="ids[]"]').forEach((c) => {
+            if (fdkKeptIds.has(c.value)) {
+                c.checked = true;
+            }
+        });
+        fdkKeptIds = null;
+    }
 });
 
 // Export links: use the filters currently in the address bar (htmx updates

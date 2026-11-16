@@ -25,6 +25,7 @@ en:
     ACTION_BULK_APPLY: 'Apply'
     LABEL_SELECT_ALL: 'Select all'
     LABEL_SELECT_RECORD: 'Select record'
+    BULK_NONE_SELECTED: 'No records selected.'
     # Filter bar
     ACTION_FILTER: 'Filter'
     ACTION_RESET: 'Reset'
@@ -100,3 +101,9 @@ en:
     SETTINGS: 'Settings'
     LOGOUT: 'Log out'
     LOGIN: 'Log in'
+  Atwx\SilverstripeFrontdeskKit\View\RecordSwitcher:
+    SEARCH: 'Search'
+    NO_MATCH: 'No matches'
+  Atwx\SilverstripeFrontdeskKit\Forms\CheckboxSetSelectAll:
+    ALL: 'Select all'
+    NONE: 'None'
