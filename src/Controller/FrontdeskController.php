@@ -34,6 +34,7 @@ use SilverStripe\Forms\Form;
 use SilverStripe\Forms\FormAction;
 use SilverStripe\Forms\HiddenField;
 use SilverStripe\Forms\LiteralField;
+use SilverStripe\Forms\Validation\RequiredFieldsValidator;
 use SilverStripe\i18n\i18n;
 use SilverStripe\Model\List\ArrayList;
 use SilverStripe\Model\ArrayData;
@@ -144,6 +145,7 @@ class FrontdeskController extends Controller implements PermissionProvider
         'delete'       => '->canEdit',
         'export',
         'bulk'         => '->canEdit',
+        'bulkdialog'   => '->canEdit',
         'recordaction',
         'saveview',
         'deleteview',
@@ -735,36 +737,105 @@ class FrontdeskController extends Controller implements PermissionProvider
 
     /**
      * Applies a bulk action to the selected records (POST with CSRF token).
-     * Records are loaded from the base list; with check_record_permissions only
-     * records the user may edit are passed to the handler.
+     * The records are the checked ones (ids[]) or, with all=1, all records of
+     * the list as filtered by the query string of the request; with
+     * check_record_permissions only records the user may edit are passed to
+     * the handler. Actions with fields() run through bulkdialog instead.
      */
     public function bulk(HTTPRequest $request)
     {
         if (!$request->isPOST() || !SecurityToken::inst()->checkRequest($request)) {
             return $this->httpError(400);
         }
-        [$name, $option] = array_pad(explode(':', (string) $request->postVar('BulkAction'), 2), 2, null);
-        $action = null;
-        foreach ($this->defineBulkActions() as $candidate) {
-            if ($candidate->getName() === $name) {
-                $action = $candidate;
-            }
-        }
-        if (!$action || ($action->getOptions() && !array_key_exists((string) $option, $action->getOptions()))) {
+        [$action, $option] = $this->requestedBulkAction($request);
+        if (!$action || $action->hasFields()) {
             return $this->httpError(400);
         }
-        $ids = array_filter(array_map('intval', (array) $request->postVar('ids')));
-        $back = (string) $request->postVar('BackURL');
-        $backURL = Director::is_site_url($back) ? $back : $this->Link();
-        if (!$ids) {
+        $backURL = $this->bulkBackURL($request);
+        $records = $this->bulkRecords($request);
+        if (!$records->exists()) {
             // Nothing chosen (e.g. the list was reloaded meanwhile): do not run the action.
-            $request->getSession()->set(
-                'FrontdeskBulkMessage',
-                _t(self::class . '.BULK_NONE_SELECTED', 'No records selected.')
-            );
+            $this->setBulkMessage(_t(self::class . '.BULK_NONE_SELECTED', 'No records selected.'));
             return $this->redirect($backURL);
         }
-        $records = $this->getBaseList()->filter('ID', $ids);
+        return $this->bulkResult($action->handle($records, $option), $backURL, false);
+    }
+
+    /**
+     * Dialog of a bulk action with fields() (in the modal): POST from the bulk
+     * bar opens it for the chosen records, POST with BulkSubmit validates the
+     * fields and runs the action (htmx: redirect via HX-Redirect).
+     */
+    public function bulkdialog(HTTPRequest $request)
+    {
+        if (!$request->isPOST() || !SecurityToken::inst()->checkRequest($request)) {
+            return $this->httpError(400);
+        }
+        [$action] = $this->requestedBulkAction($request);
+        if (!$action || !$action->hasFields()) {
+            return $this->httpError(400);
+        }
+        $records = $this->bulkRecords($request);
+        $count = $records->count();
+        $form = $this->bulkActionForm($action, $request, $count);
+        $htmx = $this->isHtmxRequest();
+        if ($request->postVar('BulkSubmit') && $count > 0) {
+            $form->loadDataFrom($request->postVars());
+            if ($form->validate()->isValid()) {
+                $data = [];
+                foreach ($action->getFields()->dataFields() as $name => $field) {
+                    $data[$name] = $form->Fields()->dataFieldByName($name)?->dataValue();
+                }
+                return $this->bulkResult($action->handle($records, $data), $this->bulkBackURL($request), $htmx);
+            }
+        }
+        $title = $action->getLabel();
+        if ($htmx) {
+            return $this->renderPartial(
+                'Atwx\\SilverstripeFrontdeskKit\\Includes\\EditFormModal',
+                ['Form' => $form, 'Title' => $title, 'Item' => null]
+            );
+        }
+        return ['Title' => $title, 'Form' => $form, 'Actions' => false];
+    }
+
+    /**
+     * The bulk action named in BulkAction ("<name>" or "<name>:<option>") and
+     * the option; [null, null] for an unknown action or option.
+     *
+     * @return array{0: ?BulkAction, 1: ?string}
+     */
+    protected function requestedBulkAction(HTTPRequest $request): array
+    {
+        [$name, $option] = array_pad(explode(':', (string) $request->requestVar('BulkAction'), 2), 2, null);
+        foreach ($this->defineBulkActions() as $candidate) {
+            if ($candidate->getName() !== $name) {
+                continue;
+            }
+            if ($candidate->getOptions() && !array_key_exists((string) $option, $candidate->getOptions())) {
+                return [null, null];
+            }
+            return [$candidate, $option];
+        }
+        return [null, null];
+    }
+
+    /**
+     * Records a bulk action applies to: the checked ones (ids[]) or, with
+     * all=1, all records of the list filtered like the list (the request's
+     * query string carries the list's filters and view); always within the
+     * base list, with check_record_permissions only editable ones.
+     *
+     * @return DataList<DataObject>
+     */
+    protected function bulkRecords(HTTPRequest $request): DataList
+    {
+        if ($request->requestVar('all')) {
+            $records = $this->getQuery();
+        } else {
+            $ids = array_filter(array_map('intval', (array) $request->requestVar('ids')));
+            $records = $this->getBaseList()->filter('ID', $ids ?: [0]);
+        }
         if (static::config()->get('check_record_permissions')) {
             $allowed = [];
             foreach ($records as $record) {
@@ -774,15 +845,81 @@ class FrontdeskController extends Controller implements PermissionProvider
             }
             $records = $records->filter('ID', $allowed ?: [0]);
         }
+        return $records;
+    }
 
-        $result = $action->handle($records, $option);
+    protected function bulkBackURL(HTTPRequest $request): string
+    {
+        $back = (string) $request->requestVar('BackURL');
+        return Director::is_site_url($back) ? $back : $this->Link();
+    }
+
+    protected function setBulkMessage(string $message): void
+    {
+        $this->getRequest()->getSession()->set('FrontdeskBulkMessage', $message);
+    }
+
+    /**
+     * Response after a bulk action: the handler's response, or back to the
+     * list with its message (for htmx via HX-Redirect).
+     */
+    protected function bulkResult(HTTPResponse|string|null $result, string $backURL, bool $htmx): HTTPResponse
+    {
         if ($result instanceof HTTPResponse) {
             return $result;
         }
         if (is_string($result) && $result !== '') {
-            $request->getSession()->set('FrontdeskBulkMessage', $result);
+            $this->setBulkMessage($result);
+        }
+        if ($htmx) {
+            return HTTPResponse::create('', 200)->addHeader('HX-Redirect', $backURL);
         }
         return $this->redirect($backURL);
+    }
+
+    /**
+     * Form of a bulk action with fields(): its fields, the selection (hidden),
+     * a hint "for N entries" and required fields; posts to bulkdialog with the
+     * list's query string, via htmx into the modal (not for newWindow()).
+     */
+    protected function bulkActionForm(BulkAction $action, HTTPRequest $request, int $count): Form
+    {
+        $fields = $action->getFields();
+        $fields->unshift(LiteralField::create('BulkCount', '<p class="fdk-bulk-dialog-count text-sm opacity-70 mb-2">'
+            . htmlspecialchars($count > 0
+                ? _t(self::class . '.BULK_FOR_COUNT', 'For {count} entries', ['count' => $count])
+                : _t(self::class . '.BULK_NONE_SELECTED', 'No records selected.'))
+            . '</p>'));
+        $fields->push(HiddenField::create('BulkAction', 'BulkAction', $action->getName()));
+        $fields->push(HiddenField::create('BulkSubmit', 'BulkSubmit', '1'));
+        $fields->push(HiddenField::create('BackURL', 'BackURL', $this->bulkBackURL($request)));
+        $fields->push(HiddenField::create('all', 'all', $request->requestVar('all') ? '1' : ''));
+        $ids = array_filter(array_map('intval', (array) $request->requestVar('ids')));
+        $fields->push(LiteralField::create('BulkIds', implode('', array_map(
+            fn (int $id) => '<input type="hidden" name="ids[]" value="' . $id . '">',
+            $ids
+        ))));
+        $actions = FieldList::create(
+            LiteralField::create('Cancel', '<a href="javascript:void(0);" onclick="var d=this.closest(\'dialog\'); '
+                . 'if(d){d.close();return false;} history.back();" class="btn">'
+                . _t(self::class . '.ACTION_CANCEL', 'Cancel') . '</a>')
+        );
+        if ($count > 0) {
+            $actions->unshift(FormAction::create('doBulk', $action->getSubmitLabel())->addExtraClass('btn-primary'));
+        }
+        $form = Form::create($this, 'BulkActionForm', $fields, $actions);
+        if ($action->getRequiredFields()) {
+            $form->setValidator(RequiredFieldsValidator::create($action->getRequiredFields()));
+        }
+        $query = http_build_query($request->getVars());
+        $form->setFormAction($this->Link('bulkdialog') . ($query !== '' ? '?' . $query : ''));
+        if ($action->opensNewWindow()) {
+            $form->setAttribute('target', '_blank');
+        } else {
+            $form->setAttribute('hx-post', $form->FormAction());
+            $form->setAttribute('hx-target', '#fdk-modal-content');
+        }
+        return $form;
     }
 
     /**

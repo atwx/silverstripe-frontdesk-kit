@@ -15,7 +15,7 @@
 </div>
 <% end_if %>
 
-<div class="fdk-table-wrapper">
+<div class="fdk-table-wrapper" data-fdk-total="$Items.TotalItems">
     <table class="table table-zebra w-full fdk-stack">
         <thead>
             <tr>

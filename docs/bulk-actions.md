@@ -52,3 +52,44 @@ instead.
 
 Members without edit permission on the controller see neither the bulk actions
 nor the row checkboxes.
+
+## Counter and all matches
+
+The bulk bar shows how many rows are checked ("12 ausgewählt"). When the
+whole page is checked and the filter has more matches, it offers "Alle 37
+Treffer auswählen": the action then applies to all records of the filtered
+list (all pages). The browser sends `all=1` with the list's query string
+instead of `ids[]`; the controller resolves it with the same filters, view
+and base list as the list (`bulkRecords()`), so the handler gets the same
+kind of `DataList` either way. Paging keeps the mode, changing a filter ends it.
+
+## Actions with fields
+
+`fields()` asks for values in a dialog before the action runs. The dialog
+says for how many entries, validates (required fields and the fields' own
+validation) and shows errors in place. The handler gets the records and the
+values of these fields; field values set in the list are the defaults:
+
+```php
+BulkAction::create('assign', 'Zuteilen …', function (DataList $records, array $data) {
+    foreach ($records as $person) {
+        $person->Area = $data['Area'];
+        $person->Status = $data['Status'];
+        $person->write();
+    }
+    return $records->count() . ' Personen zugeteilt.';
+})
+    ->fields(fn () => FieldList::create(
+        DropdownField::create('Area', 'Bereich', $areas)->setHasEmptyDefault(true),
+        DropdownField::create('Status', 'Status', $statuses)->setValue('invited')
+    ), ['Area', 'Status'])
+    ->submitLabel('Zuteilen');
+```
+
+- `fields(FieldList|callable $fields, array $required = [])`: the callable
+  is called when the dialog opens (e.g. for options from the database).
+- `submitLabel()`: text of the dialog's button (default: the action's label).
+- `confirm()` is not needed (the dialog is the confirmation); `newWindow()`
+  submits the dialog into a new tab (for a file shown in the browser).
+- Actions with `options()` work as before; an action uses either
+  `options()` or `fields()`.
