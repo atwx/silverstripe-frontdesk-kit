@@ -31,6 +31,10 @@ en:
     BULK_ALL_MATCHES_SELECTED: 'All {count} matches selected'
     BULK_CLEAR: 'Clear selection'
     BULK_FOR_COUNT: 'For {count} entries'
+    COLUMNS: 'Columns'
+    COLUMNS_SHARED: 'Applies to everyone.'
+    COLUMNS_APPLY: 'Apply'
+    COLUMNS_RESET: 'Default'
     # Filter bar
     ACTION_FILTER: 'Filter'
     ACTION_RESET: 'Reset'

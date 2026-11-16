@@ -4,11 +4,13 @@ namespace Atwx\SilverstripeFrontdeskKit\Controller;
 
 use Atwx\SilverstripeFrontdeskKit\Filter\DateRangeFilter;
 use Atwx\SilverstripeFrontdeskKit\Filter\MultiSelectFilter;
+use Atwx\SilverstripeFrontdeskKit\Model\ListColumnChoice;
 use Atwx\SilverstripeFrontdeskKit\Model\RecentView;
 use Atwx\SilverstripeFrontdeskKit\Model\SavedListView;
 use Atwx\SilverstripeFrontdeskKit\Table\ColumnCollection;
 use Atwx\SilverstripeFrontdeskKit\Table\ListView;
 use SilverStripe\Control\Controller;
+use SilverStripe\Control\Director;
 use SilverStripe\Control\HTTPRequest;
 use SilverStripe\Model\List\ArrayList;
 use SilverStripe\Model\ArrayData;
@@ -212,6 +214,138 @@ trait ListViewsTrait
             ]));
         }
         return $result;
+    }
+
+    // ─── Column choice ("Spalten" menu) ───────────────────────────────────────
+
+    /**
+     * Key the column choice is stored under (default: the list). Override to
+     * store it per context, e.g. 'campaign-' . $this->getParentID().
+     */
+    protected function columnChoiceKey(): string
+    {
+        return 'list:' . $this->listKey();
+    }
+
+    /**
+     * true: one choice for everyone using the key (only editors may change it);
+     * false (default): each member chooses for themselves.
+     */
+    protected function columnChoiceShared(): bool
+    {
+        return false;
+    }
+
+    /**
+     * Columns offered in the menu: all columns of defineColumns() that are not
+     * export-only, including optional() ones (which are hidden by default).
+     * Columns built from data (e.g. form questions) belong in defineColumns().
+     */
+    protected function choosableColumns(): ColumnCollection
+    {
+        $choosable = ColumnCollection::create();
+        foreach ($this->defineColumns() as $column) {
+            if (!$column->isExportOnly()) {
+                $choosable->addColumn($column);
+            }
+        }
+        return $choosable;
+    }
+
+    protected function columnChoiceMemberID(): int
+    {
+        return $this->columnChoiceShared() ? 0 : (int) Security::getCurrentUser()?->ID;
+    }
+
+    /**
+     * Names of the chosen columns, null when nothing was chosen.
+     *
+     * @return array<int, string>|null
+     */
+    protected function chosenColumnNames(): ?array
+    {
+        if (!static::config()->get('column_choice')) {
+            return null;
+        }
+        $memberID = $this->columnChoiceMemberID();
+        if (!$memberID && !$this->columnChoiceShared()) {
+            return null;
+        }
+        return ListColumnChoice::find($this->columnChoiceKey(), $memberID)?->columnNames();
+    }
+
+    /**
+     * Whether the "Spalten" menu is shown: enabled (config column_choice), more
+     * than one column to choose, no view with its own columns, and allowed
+     * (shared choices only for editors).
+     */
+    public function CanChooseColumns(): bool
+    {
+        if (!static::config()->get('column_choice') || !Security::getCurrentUser() || !$this->canView()) {
+            return false;
+        }
+        if ($this->currentListView()?->getColumns()) {
+            return false;
+        }
+        if ($this->columnChoiceShared() && !$this->canEdit()) {
+            return false;
+        }
+        return $this->choosableColumns()->count() > 1;
+    }
+
+    public function ColumnChoiceIsShared(): bool
+    {
+        return $this->columnChoiceShared();
+    }
+
+    /**
+     * Entries of the "Spalten" menu (checked: shown now).
+     */
+    public function ColumnChoice(): ArrayList
+    {
+        $shown = [];
+        foreach ($this->Columns() as $column) {
+            $shown[$column->getName()] = true;
+        }
+        $result = ArrayList::create();
+        foreach ($this->choosableColumns() as $column) {
+            $result->push(ArrayData::create([
+                'Name' => $column->getName(),
+                'Title' => $column->getLabel(),
+                'Checked' => isset($shown[$column->getName()]),
+            ]));
+        }
+        return $result;
+    }
+
+    /**
+     * Stores the columns chosen in the menu (POST: Columns[]; reset=1 goes
+     * back to the default columns) and returns to the list.
+     */
+    public function choosecolumns(HTTPRequest $request)
+    {
+        if (!$request->isPOST() || !SecurityToken::inst()->checkRequest($request) || !$this->CanChooseColumns()) {
+            return $this->httpError(400);
+        }
+        $key = $this->columnChoiceKey();
+        $memberID = $this->columnChoiceMemberID();
+        $choice = ListColumnChoice::find($key, $memberID);
+        $chosen = array_flip(array_map('strval', (array) $request->postVar('Columns')));
+        $names = [];
+        foreach ($this->choosableColumns() as $column) {
+            if (isset($chosen[$column->getName()])) {
+                $names[] = $column->getName();
+            }
+        }
+        if ($request->postVar('reset') || !$names) {
+            $choice?->delete();
+        } else {
+            $choice ??= ListColumnChoice::create(['ChoiceKey' => $key, 'MemberID' => $memberID]);
+            $choice->Columns = json_encode($names);
+            $choice->write();
+        }
+        $back = (string) $request->postVar('BackURL');
+        return $this->redirect(Director::is_site_url($back) ? $back : $this->Link());
     }
 
     /**

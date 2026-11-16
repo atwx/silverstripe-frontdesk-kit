@@ -33,6 +33,10 @@ de:
     BULK_ALL_MATCHES_SELECTED: 'Alle {count} Treffer ausgewählt'
     BULK_CLEAR: 'Auswahl aufheben'
     BULK_FOR_COUNT: 'Für {count} Einträge'
+    COLUMNS: 'Spalten'
+    COLUMNS_SHARED: 'Gilt für alle.'
+    COLUMNS_APPLY: 'Übernehmen'
+    COLUMNS_RESET: 'Standard'
     # Filterleiste
     ACTION_FILTER: 'Filtern'
     ACTION_RESET: 'Zurücksetzen'

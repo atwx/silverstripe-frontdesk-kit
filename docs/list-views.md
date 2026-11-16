@@ -48,3 +48,44 @@ are `SavedListView` records keyed by the controller's `url_segment`
 
 Without a view the list shows all columns that are neither optional nor
 export-only; the export shows all but the optional ones.
+
+## Column choice ("Spalten")
+
+Every list has a menu "Spalten" in the view bar: members tick the columns
+they want to see, "Standard" goes back to the default. Offered are all
+columns of `defineColumns()` that are not `exportOnly()`, including
+`optional()` ones (hidden by default). A view with its own columns wins over
+the choice (the menu is hidden then). The export is not affected.
+
+The choice is stored in `ListColumnChoice` (run `dev/build`), by default per
+member and list. Hooks on the controller:
+
+```php
+// One choice per campaign, for the whole team (only editors may change it)
+protected function columnChoiceKey(): string
+{
+    return 'campaign-' . $this->getParentID();
+}
+
+protected function columnChoiceShared(): bool
+{
+    return true;
+}
+
+// Columns from data, e.g. the campaign's form questions: add them in
+// defineColumns() as optional(); override choosableColumns() for another set.
+protected function defineColumns(): ColumnCollection
+{
+    $columns = parent::defineColumns();
+    foreach ($this->campaign()->Questions() as $question) {
+        $columns->make('Answer_' . $question->ID, $question->Title)
+            ->format(fn ($value, $record) => $record->answerTo($question))
+            ->optional()->end();
+    }
+    return $columns;
+}
+```
+
+Chosen columns that no longer exist are left out; if none is left, the
+default columns show. Switch the menu off with config
+`column_choice: false` on the controller.

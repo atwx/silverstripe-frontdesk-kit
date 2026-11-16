@@ -124,6 +124,21 @@ function initFdkToggleAll(root = document) {
 // A search box above the options filters them; Enter opens the first match,
 // Escape closes the list.
 
+// ─── Column choice ([data-fdk-column-choice]) ───────────────────────────────
+// The checkboxes come from a template while the menu is open.
+
+document.addEventListener('toggle', (e) => {
+    const details = e.target;
+    if (!(details instanceof HTMLDetailsElement) || !details.matches('[data-fdk-column-choice]')) return;
+    const body = details.querySelector('.fdk-column-choice-body');
+    if (details.open) {
+        body.replaceChildren(details.querySelector('template').content.cloneNode(true));
+        initFdkSelectAll(body);
+    } else {
+        body.replaceChildren();
+    }
+}, true);
+
 document.addEventListener('toggle', (e) => {
     const details = e.target;
     if (details instanceof HTMLDetailsElement && details.open && details.matches('[data-fdk-switcher-search]')) {
