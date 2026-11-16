@@ -256,3 +256,15 @@ details.fdk-collapse[open] > .collapse-content {
         @apply w-[calc(100vw-1rem)] max-w-none p-4;
     }
 }
+
+/* Dropdown triggers: a chevron that turns when the list is open
+   (details/summary, daisyUI focus dropdowns, searchable dropdown fields). */
+.fdk-chevron {
+    transition: rotate 0.2s;
+}
+
+details[open] > summary .fdk-chevron,
+.dropdown:focus-within > [role="button"] .fdk-chevron,
+.fdk-searchable-chevron.fdk-open .fdk-chevron {
+    rotate: 180deg;
+}

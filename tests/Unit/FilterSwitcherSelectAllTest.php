@@ -141,10 +141,13 @@ class FilterSwitcherSelectAllTest extends SapphireTest
             return (string) $data->renderWith('Atwx\\SilverstripeFrontdeskKit\\Includes\\RecordPageView');
         };
         $switcher = fn () => RecordSwitcher::create()->option('Schule A', '/a', true)->option('Schule B', '/b');
-        $this->assertStringNotContainsString('data-fdk-switcher-search', $render($switcher()));
+        $plain = $render($switcher());
+        $this->assertStringNotContainsString('data-fdk-switcher-search', $plain);
+        $this->assertStringContainsString('fdk-chevron', $plain, 'the trigger shows it is a dropdown');
 
         $html = $render($switcher()->searchable());
         $this->assertStringContainsString('data-fdk-switcher-search', $html);
+        $this->assertStringContainsString('fdk-chevron', $html);
         $this->assertStringContainsString('type="search"', $html);
         $this->assertStringContainsString('data-search="schule b"', $html);
         $this->assertStringContainsString('href="/b"', $html);
