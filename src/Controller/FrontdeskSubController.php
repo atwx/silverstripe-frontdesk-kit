@@ -121,11 +121,15 @@ abstract class FrontdeskSubController extends FrontdeskController
     }
 
     /**
-     * Override: apply filters from request to the scoped base query.
+     * Override: filters and list view applied to the scoped base query, like the
+     * main list (listRequest(): the filter values of a chosen view count until
+     * the member changes the filters).
      */
     protected function getQuery(): DataList
     {
-        return $this->applyColumnSort($this->defineFilters()->applyAll($this->getBaseList(), $this->getRequest()));
+        $list = $this->defineFilters()->applyAll($this->getBaseList(), $this->listRequest());
+        $list = $this->currentListView()?->applyTo($list) ?? $list;
+        return $this->applyColumnSort($list);
     }
 
     /**

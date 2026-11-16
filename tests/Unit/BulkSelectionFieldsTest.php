@@ -180,6 +180,22 @@ class BulkSelectionFieldsTest extends SapphireTest
         $this->assertSame('2 done', $session->get('FrontdeskBulkMessage'));
     }
 
+    public function testDialogAsPageWithoutHtmx(): void
+    {
+        [$controller, $data] = $this->post('bulkdialog', ['BulkAction' => 'assign', 'ids' => [(string) $this->ids['Anna']]]);
+        $this->assertIsArray($data);
+        $controller->pushCurrent();
+        try {
+            $controller->doInit();
+            $html = (string) $controller->getViewer('bulkdialog')->process($controller->customise($data));
+        } finally {
+            $controller->popCurrent();
+        }
+        $this->assertStringContainsString('For 1 entries', $html);
+        $this->assertStringContainsString('Form_BulkActionForm', $html);
+        $this->assertStringNotContainsString('fdk-bulk-bar', $html, 'the form page, not the list');
+    }
+
     public function testInvalidOptionValueIsRefused(): void
     {
         [$controller, $response] = $this->post(

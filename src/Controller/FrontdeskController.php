@@ -173,6 +173,14 @@ class FrontdeskController extends Controller implements PermissionProvider
             FrontdeskController::class,
             'Page',
         ];
+        // Dialogs shown as a page without htmx: the form layout, not the list.
+        foreach (['bulkdialog', 'bulkedit'] as $action) {
+            $this->templates[$action] = [
+                static::class . '_edit',
+                FrontdeskController::class . '_edit',
+                'Page',
+            ];
+        }
         $this->templates['add'] = [
             static::class . '_add',
             static::class . '_edit',
@@ -1353,7 +1361,7 @@ class FrontdeskController extends Controller implements PermissionProvider
 
     public function FilterIsActive(): bool
     {
-        return $this->defineFilters()->isActive($this->getRequest());
+        return $this->defineFilters()->isActive($this->listRequest());
     }
 
     /**
