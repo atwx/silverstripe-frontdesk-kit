@@ -42,3 +42,13 @@ confirmation when the form is submitted), e.g. for deleting:
 BulkAction::create('delete', 'Löschen', fn (DataList $records) => …)->confirm('Die ausgewählten Einträge löschen?');
 ```
 
+
+## Selection and list reloads
+
+The chosen rows stay checked when the list is reloaded by the filter bar or the
+pagination (rows that are no longer shown drop out). A bulk action submitted
+without any chosen row does not run; the list shows "No records selected."
+instead.
+
+Members without edit permission on the controller see neither the bulk actions
+nor the row checkboxes.

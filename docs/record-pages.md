@@ -85,3 +85,28 @@ $actions->push(ArrayData::create(['Title' => 'Vorschau Elternportal', 'Link' => 
 
 `RecordSwitcher` lists related records (e.g. the cases of the same child) between
 the pages, with an optional link to add one (`withAddLink()`).
+
+From 15 options on (config `RecordSwitcher.searchable_from`) the list gets a
+search box: typing filters the options, Enter opens the first match. Switch it
+on or off per switcher with `->searchable()` / `->searchable(false)`:
+
+```php
+// Switch to another school on the same page
+$segment = (string) $this->getRequest()->param('OtherID');
+$switcher = RecordSwitcher::create()->searchable();
+foreach (School::get()->sort('Name') as $school) {
+    $switcher->option($school->Name, $this->Link('view/' . $school->ID . '/' . $segment), $school->ID === $record->ID);
+}
+```
+
+## Select all in checkbox sets
+
+`CheckboxSetSelectAll::apply($field, 3)` adds "Alle auswählen" and "Keine"
+above a `CheckboxSetField` with at least 3 options (disabled options stay as
+they are):
+
+```php
+use Atwx\SilverstripeFrontdeskKit\Forms\CheckboxSetSelectAll;
+
+$fields->push(CheckboxSetSelectAll::apply(CheckboxSetField::create('Entries', 'Einträge', $options)));
+```

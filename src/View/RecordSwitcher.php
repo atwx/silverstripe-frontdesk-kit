@@ -13,6 +13,14 @@ use SilverStripe\Model\ModelData;
 class RecordSwitcher extends ModelData
 {
     /**
+     * From this number of options on, the switcher gets a search box (unless
+     * searchable() says otherwise).
+     */
+    private static int $searchable_from = 15;
+
+    private ?bool $searchable = null;
+
+    /**
      * @var array<int, array{title: string, link: string, active: bool}>
      */
     private array $options = [];
@@ -37,12 +45,28 @@ class RecordSwitcher extends ModelData
         return $this;
     }
 
+    /**
+     * Search box above the options: true or false, null = from searchable_from
+     * options on.
+     */
+    public function searchable(?bool $searchable = true): static
+    {
+        $this->searchable = $searchable;
+        return $this;
+    }
+
+    public function IsSearchable(): bool
+    {
+        return $this->searchable ?? count($this->options) >= (int) static::config()->get('searchable_from');
+    }
+
     public function Options(): ArrayList
     {
         return ArrayList::create(array_map(fn (array $o) => ArrayData::create([
             'Title' => $o['title'],
             'Link' => $o['link'],
             'Active' => $o['active'],
+            'SearchText' => mb_strtolower($o['title']),
         ]), $this->options));
     }
 
