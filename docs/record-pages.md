@@ -99,6 +99,10 @@ foreach (School::get()->sort('Name') as $school) {
 }
 ```
 
+The switcher's options are links inside `.fdk-record-sidebar` too. To address
+only the page links (e.g. to count them in a test), use
+`.fdk-record-sidebar > ul > li > a`.
+
 ## Select all in checkbox sets
 
 `CheckboxSetSelectAll::apply($field, 3)` adds "Alle auswählen" and "Keine"
