@@ -45,23 +45,31 @@
 
     <% if $BulkActions.Count %>
     <form id="fdk-bulk-form" class="fdk-bulk-bar flex flex-wrap items-center gap-2 mb-2" method="post" action="$Link('bulk')"
-          onsubmit="var o = this.BulkAction.selectedOptions[0]; if (o && o.dataset.confirm && !confirm(o.dataset.confirm)) { return false; } this.BackURL.value = window.location.pathname + window.location.search; this.target = o?.dataset.newWindow ? '_blank' : ''">
+          data-bulk-link="$Link('bulk')" data-bulkdialog-link="$Link('bulkdialog')"
+          data-label-count="<%t Atwx\SilverstripeFrontdeskKit\Controller\FrontdeskController.BULK_COUNT '{count} selected' %>"
+          data-label-select-all="<%t Atwx\SilverstripeFrontdeskKit\Controller\FrontdeskController.BULK_SELECT_ALL_MATCHES 'Select all {count} matches' %>"
+          data-label-all-selected="<%t Atwx\SilverstripeFrontdeskKit\Controller\FrontdeskController.BULK_ALL_MATCHES_SELECTED 'All {count} matches selected' %>"
+          data-label-clear="<%t Atwx\SilverstripeFrontdeskKit\Controller\FrontdeskController.BULK_CLEAR 'Clear selection' %>"
+          onsubmit="return fdkBulkSubmit(this)">
         <input type="hidden" name="SecurityID" value="$SecurityTokenValue">
         <input type="hidden" name="BackURL" value="">
+        <input type="hidden" name="all" value="">
         <label for="fdk-bulk-action" class="text-sm"><%t Atwx\SilverstripeFrontdeskKit\Controller\FrontdeskController.LABEL_BULK 'Selected records' %>:</label>
         <select id="fdk-bulk-action" name="BulkAction" class="select select-sm" required>
             <option value=""><%t Atwx\SilverstripeFrontdeskKit\Controller\FrontdeskController.LABEL_BULK_CHOOSE 'Choose action' %></option>
             <% loop $BulkActions %>
                 <% if $HasOptions %>
                     <optgroup label="$Label">
-                        <% loop $Choices %><option value="$Value"<% if $NewWindow %> data-new-window="1"<% end_if %><% if $Confirm %> data-confirm="$Confirm.ATT"<% end_if %>>$Title</option><% end_loop %>
+                        <% loop $Choices %><option value="$Value"<% if $NewWindow %> data-new-window="1"<% end_if %><% if $Confirm %> data-confirm="$Confirm.ATT"<% end_if %><% if $HasFields %> data-fields="1"<% end_if %>>$Title</option><% end_loop %>
                     </optgroup>
                 <% else %>
-                    <% loop $Choices %><option value="$Value"<% if $NewWindow %> data-new-window="1"<% end_if %><% if $Confirm %> data-confirm="$Confirm.ATT"<% end_if %>>$Title</option><% end_loop %>
+                    <% loop $Choices %><option value="$Value"<% if $NewWindow %> data-new-window="1"<% end_if %><% if $Confirm %> data-confirm="$Confirm.ATT"<% end_if %><% if $HasFields %> data-fields="1"<% end_if %>>$Title</option><% end_loop %>
                 <% end_if %>
             <% end_loop %>
         </select>
         <button type="submit" class="btn btn-sm"><%t Atwx\SilverstripeFrontdeskKit\Controller\FrontdeskController.ACTION_BULK_APPLY 'Apply' %></button>
+        <span class="fdk-bulk-count text-sm opacity-70" aria-live="polite" hidden></span>
+        <button type="button" class="fdk-bulk-all btn btn-xs btn-link" hidden></button>
     </form>
     <% end_if %>
 

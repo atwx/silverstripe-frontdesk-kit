@@ -28,6 +28,11 @@ de:
     LABEL_SELECT_ALL: 'Alle auswählen'
     LABEL_SELECT_RECORD: 'Eintrag auswählen'
     BULK_NONE_SELECTED: 'Keine Einträge ausgewählt.'
+    BULK_COUNT: '{count} ausgewählt'
+    BULK_SELECT_ALL_MATCHES: 'Alle {count} Treffer auswählen'
+    BULK_ALL_MATCHES_SELECTED: 'Alle {count} Treffer ausgewählt'
+    BULK_CLEAR: 'Auswahl aufheben'
+    BULK_FOR_COUNT: 'Für {count} Einträge'
     # Filterleiste
     ACTION_FILTER: 'Filtern'
     ACTION_RESET: 'Zurücksetzen'

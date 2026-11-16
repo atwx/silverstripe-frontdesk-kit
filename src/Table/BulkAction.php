@@ -3,6 +3,7 @@
 namespace Atwx\SilverstripeFrontdeskKit\Table;
 
 use SilverStripe\Control\HTTPResponse;
+use SilverStripe\Forms\FieldList;
 use SilverStripe\Model\ArrayData;
 use SilverStripe\Model\List\ArrayList;
 use SilverStripe\ORM\DataList;
@@ -17,6 +18,15 @@ use SilverStripe\ORM\DataList;
  *
  *   BulkAction::create('status', 'Status ändern', fn (DataList $records, ?string $status) => …)
  *       ->options(['confirmed' => 'Bestätigt', 'cancelled' => 'Storniert'])
+ *
+ * With fields(), choosing the action opens a dialog with these fields ("for N
+ * entries"); the handler then receives the records and the field values:
+ *
+ *   BulkAction::create('assign', 'Zuteilen', fn (DataList $records, array $data) => …)
+ *       ->fields(fn () => FieldList::create(
+ *           DropdownField::create('Area', 'Bereich', $areas),
+ *           DropdownField::create('Status', 'Status', $statuses)->setValue('invited')
+ *       ), ['Area', 'Status'])
  */
 class BulkAction
 {
@@ -25,6 +35,14 @@ class BulkAction
     protected bool $newWindow = false;
 
     protected string $confirmText = '';
+
+    /** @var FieldList|callable|null */
+    protected $fields = null;
+
+    /** @var array<int, string> */
+    protected array $requiredFields = [];
+
+    protected string $submitLabel = '';
 
     /** @var callable */
     protected $handler;
@@ -46,6 +64,64 @@ class BulkAction
     {
         $this->options = $options;
         return $this;
+    }
+
+    /**
+     * Fields asked for in a dialog before the action runs (a FieldList or a
+     * callable returning one, built when the dialog opens; field values are
+     * the defaults). The handler then gets (DataList $records, array $data)
+     * with the values of these fields. $required: names of required fields.
+     *
+     * @param array<int, string> $required
+     */
+    public function fields(FieldList|callable $fields, array $required = []): static
+    {
+        $this->fields = $fields;
+        $this->requiredFields = $required;
+        return $this;
+    }
+
+    public function hasFields(): bool
+    {
+        return $this->fields !== null;
+    }
+
+    /**
+     * A fresh field list for the dialog (empty without fields()).
+     */
+    public function getFields(): FieldList
+    {
+        $fields = is_callable($this->fields) ? ($this->fields)() : $this->fields;
+        if (!$fields instanceof FieldList) {
+            return FieldList::create();
+        }
+        // A FieldList given directly is shared: copy its fields for each form.
+        if (is_callable($this->fields)) {
+            return $fields;
+        }
+        return FieldList::create(array_map(fn ($field) => clone $field, $fields->toArray()));
+    }
+
+    /**
+     * @return array<int, string>
+     */
+    public function getRequiredFields(): array
+    {
+        return $this->requiredFields;
+    }
+
+    /**
+     * Label of the dialog's submit button (default: the action's label).
+     */
+    public function submitLabel(string $label): static
+    {
+        $this->submitLabel = $label;
+        return $this;
+    }
+
+    public function getSubmitLabel(): string
+    {
+        return $this->submitLabel !== '' ? $this->submitLabel : $this->label;
     }
 
     /**
@@ -92,9 +168,15 @@ class BulkAction
         return $this->options;
     }
 
-    public function handle(DataList $records, ?string $option): HTTPResponse|string|null
+    /**
+     * Runs the handler: with fields() the second argument is the array of field
+     * values, otherwise the chosen option (or null).
+     *
+     * @param string|array<string, mixed>|null $optionOrData
+     */
+    public function handle(DataList $records, string|array|null $optionOrData): HTTPResponse|string|null
     {
-        return ($this->handler)($records, $option);
+        return ($this->handler)($records, $optionOrData);
     }
 
     // Template accessors
@@ -121,6 +203,7 @@ class BulkAction
                 'Title' => $this->label,
                 'NewWindow' => $this->newWindow,
                 'Confirm' => $this->confirmText,
+                'HasFields' => $this->hasFields(),
             ]));
         }
         foreach ($this->options as $value => $label) {

@@ -214,15 +214,110 @@ document.addEventListener('DOMContentLoaded', () => {
     initFdkSelectAll();
 });
 
-// Keep the chosen rows when the list is reloaded (filters, paging): the bulk
-// form posts the checkboxes of the rows, so a reload must not lose them.
+// ─── Bulk bar: selection, counter, "all matches", dialogs ───────────────────
+// The chosen rows stay checked when the list is reloaded (filters, paging).
+// "Select all N matches" (shown when the whole page is checked and the filter
+// has more matches) sends all=1 instead of the ids: the server applies the
+// action to all records of the filtered list (the query string of the page).
+// Changing a filter ends that mode, paging keeps it. Actions with fields open
+// their dialog in the modal.
+
 let fdkKeptIds = null;
+let fdkBulkAll = false;
+
+function fdkBulkForm() {
+    return document.getElementById('fdk-bulk-form');
+}
+
+function fdkRowBoxes() {
+    return Array.from(document.querySelectorAll('#fdk-list-region input[name="ids[]"]'));
+}
+
+function fdkBulkUpdate() {
+    const form = fdkBulkForm();
+    if (!form) return;
+    const boxes = fdkRowBoxes();
+    const checked = boxes.filter((c) => c.checked).length;
+    const wrapper = document.querySelector('#fdk-list-region [data-fdk-total]');
+    const total = wrapper ? parseInt(wrapper.dataset.fdkTotal, 10) || 0 : 0;
+    const counter = form.querySelector('.fdk-bulk-count');
+    const allButton = form.querySelector('.fdk-bulk-all');
+    const label = (name, count) => (form.dataset[name] || '').replace('{count}', count);
+    if (fdkBulkAll && (checked < boxes.length || boxes.length === 0)) {
+        fdkBulkAll = false;
+    }
+    form.elements.all.value = fdkBulkAll ? '1' : '';
+    if (fdkBulkAll) {
+        counter.textContent = label('labelAllSelected', total);
+        counter.hidden = false;
+        allButton.textContent = label('labelClear', total);
+        allButton.hidden = false;
+        return;
+    }
+    counter.textContent = label('labelCount', checked);
+    counter.hidden = checked === 0;
+    const offerAll = boxes.length > 0 && checked === boxes.length && total > boxes.length;
+    allButton.textContent = label('labelSelectAll', total);
+    allButton.hidden = !offerAll;
+}
+
+document.addEventListener('click', (e) => {
+    const button = e.target instanceof Element ? e.target.closest('#fdk-bulk-form .fdk-bulk-all') : null;
+    if (!button) return;
+    if (fdkBulkAll) {
+        fdkBulkAll = false;
+        fdkRowBoxes().forEach((c) => { c.checked = false; });
+        const head = document.querySelector('#fdk-list-region thead input[type=checkbox]');
+        if (head) head.checked = false;
+    } else {
+        fdkBulkAll = true;
+    }
+    fdkBulkUpdate();
+});
+
+// Row checkboxes and the "select all" checkbox in the table head (which sets
+// the rows without change events).
+document.addEventListener('change', (e) => {
+    if (e.target instanceof Element && e.target.closest('#fdk-list-region')) fdkBulkUpdate();
+});
+document.addEventListener('click', (e) => {
+    if (e.target instanceof Element && e.target.matches('#fdk-list-region thead input[type=checkbox]')) {
+        setTimeout(fdkBulkUpdate);
+    }
+});
+
+window.fdkBulkSubmit = (form) => {
+    const option = form.BulkAction.selectedOptions[0];
+    form.elements.all.value = fdkBulkAll ? '1' : '';
+    form.BackURL.value = window.location.pathname + window.location.search;
+    if (option && option.dataset.fields) {
+        const modal = document.getElementById('fdk-modal');
+        htmx.ajax('POST', form.dataset.bulkdialogLink + window.location.search, {
+            source: form,
+            target: '#fdk-modal-content',
+        }).then(() => modal && modal.showModal());
+        return false;
+    }
+    if (option && option.dataset.confirm && !window.confirm(option.dataset.confirm)) {
+        return false;
+    }
+    form.action = form.dataset.bulkLink + window.location.search;
+    form.target = option && option.dataset.newWindow ? '_blank' : '';
+    return true;
+};
+
 document.addEventListener('htmx:beforeSwap', (e) => {
     const target = e.detail.target;
     if (target && target.id === 'fdk-list-region') {
         fdkKeptIds = new Set(Array.from(target.querySelectorAll('input[name="ids[]"]:checked'), (c) => c.value));
+        const source = e.detail.requestConfig && e.detail.requestConfig.elt;
+        if (source instanceof Element && source.closest('.fdk-filter-bar')) {
+            fdkBulkAll = false;
+        }
     }
 });
+
+document.addEventListener('DOMContentLoaded', fdkBulkUpdate);
 
 document.addEventListener('htmx:afterSwap', (e) => {
     createIcons({ icons: fdkIcons });
@@ -232,11 +327,14 @@ document.addEventListener('htmx:afterSwap', (e) => {
     initFdkSelectAll(e.target || document);
     if (fdkKeptIds && e.target && e.target.id === 'fdk-list-region') {
         e.target.querySelectorAll('input[name="ids[]"]').forEach((c) => {
-            if (fdkKeptIds.has(c.value)) {
+            if (fdkBulkAll || fdkKeptIds.has(c.value)) {
                 c.checked = true;
             }
         });
+        const head = e.target.querySelector('thead input[type=checkbox]');
+        if (head && fdkBulkAll) head.checked = true;
         fdkKeptIds = null;
+        fdkBulkUpdate();
     }
 });
 

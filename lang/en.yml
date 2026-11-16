@@ -26,6 +26,11 @@ en:
     LABEL_SELECT_ALL: 'Select all'
     LABEL_SELECT_RECORD: 'Select record'
     BULK_NONE_SELECTED: 'No records selected.'
+    BULK_COUNT: '{count} selected'
+    BULK_SELECT_ALL_MATCHES: 'Select all {count} matches'
+    BULK_ALL_MATCHES_SELECTED: 'All {count} matches selected'
+    BULK_CLEAR: 'Clear selection'
+    BULK_FOR_COUNT: 'For {count} entries'
     # Filter bar
     ACTION_FILTER: 'Filter'
     ACTION_RESET: 'Reset'
