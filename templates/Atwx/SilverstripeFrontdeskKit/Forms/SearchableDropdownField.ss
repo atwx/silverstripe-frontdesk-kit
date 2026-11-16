@@ -9,12 +9,13 @@
      @click.outside="open = false">
     <input type="hidden" name="$Name.ATT" value="$Value.ATT" x-ref="hidden" :value="value">
     <input type="text"
-           class="input w-full"
+           class="input w-full pr-8"
            x-model="query"
            @focus="open = true"
            @click="open = true"
            :placeholder="selected || empty"
            autocomplete="off">
+    <span class="fdk-searchable-chevron absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none flex opacity-60" :class="{ 'fdk-open': open }"><% include Atwx\\SilverstripeFrontdeskKit\\Includes\\Chevron %></span>
     <ul x-show="open" x-cloak
         class="menu bg-base-100 rounded-box shadow absolute z-50 w-full md:w-[200%]! mt-1 max-h-72 overflow-y-auto overflow-x-hidden flex-nowrap">
         <template x-for="opt in filtered()" :key="opt.value">

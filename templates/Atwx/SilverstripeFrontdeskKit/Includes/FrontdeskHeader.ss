@@ -46,7 +46,7 @@
                     $FrontdeskUserInitials
                 </span>
                 <span class="hidden sm:inline whitespace-nowrap">$FrontdeskUserName</span>
-                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="6 9 12 15 18 9"/></svg>
+                <% include Atwx\\SilverstripeFrontdeskKit\\Includes\\Chevron %>
             </div>
             <ul tabindex="0" class="dropdown-content menu bg-base-100 rounded-box shadow z-50 w-56 p-2 mt-1">
                 <% if $FrontdeskSecondaryNavigation %>
