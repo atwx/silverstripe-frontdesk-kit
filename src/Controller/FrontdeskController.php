@@ -116,6 +116,12 @@ class FrontdeskController extends Controller implements PermissionProvider
     private static $check_record_permissions = false;
 
     /**
+     * "Spalten" menu above the list: members choose the shown columns (see
+     * columnChoiceKey(), columnChoiceShared(), choosableColumns()).
+     */
+    private static $column_choice = true;
+
+    /**
      * When true, sub-controllers are shown as tabs of the record (each one a
      * full list page with filters, bulk actions and export) instead of inline
      * sublists below the record view. The record view becomes the first tab.
@@ -149,6 +155,7 @@ class FrontdeskController extends Controller implements PermissionProvider
         'recordaction',
         'saveview',
         'deleteview',
+        'choosecolumns',
         'file',
     ];
 
@@ -1225,9 +1232,13 @@ class FrontdeskController extends Controller implements PermissionProvider
         return $this->getItems();
     }
 
+    /**
+     * Columns of the list: those of the current view, else those chosen in the
+     * "Spalten" menu, else the default ones (neither optional nor export-only).
+     */
     public function Columns(): ColumnCollection
     {
-        $names = $this->currentListView()?->getColumns();
+        $names = $this->currentListView()?->getColumns() ?: $this->chosenColumnNames();
         return $names ? $this->selectColumns($this->defineColumns(), $names) : $this->defineColumns()->forList();
     }
 
