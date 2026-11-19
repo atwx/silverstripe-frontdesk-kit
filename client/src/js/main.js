@@ -152,6 +152,42 @@ document.addEventListener('keydown', (e) => {
     if (open) open.querySelector('summary').focus();
 });
 
+// ─── Row action menus in scrolling tables ───────────────────────────────────
+// Wide tables scroll horizontally inside .fdk-table-wrapper, which would clip
+// the row action dropdown. While open it is positioned fixed below (or above)
+// its button; scrolling closes it.
+
+function fdkPlaceRowActions(details) {
+    const menu = details.querySelector('.dropdown-content');
+    const button = details.querySelector('summary');
+    if (!menu || !button) return;
+    const r = button.getBoundingClientRect();
+    Object.assign(menu.style, { position: 'fixed', right: 'auto', bottom: 'auto', margin: '0' });
+    const below = r.bottom + 4;
+    const top = below + menu.offsetHeight > window.innerHeight && r.top - 4 - menu.offsetHeight > 0
+        ? r.top - 4 - menu.offsetHeight
+        : below;
+    menu.style.top = `${top}px`;
+    menu.style.left = `${Math.max(4, r.right - menu.offsetWidth)}px`;
+}
+
+function fdkCloseRowActions() {
+    document.querySelectorAll('details.fdk-row-actions-wrap[open]').forEach((d) => { d.open = false; });
+}
+
+document.addEventListener('toggle', (e) => {
+    const details = e.target;
+    if (details instanceof HTMLDetailsElement && details.open && details.matches('.fdk-row-actions-wrap')) {
+        fdkPlaceRowActions(details);
+    }
+}, true);
+
+document.addEventListener('scroll', (e) => {
+    if (e.target instanceof Element && e.target.closest('.fdk-row-actions-wrap')) return;
+    fdkCloseRowActions();
+}, true);
+window.addEventListener('resize', fdkCloseRowActions);
+
 // ─── Column choice ([data-fdk-column-choice]) ───────────────────────────────
 // The checkboxes come from a template while the menu is open.
 
