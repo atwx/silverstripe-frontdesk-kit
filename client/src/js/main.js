@@ -124,6 +124,34 @@ function initFdkToggleAll(root = document) {
 // A search box above the options filters them; Enter opens the first match,
 // Escape closes the list.
 
+// ─── Navigation dropdowns ([data-fdk-nav-group]) ────────────────────────────
+// Submenus of the horizontal navigation are <details>: only one is open at a
+// time, and a click outside or Escape closes them.
+
+function fdkCloseNavGroups(except = null) {
+    document.querySelectorAll('details[data-fdk-nav-group][open]').forEach((d) => {
+        if (d !== except) d.open = false;
+    });
+}
+
+document.addEventListener('toggle', (e) => {
+    const details = e.target;
+    if (details instanceof HTMLDetailsElement && details.open && details.matches('[data-fdk-nav-group]')) {
+        fdkCloseNavGroups(details);
+    }
+}, true);
+
+document.addEventListener('click', (e) => {
+    if (!(e.target instanceof Element) || !e.target.closest('details[data-fdk-nav-group]')) fdkCloseNavGroups();
+});
+
+document.addEventListener('keydown', (e) => {
+    if (e.key !== 'Escape') return;
+    const open = e.target instanceof Element ? e.target.closest('details[data-fdk-nav-group][open]') : null;
+    fdkCloseNavGroups();
+    if (open) open.querySelector('summary').focus();
+});
+
 // ─── Column choice ([data-fdk-column-choice]) ───────────────────────────────
 // The checkboxes come from a template while the menu is open.
 

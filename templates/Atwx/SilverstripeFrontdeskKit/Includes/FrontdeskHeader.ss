@@ -1,5 +1,6 @@
 <%-- Header with main navigation (FrontdeskController.main_navigation):
-     horizontal from lg up, in a burger menu below. secondary_navigation is in
+     horizontal from lg up (groups with children as dropdowns), in a burger
+     menu below (groups as titled sections). secondary_navigation is in
      the user menu from lg up and in the burger menu below. --%>
 <header class="fdk-header navbar px-2 sm:px-4 gap-2">
     <div class="navbar-start w-auto flex-1 lg:flex-none gap-1 min-w-0">
@@ -10,12 +11,12 @@
             </div>
             <ul tabindex="0" class="fdk-burger-menu menu dropdown-content bg-base-100 rounded-box shadow z-50 mt-2 w-72 max-w-[calc(100vw-1rem)] p-2">
                 <% loop $FrontdeskMainNavigation %>
-                    <% include Atwx\SilverstripeFrontdeskKit\Includes\FrontdeskNavEntry %>
+                    <% include Atwx\SilverstripeFrontdeskKit\Includes\FrontdeskNavEntry Flat=1 %>
                 <% end_loop %>
                 <% if $FrontdeskSecondaryNavigation %>
                     <li class="menu-title"><%t Atwx\SilverstripeFrontdeskKit\Navigation\FrontdeskNavigation.MORE 'More' %></li>
                     <% loop $FrontdeskSecondaryNavigation %>
-                        <% include Atwx\SilverstripeFrontdeskKit\Includes\FrontdeskNavEntry %>
+                        <% include Atwx\SilverstripeFrontdeskKit\Includes\FrontdeskNavEntry Flat=1 %>
                     <% end_loop %>
                 <% end_if %>
             </ul>
@@ -51,7 +52,7 @@
             <ul tabindex="0" class="dropdown-content menu bg-base-100 rounded-box shadow z-50 w-56 p-2 mt-1">
                 <% if $FrontdeskSecondaryNavigation %>
                     <% loop $FrontdeskSecondaryNavigation %>
-                        <% include Atwx\SilverstripeFrontdeskKit\Includes\FrontdeskNavEntry ExtraClass='max-lg:hidden' %>
+                        <% include Atwx\SilverstripeFrontdeskKit\Includes\FrontdeskNavEntry ExtraClass='max-lg:hidden', Flat=1 %>
                     <% end_loop %>
                     <li class="max-lg:hidden"><hr class="my-1 p-0 border-base-200"></li>
                 <% end_if %>

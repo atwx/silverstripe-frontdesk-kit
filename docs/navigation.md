@@ -42,6 +42,27 @@ Atwx\SilverstripeFrontdeskKit\Controller\FrontdeskController:
       link: 'https://example.org/help'    # absolute: opens in a new tab
 ```
 
+### Submenus
+
+An entry with `children` is a group: a dropdown in the horizontal navigation
+and a titled section in the burger menu (and in the user menu, if used in
+`secondary_navigation`). Children take the same keys as other entries; one
+level only.
+
+```yaml
+  main_navigation:
+    finance:
+      title: 'Finanzen'
+      children:
+        costs:       { title: 'Kosten', segment: 'costs', controller: 'App\Controllers\CostController' }
+        controlling: { title: 'Controlling', segment: 'controlling', permission: 'ADMIN' }
+```
+
+The group is hidden when none of its children is visible, marked active when
+one of them is, and shows the sum of the children's numeric badges unless it
+has a `badge` of its own. Only one dropdown is open at a time; a click outside
+or Escape closes it.
+
 Entries are keyed, so a project can change or remove one by its key. The
 entries are template globals (`$FrontdeskMainNavigation`,
 `$FrontdeskSecondaryNavigation`) and work on every controller, not only on

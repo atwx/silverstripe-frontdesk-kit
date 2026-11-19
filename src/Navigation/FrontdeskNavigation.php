@@ -23,6 +23,11 @@ use SilverStripe\Security\Security;
  *   - badge: optional callable "Class::method" (or [Class, method]) returning
  *     a count or short text; 0 and empty values show no badge
  *   - default: active on the start page
+ *   - children: optional entries of a submenu (one level, same keys); the
+ *     group is a dropdown in the horizontal navigation and a titled section
+ *     in the burger menu. It is hidden when none of its children is visible,
+ *     active when one of them is, and its badge is the sum of their numeric
+ *     badges unless it has a badge of its own.
  * Only logged-in members see entries.
  */
 class FrontdeskNavigation
@@ -61,6 +66,13 @@ class FrontdeskNavigation
             if (!is_array($entry) || !$this->allowed($entry)) {
                 continue;
             }
+            if (isset($entry['children'])) {
+                $group = $this->group($entry, $url);
+                if ($group) {
+                    $navigation->push($group);
+                }
+                continue;
+            }
             $segment = trim((string) ($entry['segment'] ?? ''), '/');
             $link = (string) ($entry['link'] ?? $segment);
             $navigation->push(ArrayData::create([
@@ -69,9 +81,44 @@ class FrontdeskNavigation
                 'Active' => $this->isActive($entry, $segment, $link, $url),
                 'External' => (bool) preg_match('#^[a-z][a-z0-9+.-]*://#i', $link),
                 'Badge' => $this->badge($entry['badge'] ?? null),
+                'Children' => null,
             ]));
         }
         return $navigation;
+    }
+
+    /**
+     * A submenu: null if none of its children is visible. Nested children
+     * deeper than one level are ignored.
+     *
+     * @param array<string, mixed> $entry
+     */
+    private function group(array $entry, string $url): ?ArrayData
+    {
+        $children = array_filter(
+            (array) $entry['children'],
+            fn ($child) => is_array($child) && !isset($child['children'])
+        );
+        $items = $this->entries($children, $url);
+        if (!$items->count()) {
+            return null;
+        }
+        $badge = $this->badge($entry['badge'] ?? null);
+        if ($badge === '') {
+            $sum = 0;
+            foreach ($items as $item) {
+                $sum += is_numeric($item->Badge) ? (int) $item->Badge : 0;
+            }
+            $badge = $sum > 0 ? (string) $sum : '';
+        }
+        return ArrayData::create([
+            'Title' => (string) ($entry['title'] ?? ''),
+            'Link' => '',
+            'Active' => (bool) $items->find('Active', true),
+            'External' => false,
+            'Badge' => $badge,
+            'Children' => $items,
+        ]);
     }
 
     /**
