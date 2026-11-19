@@ -107,6 +107,43 @@ class NavigationTest extends SapphireTest
         $this->assertTrue($secondary[0]['Active'], 'active by the path of the link');
     }
 
+    public function testGroupsWithChildren(): void
+    {
+        Config::modify()->set(FrontdeskController::class, 'main_navigation', [
+            'people' => ['title' => 'Personen', 'children' => [
+                'students' => ['title' => 'Schüler', 'segment' => 'students', 'controller' => NavigationTarget::class],
+                'followups' => ['title' => 'Wiedervorlagen', 'segment' => 'followups',
+                    'badge' => NavigationBadges::class . '::open'],
+            ]],
+            'admin' => ['title' => 'Verwaltung', 'children' => [
+                'retention' => ['title' => 'Bereinigung', 'segment' => 'retention', 'permission' => 'ADMIN'],
+            ]],
+        ]);
+        $this->logInWithPermission('SOMETHING');
+        $main = $this->entries('main_navigation', 'followups/view/3');
+        $this->assertSame(['Personen'], array_column($main, 'Title'), 'group without visible children hidden');
+        $this->assertTrue($main[0]['Active'], 'active through a child');
+        $this->assertSame('3', $main[0]['Badge'], 'sum of the child badges');
+        $children = $main[0]['Children']->toArray();
+        $this->assertSame(['Schüler', 'Wiedervorlagen'], array_column(
+            array_map(fn ($c) => $c->toMap(), $children),
+            'Title'
+        ));
+        $this->assertFalse($children[0]->Active);
+
+        NavigationTarget::$allowed = false;
+        $main = $this->entries('main_navigation', 'students');
+        $this->assertFalse($main[0]['Active']);
+        $this->assertCount(1, $main[0]['Children']);
+
+        $html = (string) SSViewer::create('Atwx\\SilverstripeFrontdeskKit\\Includes\\FrontdeskHeader')
+            ->process(Security::singleton());
+        $this->assertStringContainsString('<details class="fdk-nav-group" data-fdk-nav-group><summary>Personen', $html);
+        $this->assertStringContainsString('<span class="menu-title">Personen</span>', $html, 'section in the burger');
+        $this->assertSame(2, substr_count($html, 'href="followups"'), 'burger and dropdown');
+        $this->assertStringNotContainsString('Verwaltung', $html);
+    }
+
     public function testHeaderRendersBurgerAndUserMenu(): void
     {
         $member = Member::create(['FirstName' => 'Ida', 'Surname' => 'Lenz', 'Email' => 'ida@example.org']);
