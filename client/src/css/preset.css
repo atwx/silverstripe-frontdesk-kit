@@ -119,6 +119,15 @@
     @apply bg-base-100 rounded-box shadow-sm overflow-visible;
 }
 
+/* Wide tables scroll inside their card instead of widening the page. Row
+   action menus are positioned fixed while open (main.js), so the scroll
+   container does not clip them. Below md tables are stacked cards. */
+@media (min-width: 768px) {
+    .fdk-table-wrapper:has(> table) {
+        overflow-x: auto;
+    }
+}
+
 .fdk-row-actions {
     @apply w-10 text-right;
 }
@@ -216,6 +225,19 @@ details.fdk-collapse[open] > .collapse-content {
     table.fdk-stack td[data-label]:not([data-label=""])::before {
         content: attr(data-label);
         @apply shrink-0 w-2/5 text-base-content/60 text-sm;
+    }
+
+    /* Values shrink and wrap instead of widening the card (badge groups,
+       long badges) */
+    table.fdk-stack td > * {
+        min-width: 0;
+    }
+
+    table.fdk-stack td .badge {
+        height: auto;
+        min-height: var(--size, 1.25rem);
+        white-space: normal;
+        text-align: left;
     }
 
     table.fdk-stack td.fdk-cell-empty {

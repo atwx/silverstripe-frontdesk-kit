@@ -68,6 +68,13 @@ entries are template globals (`$FrontdeskMainNavigation`,
 `$FrontdeskSecondaryNavigation`) and work on every controller, not only on
 FrontdeskController.
 
+## Wide tables
+
+From `md` up a list or sub-list table wider than the page scrolls
+horizontally inside its card; the page itself does not scroll sideways. Row
+action menus (`···`) are positioned fixed while open, so the scroll container
+does not cut them off; scrolling closes them.
+
 ## Phones
 
 Below `md` (768 px) list and sub-list tables become stacked cards (label before
