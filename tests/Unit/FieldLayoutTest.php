@@ -6,6 +6,7 @@ use Atwx\SilverstripeFrontdeskKit\Forms\CollapsibleFieldGroup;
 use Atwx\SilverstripeFrontdeskKit\Forms\FieldLayout;
 use SilverStripe\Dev\SapphireTest;
 use SilverStripe\Dev\TestOnly;
+use SilverStripe\Forms\FieldGroup;
 use SilverStripe\Forms\FieldList;
 use SilverStripe\Forms\HiddenField;
 use SilverStripe\Forms\TextField;
@@ -137,5 +138,22 @@ class FieldLayoutTest extends SapphireTest
         $this->assertSame(['Basics', ''], $groups->column('Title'));
         $this->assertSame(['Title', 'Venue'], $groups->first()->Rows->column('Label'));
         $this->assertSame(['Extra'], $groups->last()->Rows->column('Label'));
+    }
+
+    public function testCollapsedGroupOpensOnFieldMessage(): void
+    {
+        $inner = TextField::create('Inner');
+        $group = CollapsibleFieldGroup::create('E-Rechnung', [
+            TextField::create('Plain'),
+            FieldGroup::create([$inner]),
+        ]);
+        $this->assertFalse($group->IsOpen());
+
+        $inner->setMessage('Pflichtfeld', 'validation');
+        $this->assertTrue($group->IsOpen(), 'a message in a nested field opens the group');
+
+        $inner->setMessage('');
+        $this->assertFalse($group->IsOpen());
+        $this->assertTrue($group->setOpen()->IsOpen());
     }
 }

@@ -27,7 +27,9 @@ protected function defineFieldLayout(?DataObject $record): ?FieldLayout
 (`VenueID` for a has_one). After `saveInto()` the controller calls
 `resetLockedChanges()`, so a manipulated POST cannot change a field that is
 not writable. Groups are rendered as `CollapsibleFieldGroup`s in the form and
-as cards in the view (`Includes/ViewGroups.ss`).
+as cards in the view (`Includes/ViewGroups.ss`). A collapsed group opens by
+itself when one of its fields has a message, e.g. a validation error after a
+failed save.
 
 ## Record actions
 
