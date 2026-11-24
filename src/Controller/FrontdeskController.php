@@ -208,6 +208,11 @@ class FrontdeskController extends Controller implements PermissionProvider
         }
 
         if (!$this->canView()) {
+            // A nested sub-controller shares this response and may already have sent the
+            // visitor to the login form; a second redirect fails ("Already directed to").
+            if ($response->isRedirect()) {
+                return $response;
+            }
             $this->pushCurrent();
             try {
                 return Security::permissionFailure($this, _t(self::class . '.PERMISSION_FAILURE_LOGIN', 'Please log in to access this area.'));
