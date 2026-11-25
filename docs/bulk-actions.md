@@ -42,6 +42,13 @@ confirmation when the form is submitted), e.g. for deleting:
 BulkAction::create('delete', 'Löschen', fn (DataList $records) => …)->confirm('Die ausgewählten Einträge löschen?');
 ```
 
+`{count}` in the question is replaced by the number of records the action runs
+on (the checked rows, or all matches when "Select all N matches" is on):
+
+```php
+->confirm('{count} Spieler löschen?')
+```
+
 
 ## Selection and list reloads
 
