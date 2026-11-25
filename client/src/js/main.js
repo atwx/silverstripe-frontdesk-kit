@@ -386,8 +386,17 @@ window.fdkBulkSubmit = (form) => {
         }).then(() => modal && modal.showModal());
         return false;
     }
-    if (option && option.dataset.confirm && !window.confirm(option.dataset.confirm)) {
-        return false;
+    if (option && option.dataset.confirm) {
+        // "{count}" in the question becomes the number of records the action
+        // runs on: all matches when "select all matches" is on, else the
+        // checked rows.
+        const wrapper = document.querySelector('#fdk-list-region [data-fdk-total]');
+        const count = fdkBulkAll && wrapper
+            ? parseInt(wrapper.dataset.fdkTotal, 10) || 0
+            : fdkRowBoxes().filter((c) => c.checked).length;
+        if (!window.confirm(option.dataset.confirm.replaceAll('{count}', count))) {
+            return false;
+        }
     }
     form.action = form.dataset.bulkLink + window.location.search;
     form.target = option && option.dataset.newWindow ? '_blank' : '';
