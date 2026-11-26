@@ -8,7 +8,9 @@ use SilverStripe\Model\ModelData;
 
 /**
  * Switch between related records in the sidebar of a record view, e.g. the
- * cases of the same child. Shown between the record pages where it was added.
+ * cases of the same child. Shown between the record pages where it was added,
+ * or (layout 'tabs') above the cards. display('select') shows it as a select
+ * field with the add link as a button next to it.
  */
 class RecordSwitcher extends ModelData
 {
@@ -28,6 +30,11 @@ class RecordSwitcher extends ModelData
     private ?string $addLink = null;
 
     private string $addTitle = '+';
+
+    /**
+     * 'menu', 'select' or null (layout default: 'select' in the layout 'tabs').
+     */
+    private ?string $display = null;
 
     public function option(string $title, string $link, bool $active = false): static
     {
@@ -53,6 +60,39 @@ class RecordSwitcher extends ModelData
     {
         $this->searchable = $searchable;
         return $this;
+    }
+
+    /**
+     * 'menu' (entry in the sidebar menu) or 'select' (select field); null =
+     * default of the layout.
+     */
+    public function display(?string $display): static
+    {
+        if ($display !== null && !in_array($display, ['menu', 'select'], true)) {
+            throw new \InvalidArgumentException("Unknown switcher display '{$display}'");
+        }
+        $this->display = $display;
+        return $this;
+    }
+
+    public function getDisplay(): ?string
+    {
+        return $this->display;
+    }
+
+    public function IsSelect(): bool
+    {
+        return $this->display === 'select';
+    }
+
+    public function ActiveLink(): string
+    {
+        foreach ($this->options as $option) {
+            if ($option['active']) {
+                return $option['link'];
+            }
+        }
+        return '';
     }
 
     public function IsSearchable(): bool

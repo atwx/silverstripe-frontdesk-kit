@@ -2,7 +2,12 @@ import Alpine from 'alpinejs';
 import htmx from 'htmx.org';
 import Chart from 'chart.js/auto';
 import Treeselect from 'treeselectjs';
-import { createIcons, Pencil, Trash2, ExternalLink, Github, KeyRound, Download, FileText, Printer, Minimize2, Maximize2 } from 'lucide';
+import {
+    createIcons, Pencil, Trash2, ExternalLink, Github, KeyRound, Download, FileText, Printer, Minimize2, Maximize2,
+    Phone, Mail, School, Calendar, CalendarDays, Bell, SquareCheck, Square, MessageSquare, MessageCircle, Users, User,
+    AlarmClock, Pin, Reply, Undo2, Star, Paperclip, ListTodo, Inbox, Clock, Tag, Info, TriangleAlert, CircleCheck,
+    StickyNote, Plus, Filter, House, Building2, GraduationCap, Plane, Euro, Handshake, Briefcase, Flag, Check,
+} from 'lucide';
 
 window.Alpine = Alpine;
 window.htmx = htmx;
@@ -57,7 +62,16 @@ const fdkTypedFields = 'input[type=text], input[type=search], input:not([type]),
 window.fdkFilterChange = (el) => !(el instanceof Element && el.matches(fdkTypedFields));
 window.fdkFilterInput = (el) => el instanceof Element && el.matches(fdkTypedFields) && !el.closest('.fdk-searchable');
 
-const fdkIcons = { Pencil, Trash2, ExternalLink, Github, KeyRound, Download, FileText, Printer, Minimize2, Maximize2 };
+// Icons usable as data-lucide="<kebab-name>" (navigation, row actions, comment types).
+// Projects add more by setting window.fdkExtraIcons (name => lucide icon node) before this bundle loads.
+const fdkIcons = {
+    Pencil, Trash2, ExternalLink, Github, KeyRound, Download, FileText, Printer, Minimize2, Maximize2,
+    Phone, Mail, School, Calendar, CalendarDays, Bell, SquareCheck, Square, MessageSquare, MessageCircle, Users, User,
+    AlarmClock, Pin, Reply, Undo2, Star, Paperclip, ListTodo, Inbox, Clock, Tag, Info, TriangleAlert, CircleCheck,
+    StickyNote, Plus, Filter, House, Building2, GraduationCap, Plane, Euro, Handshake, Briefcase, Flag, Check,
+    ...(window.fdkExtraIcons || {}),
+};
+window.fdkIcons = fdkIcons;
 
 // ─── Checkbox tree ([data-fdk-checkbox-tree]) ────────────────────────────────
 // Hierarchical, independent-node checkbox tree rendered by treeselectjs.
@@ -293,7 +307,45 @@ function initFdkCharts(root = document) {
     });
 }
 
+// ─── Record cards ([data-fdk-card], layout 'tabs') ──────────────────────────
+// The browser remembers per card whether the member opened or closed it.
+function initFdkCards(root = document) {
+    root.querySelectorAll('details[data-fdk-card]').forEach((details) => {
+        if (details.__fdkCard) {
+            return;
+        }
+        details.__fdkCard = true;
+        const key = details.getAttribute('data-fdk-card');
+        try {
+            const stored = window.localStorage.getItem(key);
+            if (stored === '1') {
+                details.open = true;
+            } else if (stored === '0') {
+                details.open = false;
+            }
+        } catch (e) {
+            // storage unavailable: keep the default state
+        }
+        details.addEventListener('toggle', () => {
+            try {
+                window.localStorage.setItem(key, details.open ? '1' : '0');
+            } catch (e) {
+                // ignore
+            }
+        });
+    });
+}
+
+// Switcher as a select field: go to the chosen record.
+document.addEventListener('change', (e) => {
+    const select = e.target instanceof HTMLSelectElement ? e.target : null;
+    if (select && select.matches('[data-fdk-switcher-select]') && select.value) {
+        window.location.href = select.value;
+    }
+});
+
 document.addEventListener('DOMContentLoaded', () => {
+    initFdkCards();
     Alpine.start();
     createIcons({ icons: fdkIcons });
     initFdkCharts();

@@ -22,6 +22,11 @@ use SilverStripe\Security\Security;
  *   - permission: optional permission code (or a list, any of them)
  *   - badge: optional callable "Class::method" (or [Class, method]) returning
  *     a count or short text; 0 and empty values show no badge
+ *   - badge_secondary: optional second counter (same form), shown next to
+ *     the badge in another color (e.g. the to-do basket next to own to-dos)
+ *   - icon: optional Lucide icon name (kebab case, see the kit's icon set)
+ *   - icon_only: true shows only the icon in the horizontal navigation (the
+ *     title becomes its tooltip and label; the burger menu shows the title)
  *   - default: active on the start page
  *   - children: optional entries of a submenu (one level, same keys); the
  *     group is a dropdown in the horizontal navigation and a titled section
@@ -81,6 +86,9 @@ class FrontdeskNavigation
                 'Active' => $this->isActive($entry, $segment, $link, $url),
                 'External' => (bool) preg_match('#^[a-z][a-z0-9+.-]*://#i', $link),
                 'Badge' => $this->badge($entry['badge'] ?? null),
+                'BadgeSecondary' => $this->badge($entry['badge_secondary'] ?? null),
+                'Icon' => (string) ($entry['icon'] ?? ''),
+                'IconOnly' => !empty($entry['icon_only']) && !empty($entry['icon']),
                 'Children' => null,
             ]));
         }
@@ -117,6 +125,9 @@ class FrontdeskNavigation
             'Active' => (bool) $items->find('Active', true),
             'External' => false,
             'Badge' => $badge,
+            'BadgeSecondary' => $this->badge($entry['badge_secondary'] ?? null),
+            'Icon' => (string) ($entry['icon'] ?? ''),
+            'IconOnly' => !empty($entry['icon_only']) && !empty($entry['icon']),
             'Children' => $items,
         ]);
     }

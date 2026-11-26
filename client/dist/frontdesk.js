@@ -40,7 +40,57 @@ ${ii?'Expression: "'+ii+`"
  *
  * This source code is licensed under the ISC license.
  * See the LICENSE file in the root directory of this source tree.
+ */const AlarmClock=[["circle",{cx:"12",cy:"13",r:"8"}],["path",{d:"M12 9v4l2 2"}],["path",{d:"M5 3 2 6"}],["path",{d:"m22 6-3-3"}],["path",{d:"M6.38 18.7 4 21"}],["path",{d:"M17.64 18.67 20 21"}]];/**
+ * @license lucide v0.511.0 - ISC
+ *
+ * This source code is licensed under the ISC license.
+ * See the LICENSE file in the root directory of this source tree.
+ */const Bell=[["path",{d:"M10.268 21a2 2 0 0 0 3.464 0"}],["path",{d:"M3.262 15.326A1 1 0 0 0 4 17h16a1 1 0 0 0 .74-1.673C19.41 13.956 18 12.499 18 8A6 6 0 0 0 6 8c0 4.499-1.411 5.956-2.738 7.326"}]];/**
+ * @license lucide v0.511.0 - ISC
+ *
+ * This source code is licensed under the ISC license.
+ * See the LICENSE file in the root directory of this source tree.
+ */const Briefcase=[["path",{d:"M16 20V4a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"}],["rect",{width:"20",height:"14",x:"2",y:"6",rx:"2"}]];/**
+ * @license lucide v0.511.0 - ISC
+ *
+ * This source code is licensed under the ISC license.
+ * See the LICENSE file in the root directory of this source tree.
+ */const Building2=[["path",{d:"M6 22V4a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v18Z"}],["path",{d:"M6 12H4a2 2 0 0 0-2 2v6a2 2 0 0 0 2 2h2"}],["path",{d:"M18 9h2a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2h-2"}],["path",{d:"M10 6h4"}],["path",{d:"M10 10h4"}],["path",{d:"M10 14h4"}],["path",{d:"M10 18h4"}]];/**
+ * @license lucide v0.511.0 - ISC
+ *
+ * This source code is licensed under the ISC license.
+ * See the LICENSE file in the root directory of this source tree.
+ */const CalendarDays=[["path",{d:"M8 2v4"}],["path",{d:"M16 2v4"}],["rect",{width:"18",height:"18",x:"3",y:"4",rx:"2"}],["path",{d:"M3 10h18"}],["path",{d:"M8 14h.01"}],["path",{d:"M12 14h.01"}],["path",{d:"M16 14h.01"}],["path",{d:"M8 18h.01"}],["path",{d:"M12 18h.01"}],["path",{d:"M16 18h.01"}]];/**
+ * @license lucide v0.511.0 - ISC
+ *
+ * This source code is licensed under the ISC license.
+ * See the LICENSE file in the root directory of this source tree.
+ */const Calendar=[["path",{d:"M8 2v4"}],["path",{d:"M16 2v4"}],["rect",{width:"18",height:"18",x:"3",y:"4",rx:"2"}],["path",{d:"M3 10h18"}]];/**
+ * @license lucide v0.511.0 - ISC
+ *
+ * This source code is licensed under the ISC license.
+ * See the LICENSE file in the root directory of this source tree.
+ */const Check=[["path",{d:"M20 6 9 17l-5-5"}]];/**
+ * @license lucide v0.511.0 - ISC
+ *
+ * This source code is licensed under the ISC license.
+ * See the LICENSE file in the root directory of this source tree.
+ */const CircleCheck=[["circle",{cx:"12",cy:"12",r:"10"}],["path",{d:"m9 12 2 2 4-4"}]];/**
+ * @license lucide v0.511.0 - ISC
+ *
+ * This source code is licensed under the ISC license.
+ * See the LICENSE file in the root directory of this source tree.
+ */const Clock=[["circle",{cx:"12",cy:"12",r:"10"}],["polyline",{points:"12 6 12 12 16 14"}]];/**
+ * @license lucide v0.511.0 - ISC
+ *
+ * This source code is licensed under the ISC license.
+ * See the LICENSE file in the root directory of this source tree.
  */const Download=[["path",{d:"M12 15V3"}],["path",{d:"M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"}],["path",{d:"m7 10 5 5 5-5"}]];/**
+ * @license lucide v0.511.0 - ISC
+ *
+ * This source code is licensed under the ISC license.
+ * See the LICENSE file in the root directory of this source tree.
+ */const Euro=[["path",{d:"M4 10h12"}],["path",{d:"M4 14h9"}],["path",{d:"M19 6a7.7 7.7 0 0 0-5.2-2A7.9 7.9 0 0 0 6 12c0 4.4 3.5 8 7.8 8 2 0 3.8-.8 5.2-2"}]];/**
  * @license lucide v0.511.0 - ISC
  *
  * This source code is licensed under the ISC license.
@@ -55,7 +105,42 @@ ${ii?'Expression: "'+ii+`"
  *
  * This source code is licensed under the ISC license.
  * See the LICENSE file in the root directory of this source tree.
+ */const Flag=[["path",{d:"M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z"}],["line",{x1:"4",x2:"4",y1:"22",y2:"15"}]];/**
+ * @license lucide v0.511.0 - ISC
+ *
+ * This source code is licensed under the ISC license.
+ * See the LICENSE file in the root directory of this source tree.
+ */const Funnel=[["path",{d:"M10 20a1 1 0 0 0 .553.895l2 1A1 1 0 0 0 14 21v-7a2 2 0 0 1 .517-1.341L21.74 4.67A1 1 0 0 0 21 3H3a1 1 0 0 0-.742 1.67l7.225 7.989A2 2 0 0 1 10 14z"}]];/**
+ * @license lucide v0.511.0 - ISC
+ *
+ * This source code is licensed under the ISC license.
+ * See the LICENSE file in the root directory of this source tree.
  */const Github=[["path",{d:"M15 22v-4a4.8 4.8 0 0 0-1-3.5c3 0 6-2 6-5.5.08-1.25-.27-2.48-1-3.5.28-1.15.28-2.35 0-3.5 0 0-1 0-3 1.5-2.64-.5-5.36-.5-8 0C6 2 5 2 5 2c-.3 1.15-.3 2.35 0 3.5A5.403 5.403 0 0 0 4 9c0 3.5 3 5.5 6 5.5-.39.49-.68 1.05-.85 1.65-.17.6-.22 1.23-.15 1.85v4"}],["path",{d:"M9 18c-4.51 2-5-2-7-2"}]];/**
+ * @license lucide v0.511.0 - ISC
+ *
+ * This source code is licensed under the ISC license.
+ * See the LICENSE file in the root directory of this source tree.
+ */const GraduationCap=[["path",{d:"M21.42 10.922a1 1 0 0 0-.019-1.838L12.83 5.18a2 2 0 0 0-1.66 0L2.6 9.08a1 1 0 0 0 0 1.832l8.57 3.908a2 2 0 0 0 1.66 0z"}],["path",{d:"M22 10v6"}],["path",{d:"M6 12.5V16a6 3 0 0 0 12 0v-3.5"}]];/**
+ * @license lucide v0.511.0 - ISC
+ *
+ * This source code is licensed under the ISC license.
+ * See the LICENSE file in the root directory of this source tree.
+ */const Handshake=[["path",{d:"m11 17 2 2a1 1 0 1 0 3-3"}],["path",{d:"m14 14 2.5 2.5a1 1 0 1 0 3-3l-3.88-3.88a3 3 0 0 0-4.24 0l-.88.88a1 1 0 1 1-3-3l2.81-2.81a5.79 5.79 0 0 1 7.06-.87l.47.28a2 2 0 0 0 1.42.25L21 4"}],["path",{d:"m21 3 1 11h-2"}],["path",{d:"M3 3 2 14l6.5 6.5a1 1 0 1 0 3-3"}],["path",{d:"M3 4h8"}]];/**
+ * @license lucide v0.511.0 - ISC
+ *
+ * This source code is licensed under the ISC license.
+ * See the LICENSE file in the root directory of this source tree.
+ */const House=[["path",{d:"M15 21v-8a1 1 0 0 0-1-1h-4a1 1 0 0 0-1 1v8"}],["path",{d:"M3 10a2 2 0 0 1 .709-1.528l7-5.999a2 2 0 0 1 2.582 0l7 5.999A2 2 0 0 1 21 10v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"}]];/**
+ * @license lucide v0.511.0 - ISC
+ *
+ * This source code is licensed under the ISC license.
+ * See the LICENSE file in the root directory of this source tree.
+ */const Inbox=[["polyline",{points:"22 12 16 12 14 15 10 15 8 12 2 12"}],["path",{d:"M5.45 5.11 2 12v6a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-6l-3.45-6.89A2 2 0 0 0 16.76 4H7.24a2 2 0 0 0-1.79 1.11z"}]];/**
+ * @license lucide v0.511.0 - ISC
+ *
+ * This source code is licensed under the ISC license.
+ * See the LICENSE file in the root directory of this source tree.
+ */const Info=[["circle",{cx:"12",cy:"12",r:"10"}],["path",{d:"M12 16v-4"}],["path",{d:"M12 8h.01"}]];/**
  * @license lucide v0.511.0 - ISC
  *
  * This source code is licensed under the ISC license.
@@ -65,7 +150,27 @@ ${ii?'Expression: "'+ii+`"
  *
  * This source code is licensed under the ISC license.
  * See the LICENSE file in the root directory of this source tree.
+ */const ListTodo=[["rect",{x:"3",y:"5",width:"6",height:"6",rx:"1"}],["path",{d:"m3 17 2 2 4-4"}],["path",{d:"M13 6h8"}],["path",{d:"M13 12h8"}],["path",{d:"M13 18h8"}]];/**
+ * @license lucide v0.511.0 - ISC
+ *
+ * This source code is licensed under the ISC license.
+ * See the LICENSE file in the root directory of this source tree.
+ */const Mail=[["path",{d:"m22 7-8.991 5.727a2 2 0 0 1-2.009 0L2 7"}],["rect",{x:"2",y:"4",width:"20",height:"16",rx:"2"}]];/**
+ * @license lucide v0.511.0 - ISC
+ *
+ * This source code is licensed under the ISC license.
+ * See the LICENSE file in the root directory of this source tree.
  */const Maximize2=[["path",{d:"M15 3h6v6"}],["path",{d:"m21 3-7 7"}],["path",{d:"m3 21 7-7"}],["path",{d:"M9 21H3v-6"}]];/**
+ * @license lucide v0.511.0 - ISC
+ *
+ * This source code is licensed under the ISC license.
+ * See the LICENSE file in the root directory of this source tree.
+ */const MessageCircle=[["path",{d:"M7.9 20A9 9 0 1 0 4 16.1L2 22Z"}]];/**
+ * @license lucide v0.511.0 - ISC
+ *
+ * This source code is licensed under the ISC license.
+ * See the LICENSE file in the root directory of this source tree.
+ */const MessageSquare=[["path",{d:"M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"}]];/**
  * @license lucide v0.511.0 - ISC
  *
  * This source code is licensed under the ISC license.
@@ -75,7 +180,32 @@ ${ii?'Expression: "'+ii+`"
  *
  * This source code is licensed under the ISC license.
  * See the LICENSE file in the root directory of this source tree.
+ */const Paperclip=[["path",{d:"M13.234 20.252 21 12.3"}],["path",{d:"m16 6-8.414 8.586a2 2 0 0 0 0 2.828 2 2 0 0 0 2.828 0l8.414-8.586a4 4 0 0 0 0-5.656 4 4 0 0 0-5.656 0l-8.415 8.585a6 6 0 1 0 8.486 8.486"}]];/**
+ * @license lucide v0.511.0 - ISC
+ *
+ * This source code is licensed under the ISC license.
+ * See the LICENSE file in the root directory of this source tree.
  */const Pencil=[["path",{d:"M21.174 6.812a1 1 0 0 0-3.986-3.987L3.842 16.174a2 2 0 0 0-.5.83l-1.321 4.352a.5.5 0 0 0 .623.622l4.353-1.32a2 2 0 0 0 .83-.497z"}],["path",{d:"m15 5 4 4"}]];/**
+ * @license lucide v0.511.0 - ISC
+ *
+ * This source code is licensed under the ISC license.
+ * See the LICENSE file in the root directory of this source tree.
+ */const Phone=[["path",{d:"M13.832 16.568a1 1 0 0 0 1.213-.303l.355-.465A2 2 0 0 1 17 15h3a2 2 0 0 1 2 2v3a2 2 0 0 1-2 2A18 18 0 0 1 2 4a2 2 0 0 1 2-2h3a2 2 0 0 1 2 2v3a2 2 0 0 1-.8 1.6l-.468.351a1 1 0 0 0-.292 1.233 14 14 0 0 0 6.392 6.384"}]];/**
+ * @license lucide v0.511.0 - ISC
+ *
+ * This source code is licensed under the ISC license.
+ * See the LICENSE file in the root directory of this source tree.
+ */const Pin=[["path",{d:"M12 17v5"}],["path",{d:"M9 10.76a2 2 0 0 1-1.11 1.79l-1.78.9A2 2 0 0 0 5 15.24V16a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-.76a2 2 0 0 0-1.11-1.79l-1.78-.9A2 2 0 0 1 15 10.76V7a1 1 0 0 1 1-1 2 2 0 0 0 0-4H8a2 2 0 0 0 0 4 1 1 0 0 1 1 1z"}]];/**
+ * @license lucide v0.511.0 - ISC
+ *
+ * This source code is licensed under the ISC license.
+ * See the LICENSE file in the root directory of this source tree.
+ */const Plane=[["path",{d:"M17.8 19.2 16 11l3.5-3.5C21 6 21.5 4 21 3c-1-.5-3 0-4.5 1.5L13 8 4.8 6.2c-.5-.1-.9.1-1.1.5l-.3.5c-.2.5-.1 1 .3 1.3L9 12l-2 3H4l-1 1 3 2 2 3 1-1v-3l3-2 3.5 5.3c.3.4.8.5 1.3.3l.5-.2c.4-.3.6-.7.5-1.2z"}]];/**
+ * @license lucide v0.511.0 - ISC
+ *
+ * This source code is licensed under the ISC license.
+ * See the LICENSE file in the root directory of this source tree.
+ */const Plus=[["path",{d:"M5 12h14"}],["path",{d:"M12 5v14"}]];/**
  * @license lucide v0.511.0 - ISC
  *
  * This source code is licensed under the ISC license.
@@ -85,7 +215,62 @@ ${ii?'Expression: "'+ii+`"
  *
  * This source code is licensed under the ISC license.
  * See the LICENSE file in the root directory of this source tree.
+ */const Reply=[["path",{d:"M20 18v-2a4 4 0 0 0-4-4H4"}],["path",{d:"m9 17-5-5 5-5"}]];/**
+ * @license lucide v0.511.0 - ISC
+ *
+ * This source code is licensed under the ISC license.
+ * See the LICENSE file in the root directory of this source tree.
+ */const School=[["path",{d:"M14 22v-4a2 2 0 1 0-4 0v4"}],["path",{d:"m18 10 3.447 1.724a1 1 0 0 1 .553.894V20a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2v-7.382a1 1 0 0 1 .553-.894L6 10"}],["path",{d:"M18 5v17"}],["path",{d:"m4 6 7.106-3.553a2 2 0 0 1 1.788 0L20 6"}],["path",{d:"M6 5v17"}],["circle",{cx:"12",cy:"9",r:"2"}]];/**
+ * @license lucide v0.511.0 - ISC
+ *
+ * This source code is licensed under the ISC license.
+ * See the LICENSE file in the root directory of this source tree.
+ */const SquareCheck=[["rect",{width:"18",height:"18",x:"3",y:"3",rx:"2"}],["path",{d:"m9 12 2 2 4-4"}]];/**
+ * @license lucide v0.511.0 - ISC
+ *
+ * This source code is licensed under the ISC license.
+ * See the LICENSE file in the root directory of this source tree.
+ */const Square=[["rect",{width:"18",height:"18",x:"3",y:"3",rx:"2"}]];/**
+ * @license lucide v0.511.0 - ISC
+ *
+ * This source code is licensed under the ISC license.
+ * See the LICENSE file in the root directory of this source tree.
+ */const Star=[["path",{d:"M11.525 2.295a.53.53 0 0 1 .95 0l2.31 4.679a2.123 2.123 0 0 0 1.595 1.16l5.166.756a.53.53 0 0 1 .294.904l-3.736 3.638a2.123 2.123 0 0 0-.611 1.878l.882 5.14a.53.53 0 0 1-.771.56l-4.618-2.428a2.122 2.122 0 0 0-1.973 0L6.396 21.01a.53.53 0 0 1-.77-.56l.881-5.139a2.122 2.122 0 0 0-.611-1.879L2.16 9.795a.53.53 0 0 1 .294-.906l5.165-.755a2.122 2.122 0 0 0 1.597-1.16z"}]];/**
+ * @license lucide v0.511.0 - ISC
+ *
+ * This source code is licensed under the ISC license.
+ * See the LICENSE file in the root directory of this source tree.
+ */const StickyNote=[["path",{d:"M16 3H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V8Z"}],["path",{d:"M15 3v4a2 2 0 0 0 2 2h4"}]];/**
+ * @license lucide v0.511.0 - ISC
+ *
+ * This source code is licensed under the ISC license.
+ * See the LICENSE file in the root directory of this source tree.
+ */const Tag=[["path",{d:"M12.586 2.586A2 2 0 0 0 11.172 2H4a2 2 0 0 0-2 2v7.172a2 2 0 0 0 .586 1.414l8.704 8.704a2.426 2.426 0 0 0 3.42 0l6.58-6.58a2.426 2.426 0 0 0 0-3.42z"}],["circle",{cx:"7.5",cy:"7.5",r:".5",fill:"currentColor"}]];/**
+ * @license lucide v0.511.0 - ISC
+ *
+ * This source code is licensed under the ISC license.
+ * See the LICENSE file in the root directory of this source tree.
  */const Trash2=[["path",{d:"M3 6h18"}],["path",{d:"M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"}],["path",{d:"M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"}],["line",{x1:"10",x2:"10",y1:"11",y2:"17"}],["line",{x1:"14",x2:"14",y1:"11",y2:"17"}]];/**
+ * @license lucide v0.511.0 - ISC
+ *
+ * This source code is licensed under the ISC license.
+ * See the LICENSE file in the root directory of this source tree.
+ */const TriangleAlert=[["path",{d:"m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3"}],["path",{d:"M12 9v4"}],["path",{d:"M12 17h.01"}]];/**
+ * @license lucide v0.511.0 - ISC
+ *
+ * This source code is licensed under the ISC license.
+ * See the LICENSE file in the root directory of this source tree.
+ */const Undo2=[["path",{d:"M9 14 4 9l5-5"}],["path",{d:"M4 9h10.5a5.5 5.5 0 0 1 5.5 5.5a5.5 5.5 0 0 1-5.5 5.5H11"}]];/**
+ * @license lucide v0.511.0 - ISC
+ *
+ * This source code is licensed under the ISC license.
+ * See the LICENSE file in the root directory of this source tree.
+ */const User=[["path",{d:"M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"}],["circle",{cx:"12",cy:"7",r:"4"}]];/**
+ * @license lucide v0.511.0 - ISC
+ *
+ * This source code is licensed under the ISC license.
+ * See the LICENSE file in the root directory of this source tree.
+ */const Users=[["path",{d:"M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"}],["path",{d:"M16 3.128a4 4 0 0 1 0 7.744"}],["path",{d:"M22 21v-2a4 4 0 0 0-3-3.87"}],["circle",{cx:"9",cy:"7",r:"4"}]];/**
  * @license lucide v0.511.0 - ISC
  *
  * This source code is licensed under the ISC license.
@@ -93,4 +278,4 @@ ${ii?'Expression: "'+ii+`"
  */const createIcons=({icons:ei={},nameAttr:ti="data-lucide",attrs:ii={}}={})=>{if(!Object.values(ei).length)throw new Error(`Please provide an icons object.
 If you want to use all the icons you can import it like:
  \`import { createIcons, icons } from 'lucide';
-lucide.createIcons({icons});\``);if(typeof document>"u")throw new Error("`createIcons()` only works in a browser environment.");const ni=document.querySelectorAll(`[${ti}]`);if(Array.from(ni).forEach(si=>replaceElement(si,{nameAttr:ti,icons:ei,attrs:ii})),ti==="data-lucide"){const si=document.querySelectorAll("[icon-name]");si.length>0&&(console.warn("[Lucide] Some icons were found with the now deprecated icon-name attribute. These will still be replaced for backwards compatibility, but will no longer be supported in v1.0 and you should switch to data-lucide"),Array.from(si).forEach(ri=>replaceElement(ri,{nameAttr:"icon-name",icons:ei,attrs:ii})))}};window.Alpine=module_default,window.htmx=htmx,window.Chart=Chart,htmx.config.defaultSwapStyle="innerHTML",window.fdkSearchable=()=>({open:!1,value:"",selected:"",query:"",empty:"",options:[],init(){const ei=this.$el.dataset;this.value=ei.value||"",this.selected=ei.selected||"",this.empty=ei.empty||"";let ti=[];try{ti=JSON.parse(ei.options||"[]")}catch(ii){console.error("fdkSearchable: invalid options JSON",ii)}this.options=[{value:"",label:this.empty},...ti]},filtered(){const ei=this.query.trim().toLowerCase();return ei?this.options.filter(ti=>(ti.label||"").toLowerCase().includes(ei)):this.options},pick(ei){this.value=ei.value,this.selected=ei.label,this.query="",this.open=!1,this.$nextTick(()=>{this.$refs.hidden.dispatchEvent(new Event("change",{bubbles:!0}))})}});const fdkTypedFields="input[type=text], input[type=search], input:not([type]), textarea";window.fdkFilterChange=ei=>!(ei instanceof Element&&ei.matches(fdkTypedFields)),window.fdkFilterInput=ei=>ei instanceof Element&&ei.matches(fdkTypedFields)&&!ei.closest(".fdk-searchable");const fdkIcons={Pencil,Trash2,ExternalLink,Github,KeyRound,Download,FileText,Printer,Minimize2,Maximize2};function initFdkCheckboxTrees(ei=document){ei.querySelectorAll("[data-fdk-checkbox-tree]").forEach(ti=>{if(ti.__fdkTree)return;ti.__fdkTree=!0;let ii=[];try{ii=JSON.parse(ti.querySelector("[data-fdk-tree-options]").textContent)}catch(ai){console.error("fdk-checkbox-tree: invalid options JSON",ai,ti);return}const ni=ti.querySelector("[data-fdk-tree-input]"),si=ti.querySelector("[data-fdk-tree-root]");let ri=[];try{ri=ni.value?JSON.parse(ni.value):[]}catch{ri=[]}new Is({parentHtmlContainer:si,value:Array.isArray(ri)?ri:[],options:ii,isIndependentNodes:!0}).srcElement.addEventListener("input",ai=>{ni.value=JSON.stringify(ai.detail),ni.dispatchEvent(new Event("change",{bubbles:!0}))})})}function initFdkToggleAll(ei=document){ei.querySelectorAll("[data-fdk-toggle-all]").forEach(ti=>{ti.__fdkToggleAll||(ti.__fdkToggleAll=!0,ti.addEventListener("click",ii=>{ii.preventDefault();const ni=ti.getAttribute("data-fdk-toggle-all")||"details.fdk-collapse",si=document.querySelectorAll(ni),ri=Array.from(si).some(oi=>!oi.open);si.forEach(oi=>{oi.open=ri})}))})}function fdkCloseNavGroups(ei=null){document.querySelectorAll("details[data-fdk-nav-group][open]").forEach(ti=>{ti!==ei&&(ti.open=!1)})}document.addEventListener("toggle",ei=>{const ti=ei.target;ti instanceof HTMLDetailsElement&&ti.open&&ti.matches("[data-fdk-nav-group]")&&fdkCloseNavGroups(ti)},!0),document.addEventListener("click",ei=>{(!(ei.target instanceof Element)||!ei.target.closest("details[data-fdk-nav-group]"))&&fdkCloseNavGroups()}),document.addEventListener("keydown",ei=>{if(ei.key!=="Escape")return;const ti=ei.target instanceof Element?ei.target.closest("details[data-fdk-nav-group][open]"):null;fdkCloseNavGroups(),ti&&ti.querySelector("summary").focus()});function fdkPlaceRowActions(ei){const ti=ei.querySelector(".dropdown-content"),ii=ei.querySelector("summary");if(!ti||!ii)return;const ni=ii.getBoundingClientRect();Object.assign(ti.style,{position:"fixed",right:"auto",bottom:"auto",margin:"0"});const si=ni.bottom+4,ri=si+ti.offsetHeight>window.innerHeight&&ni.top-4-ti.offsetHeight>0?ni.top-4-ti.offsetHeight:si;ti.style.top=`${ri}px`,ti.style.left=`${Math.max(4,ni.right-ti.offsetWidth)}px`}function fdkUpdateRowActions(){document.querySelectorAll("details.fdk-row-actions-wrap[open]").forEach(ei=>{var ii;const ti=(ii=ei.querySelector("summary"))==null?void 0:ii.getBoundingClientRect();!ti||ti.bottom<0||ti.top>window.innerHeight||ti.right<0||ti.left>window.innerWidth?ei.open=!1:fdkPlaceRowActions(ei)})}document.addEventListener("toggle",ei=>{const ti=ei.target;ti instanceof HTMLDetailsElement&&ti.open&&ti.matches(".fdk-row-actions-wrap")&&fdkPlaceRowActions(ti)},!0),document.addEventListener("scroll",ei=>{ei.target instanceof Element&&ei.target.closest(".fdk-row-actions-wrap")||fdkUpdateRowActions()},!0),window.addEventListener("resize",fdkUpdateRowActions),document.addEventListener("toggle",ei=>{const ti=ei.target;if(!(ti instanceof HTMLDetailsElement)||!ti.matches("[data-fdk-column-choice]"))return;const ii=ti.querySelector(".fdk-column-choice-body");ti.open?(ii.replaceChildren(ti.querySelector("template").content.cloneNode(!0)),initFdkSelectAll(ii)):ii.replaceChildren()},!0),document.addEventListener("toggle",ei=>{const ti=ei.target;if(ti instanceof HTMLDetailsElement&&ti.open&&ti.matches("[data-fdk-switcher-search]")){const ii=ti.querySelector("input[type=search]");ii.value="",ii.dispatchEvent(new Event("input",{bubbles:!0})),requestAnimationFrame(()=>ii.focus())}},!0),document.addEventListener("input",ei=>{const ti=ei.target instanceof Element?ei.target.closest("[data-fdk-switcher-search]"):null;if(!ti)return;const ii=ei.target.value.trim().toLowerCase();let ni=0;ti.querySelectorAll("li[data-search]").forEach(si=>{const ri=!ii||si.dataset.search.includes(ii);si.hidden=!ri,ni+=ri?1:0}),ti.querySelector(".fdk-switcher-empty").hidden=ni>0}),document.addEventListener("keydown",ei=>{const ti=ei.target instanceof Element?ei.target.closest("[data-fdk-switcher-search]"):null;if(ti){if(ei.key==="Escape")ti.open=!1,ti.querySelector("summary").focus();else if(ei.key==="Enter"&&ei.target.matches("input[type=search]")){ei.preventDefault();const ii=ti.querySelector("li[data-search]:not([hidden]) a");ii&&(window.location.href=ii.href)}}});function initFdkSelectAll(ei=document){ei.querySelectorAll("[data-fdk-select-all]").forEach(ti=>{if(ti.__fdkSelectAll)return;ti.__fdkSelectAll=!0;const ii=(si,ri)=>{const oi=document.createElement("button");return oi.type="button",oi.className="link link-hover link-primary",oi.textContent=si,oi.addEventListener("click",()=>{ti.querySelectorAll("input[type=checkbox]:not(:disabled)").forEach(ai=>{ai.checked!==ri&&(ai.checked=ri,ai.dispatchEvent(new Event("change",{bubbles:!0})))})}),oi},ni=document.createElement("div");ni.className="fdk-select-all flex gap-3 mb-1 text-sm",ni.append(ii(ti.dataset.fdkSelectAll,!0),ii(ti.dataset.fdkSelectNone||"–",!1)),ti.parentNode.insertBefore(ni,ti)})}function initFdkCharts(ei=document){ei.querySelectorAll("[data-fdk-chart]").forEach(ti=>{ti.__fdkChart&&ti.__fdkChart.destroy();try{const ii=JSON.parse(ti.getAttribute("data-fdk-chart"));ti.__fdkChart=new Chart(ti,ii)}catch(ii){console.error("fdk-chart: invalid config",ii,ti)}})}document.addEventListener("DOMContentLoaded",()=>{module_default.start(),createIcons({icons:fdkIcons}),initFdkCharts(),initFdkCheckboxTrees(),initFdkToggleAll(),initFdkSelectAll()});let fdkKeptIds=null,fdkBulkAll=!1;function fdkBulkForm(){return document.getElementById("fdk-bulk-form")}function fdkRowBoxes(){return Array.from(document.querySelectorAll('#fdk-list-region input[name="ids[]"]'))}function fdkBulkUpdate(){const ei=fdkBulkForm();if(!ei)return;const ti=fdkRowBoxes(),ii=ti.filter(ci=>ci.checked).length,ni=document.querySelector("#fdk-list-region [data-fdk-total]"),si=ni&&parseInt(ni.dataset.fdkTotal,10)||0,ri=ei.querySelector(".fdk-bulk-count"),oi=ei.querySelector(".fdk-bulk-all"),ai=(ci,ui)=>(ei.dataset[ci]||"").replace("{count}",ui);if(fdkBulkAll&&(ii<ti.length||ti.length===0)&&(fdkBulkAll=!1),ei.elements.all.value=fdkBulkAll?"1":"",fdkBulkAll){ri.textContent=ai("labelAllSelected",si),ri.hidden=!1,oi.textContent=ai("labelClear",si),oi.hidden=!1;return}ri.textContent=ai("labelCount",ii),ri.hidden=ii===0;const li=ti.length>0&&ii===ti.length&&si>ti.length;oi.textContent=ai("labelSelectAll",si),oi.hidden=!li}document.addEventListener("click",ei=>{if(ei.target instanceof Element&&ei.target.closest("#fdk-bulk-form .fdk-bulk-all")){if(fdkBulkAll){fdkBulkAll=!1,fdkRowBoxes().forEach(ni=>{ni.checked=!1});const ii=document.querySelector("#fdk-list-region thead input[type=checkbox]");ii&&(ii.checked=!1)}else fdkBulkAll=!0;fdkBulkUpdate()}}),document.addEventListener("change",ei=>{ei.target instanceof Element&&ei.target.closest("#fdk-list-region")&&fdkBulkUpdate()}),document.addEventListener("click",ei=>{ei.target instanceof Element&&ei.target.matches("#fdk-list-region thead input[type=checkbox]")&&setTimeout(fdkBulkUpdate)}),window.fdkBulkSubmit=ei=>{const ti=ei.BulkAction.selectedOptions[0];if(ei.elements.all.value=fdkBulkAll?"1":"",ei.BackURL.value=window.location.pathname+window.location.search,ti&&ti.dataset.fields){const ii=document.getElementById("fdk-modal");return htmx.ajax("POST",ei.dataset.bulkdialogLink+window.location.search,{source:ei,target:"#fdk-modal-content"}).then(()=>ii&&ii.showModal()),!1}if(ti&&ti.dataset.confirm){const ii=document.querySelector("#fdk-list-region [data-fdk-total]"),ni=fdkBulkAll&&ii?parseInt(ii.dataset.fdkTotal,10)||0:fdkRowBoxes().filter(si=>si.checked).length;if(!window.confirm(ti.dataset.confirm.replaceAll("{count}",ni)))return!1}return ei.action=ei.dataset.bulkLink+window.location.search,ei.target=ti&&ti.dataset.newWindow?"_blank":"",!0},document.addEventListener("htmx:beforeSwap",ei=>{const ti=ei.detail.target;if(ti&&ti.id==="fdk-list-region"){fdkKeptIds=new Set(Array.from(ti.querySelectorAll('input[name="ids[]"]:checked'),ni=>ni.value));const ii=ei.detail.requestConfig&&ei.detail.requestConfig.elt;ii instanceof Element&&ii.closest(".fdk-filter-bar")&&(fdkBulkAll=!1)}}),document.addEventListener("DOMContentLoaded",fdkBulkUpdate),document.addEventListener("htmx:afterSwap",ei=>{if(createIcons({icons:fdkIcons}),initFdkCharts(ei.target||document),initFdkCheckboxTrees(ei.target||document),initFdkToggleAll(ei.target||document),initFdkSelectAll(ei.target||document),fdkKeptIds&&ei.target&&ei.target.id==="fdk-list-region"){ei.target.querySelectorAll('input[name="ids[]"]').forEach(ii=>{(fdkBulkAll||fdkKeptIds.has(ii.value))&&(ii.checked=!0)});const ti=ei.target.querySelector("thead input[type=checkbox]");ti&&fdkBulkAll&&(ti.checked=!0),fdkKeptIds=null,fdkBulkUpdate()}}),document.addEventListener("click",ei=>{const ti=ei.target instanceof Element?ei.target.closest("a[data-fdk-keep-query]"):null;if(!ti)return;const ii=new URLSearchParams(window.location.search);ii.delete("export"),new URLSearchParams(ti.getAttribute("data-fdk-keep-query")||"").forEach((si,ri)=>ii.set(ri,si));const ni=ii.toString();ti.href=ti.href.split("?")[0]+(ni?"?"+ni:"")})})();
+lucide.createIcons({icons});\``);if(typeof document>"u")throw new Error("`createIcons()` only works in a browser environment.");const ni=document.querySelectorAll(`[${ti}]`);if(Array.from(ni).forEach(si=>replaceElement(si,{nameAttr:ti,icons:ei,attrs:ii})),ti==="data-lucide"){const si=document.querySelectorAll("[icon-name]");si.length>0&&(console.warn("[Lucide] Some icons were found with the now deprecated icon-name attribute. These will still be replaced for backwards compatibility, but will no longer be supported in v1.0 and you should switch to data-lucide"),Array.from(si).forEach(ri=>replaceElement(ri,{nameAttr:"icon-name",icons:ei,attrs:ii})))}};window.Alpine=module_default,window.htmx=htmx,window.Chart=Chart,htmx.config.defaultSwapStyle="innerHTML",window.fdkSearchable=()=>({open:!1,value:"",selected:"",query:"",empty:"",options:[],init(){const ei=this.$el.dataset;this.value=ei.value||"",this.selected=ei.selected||"",this.empty=ei.empty||"";let ti=[];try{ti=JSON.parse(ei.options||"[]")}catch(ii){console.error("fdkSearchable: invalid options JSON",ii)}this.options=[{value:"",label:this.empty},...ti]},filtered(){const ei=this.query.trim().toLowerCase();return ei?this.options.filter(ti=>(ti.label||"").toLowerCase().includes(ei)):this.options},pick(ei){this.value=ei.value,this.selected=ei.label,this.query="",this.open=!1,this.$nextTick(()=>{this.$refs.hidden.dispatchEvent(new Event("change",{bubbles:!0}))})}});const fdkTypedFields="input[type=text], input[type=search], input:not([type]), textarea";window.fdkFilterChange=ei=>!(ei instanceof Element&&ei.matches(fdkTypedFields)),window.fdkFilterInput=ei=>ei instanceof Element&&ei.matches(fdkTypedFields)&&!ei.closest(".fdk-searchable");const fdkIcons={Pencil,Trash2,ExternalLink,Github,KeyRound,Download,FileText,Printer,Minimize2,Maximize2,Phone,Mail,School,Calendar,CalendarDays,Bell,SquareCheck,Square,MessageSquare,MessageCircle,Users,User,AlarmClock,Pin,Reply,Undo2,Star,Paperclip,ListTodo,Inbox,Clock,Tag,Info,TriangleAlert,CircleCheck,StickyNote,Plus,Filter:Funnel,House,Building2,GraduationCap,Plane,Euro,Handshake,Briefcase,Flag,Check,...window.fdkExtraIcons||{}};window.fdkIcons=fdkIcons;function initFdkCheckboxTrees(ei=document){ei.querySelectorAll("[data-fdk-checkbox-tree]").forEach(ti=>{if(ti.__fdkTree)return;ti.__fdkTree=!0;let ii=[];try{ii=JSON.parse(ti.querySelector("[data-fdk-tree-options]").textContent)}catch(ai){console.error("fdk-checkbox-tree: invalid options JSON",ai,ti);return}const ni=ti.querySelector("[data-fdk-tree-input]"),si=ti.querySelector("[data-fdk-tree-root]");let ri=[];try{ri=ni.value?JSON.parse(ni.value):[]}catch{ri=[]}new Is({parentHtmlContainer:si,value:Array.isArray(ri)?ri:[],options:ii,isIndependentNodes:!0}).srcElement.addEventListener("input",ai=>{ni.value=JSON.stringify(ai.detail),ni.dispatchEvent(new Event("change",{bubbles:!0}))})})}function initFdkToggleAll(ei=document){ei.querySelectorAll("[data-fdk-toggle-all]").forEach(ti=>{ti.__fdkToggleAll||(ti.__fdkToggleAll=!0,ti.addEventListener("click",ii=>{ii.preventDefault();const ni=ti.getAttribute("data-fdk-toggle-all")||"details.fdk-collapse",si=document.querySelectorAll(ni),ri=Array.from(si).some(oi=>!oi.open);si.forEach(oi=>{oi.open=ri})}))})}function fdkCloseNavGroups(ei=null){document.querySelectorAll("details[data-fdk-nav-group][open]").forEach(ti=>{ti!==ei&&(ti.open=!1)})}document.addEventListener("toggle",ei=>{const ti=ei.target;ti instanceof HTMLDetailsElement&&ti.open&&ti.matches("[data-fdk-nav-group]")&&fdkCloseNavGroups(ti)},!0),document.addEventListener("click",ei=>{(!(ei.target instanceof Element)||!ei.target.closest("details[data-fdk-nav-group]"))&&fdkCloseNavGroups()}),document.addEventListener("keydown",ei=>{if(ei.key!=="Escape")return;const ti=ei.target instanceof Element?ei.target.closest("details[data-fdk-nav-group][open]"):null;fdkCloseNavGroups(),ti&&ti.querySelector("summary").focus()});function fdkPlaceRowActions(ei){const ti=ei.querySelector(".dropdown-content"),ii=ei.querySelector("summary");if(!ti||!ii)return;const ni=ii.getBoundingClientRect();Object.assign(ti.style,{position:"fixed",right:"auto",bottom:"auto",margin:"0"});const si=ni.bottom+4,ri=si+ti.offsetHeight>window.innerHeight&&ni.top-4-ti.offsetHeight>0?ni.top-4-ti.offsetHeight:si;ti.style.top=`${ri}px`,ti.style.left=`${Math.max(4,ni.right-ti.offsetWidth)}px`}function fdkUpdateRowActions(){document.querySelectorAll("details.fdk-row-actions-wrap[open]").forEach(ei=>{var ii;const ti=(ii=ei.querySelector("summary"))==null?void 0:ii.getBoundingClientRect();!ti||ti.bottom<0||ti.top>window.innerHeight||ti.right<0||ti.left>window.innerWidth?ei.open=!1:fdkPlaceRowActions(ei)})}document.addEventListener("toggle",ei=>{const ti=ei.target;ti instanceof HTMLDetailsElement&&ti.open&&ti.matches(".fdk-row-actions-wrap")&&fdkPlaceRowActions(ti)},!0),document.addEventListener("scroll",ei=>{ei.target instanceof Element&&ei.target.closest(".fdk-row-actions-wrap")||fdkUpdateRowActions()},!0),window.addEventListener("resize",fdkUpdateRowActions),document.addEventListener("toggle",ei=>{const ti=ei.target;if(!(ti instanceof HTMLDetailsElement)||!ti.matches("[data-fdk-column-choice]"))return;const ii=ti.querySelector(".fdk-column-choice-body");ti.open?(ii.replaceChildren(ti.querySelector("template").content.cloneNode(!0)),initFdkSelectAll(ii)):ii.replaceChildren()},!0),document.addEventListener("toggle",ei=>{const ti=ei.target;if(ti instanceof HTMLDetailsElement&&ti.open&&ti.matches("[data-fdk-switcher-search]")){const ii=ti.querySelector("input[type=search]");ii.value="",ii.dispatchEvent(new Event("input",{bubbles:!0})),requestAnimationFrame(()=>ii.focus())}},!0),document.addEventListener("input",ei=>{const ti=ei.target instanceof Element?ei.target.closest("[data-fdk-switcher-search]"):null;if(!ti)return;const ii=ei.target.value.trim().toLowerCase();let ni=0;ti.querySelectorAll("li[data-search]").forEach(si=>{const ri=!ii||si.dataset.search.includes(ii);si.hidden=!ri,ni+=ri?1:0}),ti.querySelector(".fdk-switcher-empty").hidden=ni>0}),document.addEventListener("keydown",ei=>{const ti=ei.target instanceof Element?ei.target.closest("[data-fdk-switcher-search]"):null;if(ti){if(ei.key==="Escape")ti.open=!1,ti.querySelector("summary").focus();else if(ei.key==="Enter"&&ei.target.matches("input[type=search]")){ei.preventDefault();const ii=ti.querySelector("li[data-search]:not([hidden]) a");ii&&(window.location.href=ii.href)}}});function initFdkSelectAll(ei=document){ei.querySelectorAll("[data-fdk-select-all]").forEach(ti=>{if(ti.__fdkSelectAll)return;ti.__fdkSelectAll=!0;const ii=(si,ri)=>{const oi=document.createElement("button");return oi.type="button",oi.className="link link-hover link-primary",oi.textContent=si,oi.addEventListener("click",()=>{ti.querySelectorAll("input[type=checkbox]:not(:disabled)").forEach(ai=>{ai.checked!==ri&&(ai.checked=ri,ai.dispatchEvent(new Event("change",{bubbles:!0})))})}),oi},ni=document.createElement("div");ni.className="fdk-select-all flex gap-3 mb-1 text-sm",ni.append(ii(ti.dataset.fdkSelectAll,!0),ii(ti.dataset.fdkSelectNone||"–",!1)),ti.parentNode.insertBefore(ni,ti)})}function initFdkCharts(ei=document){ei.querySelectorAll("[data-fdk-chart]").forEach(ti=>{ti.__fdkChart&&ti.__fdkChart.destroy();try{const ii=JSON.parse(ti.getAttribute("data-fdk-chart"));ti.__fdkChart=new Chart(ti,ii)}catch(ii){console.error("fdk-chart: invalid config",ii,ti)}})}function initFdkCards(ei=document){ei.querySelectorAll("details[data-fdk-card]").forEach(ti=>{if(ti.__fdkCard)return;ti.__fdkCard=!0;const ii=ti.getAttribute("data-fdk-card");try{const ni=window.localStorage.getItem(ii);ni==="1"?ti.open=!0:ni==="0"&&(ti.open=!1)}catch{}ti.addEventListener("toggle",()=>{try{window.localStorage.setItem(ii,ti.open?"1":"0")}catch{}})})}document.addEventListener("change",ei=>{const ti=ei.target instanceof HTMLSelectElement?ei.target:null;ti&&ti.matches("[data-fdk-switcher-select]")&&ti.value&&(window.location.href=ti.value)}),document.addEventListener("DOMContentLoaded",()=>{initFdkCards(),module_default.start(),createIcons({icons:fdkIcons}),initFdkCharts(),initFdkCheckboxTrees(),initFdkToggleAll(),initFdkSelectAll()});let fdkKeptIds=null,fdkBulkAll=!1;function fdkBulkForm(){return document.getElementById("fdk-bulk-form")}function fdkRowBoxes(){return Array.from(document.querySelectorAll('#fdk-list-region input[name="ids[]"]'))}function fdkBulkUpdate(){const ei=fdkBulkForm();if(!ei)return;const ti=fdkRowBoxes(),ii=ti.filter(ci=>ci.checked).length,ni=document.querySelector("#fdk-list-region [data-fdk-total]"),si=ni&&parseInt(ni.dataset.fdkTotal,10)||0,ri=ei.querySelector(".fdk-bulk-count"),oi=ei.querySelector(".fdk-bulk-all"),ai=(ci,ui)=>(ei.dataset[ci]||"").replace("{count}",ui);if(fdkBulkAll&&(ii<ti.length||ti.length===0)&&(fdkBulkAll=!1),ei.elements.all.value=fdkBulkAll?"1":"",fdkBulkAll){ri.textContent=ai("labelAllSelected",si),ri.hidden=!1,oi.textContent=ai("labelClear",si),oi.hidden=!1;return}ri.textContent=ai("labelCount",ii),ri.hidden=ii===0;const li=ti.length>0&&ii===ti.length&&si>ti.length;oi.textContent=ai("labelSelectAll",si),oi.hidden=!li}document.addEventListener("click",ei=>{if(ei.target instanceof Element&&ei.target.closest("#fdk-bulk-form .fdk-bulk-all")){if(fdkBulkAll){fdkBulkAll=!1,fdkRowBoxes().forEach(ni=>{ni.checked=!1});const ii=document.querySelector("#fdk-list-region thead input[type=checkbox]");ii&&(ii.checked=!1)}else fdkBulkAll=!0;fdkBulkUpdate()}}),document.addEventListener("change",ei=>{ei.target instanceof Element&&ei.target.closest("#fdk-list-region")&&fdkBulkUpdate()}),document.addEventListener("click",ei=>{ei.target instanceof Element&&ei.target.matches("#fdk-list-region thead input[type=checkbox]")&&setTimeout(fdkBulkUpdate)}),window.fdkBulkSubmit=ei=>{const ti=ei.BulkAction.selectedOptions[0];if(ei.elements.all.value=fdkBulkAll?"1":"",ei.BackURL.value=window.location.pathname+window.location.search,ti&&ti.dataset.fields){const ii=document.getElementById("fdk-modal");return htmx.ajax("POST",ei.dataset.bulkdialogLink+window.location.search,{source:ei,target:"#fdk-modal-content"}).then(()=>ii&&ii.showModal()),!1}if(ti&&ti.dataset.confirm){const ii=document.querySelector("#fdk-list-region [data-fdk-total]"),ni=fdkBulkAll&&ii?parseInt(ii.dataset.fdkTotal,10)||0:fdkRowBoxes().filter(si=>si.checked).length;if(!window.confirm(ti.dataset.confirm.replaceAll("{count}",ni)))return!1}return ei.action=ei.dataset.bulkLink+window.location.search,ei.target=ti&&ti.dataset.newWindow?"_blank":"",!0},document.addEventListener("htmx:beforeSwap",ei=>{const ti=ei.detail.target;if(ti&&ti.id==="fdk-list-region"){fdkKeptIds=new Set(Array.from(ti.querySelectorAll('input[name="ids[]"]:checked'),ni=>ni.value));const ii=ei.detail.requestConfig&&ei.detail.requestConfig.elt;ii instanceof Element&&ii.closest(".fdk-filter-bar")&&(fdkBulkAll=!1)}}),document.addEventListener("DOMContentLoaded",fdkBulkUpdate),document.addEventListener("htmx:afterSwap",ei=>{if(createIcons({icons:fdkIcons}),initFdkCharts(ei.target||document),initFdkCheckboxTrees(ei.target||document),initFdkToggleAll(ei.target||document),initFdkSelectAll(ei.target||document),fdkKeptIds&&ei.target&&ei.target.id==="fdk-list-region"){ei.target.querySelectorAll('input[name="ids[]"]').forEach(ii=>{(fdkBulkAll||fdkKeptIds.has(ii.value))&&(ii.checked=!0)});const ti=ei.target.querySelector("thead input[type=checkbox]");ti&&fdkBulkAll&&(ti.checked=!0),fdkKeptIds=null,fdkBulkUpdate()}}),document.addEventListener("click",ei=>{const ti=ei.target instanceof Element?ei.target.closest("a[data-fdk-keep-query]"):null;if(!ti)return;const ii=new URLSearchParams(window.location.search);ii.delete("export"),new URLSearchParams(ti.getAttribute("data-fdk-keep-query")||"").forEach((si,ri)=>ii.set(ri,si));const ni=ii.toString();ti.href=ti.href.split("?")[0]+(ni?"?"+ni:"")})})();
