@@ -43,6 +43,8 @@
     <div role="status" class="alert alert-success mb-4">$BulkMessage</div>
     <% end_if %>
 
+    <% include Atwx\\SilverstripeFrontdeskKit\\Includes\\FlashMessage %>
+
     <% if $BulkActions.Count %>
     <form id="fdk-bulk-form" class="fdk-bulk-bar flex flex-wrap items-center gap-2 mb-2" method="post" action="$Link('bulk')"
           data-bulk-link="$Link('bulk')" data-bulkdialog-link="$Link('bulkdialog')"

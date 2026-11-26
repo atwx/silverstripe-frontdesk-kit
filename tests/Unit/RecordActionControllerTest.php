@@ -132,6 +132,15 @@ class RecordActionControllerTest extends SapphireTest
         $this->assertTrue($ctrl->getResponse()->isRedirect());
     }
 
+    public function testListPageShowsTheFlashMessage(): void
+    {
+        $record = $this->record();
+        $ctrl = RecordActionTestController::create();
+        $this->post($ctrl, $record->ID, ['RecordAction' => 'state', 'Option' => 'open', 'Comment' => 'ok']);
+        $html = (string) $ctrl->renderWith('Atwx\\SilverstripeFrontdeskKit\\Controller\\Layout\\FrontdeskController');
+        $this->assertStringContainsString('State changed.', $html);
+    }
+
     public function testRefusedActionShowsError(): void
     {
         $record = $this->record('open');

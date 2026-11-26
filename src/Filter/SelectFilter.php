@@ -44,7 +44,7 @@ class SelectFilter extends Filter
     {
         $class = $this->searchable ? SearchableDropdownField::class : DropdownField::class;
         $field = $class::create($this->name, $this->label, $this->resolveOptions())
-            ->setEmptyString('Alle');
+            ->setEmptyString(_t(self::class . '.ALL', 'All'));
         if ($this->default !== null) {
             $field->setValue($this->default);
         }
