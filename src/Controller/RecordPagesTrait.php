@@ -166,6 +166,8 @@ trait RecordPagesTrait
             }
         }
 
+        $viewActions = $this->viewActionsOnPage($item, $current->getSegment());
+        $recordActions = $this->recordActionsFor($item, $current->getSegment());
         $data = [
             'Item'             => $item,
             'Title'            => $title,
@@ -178,8 +180,9 @@ trait RecordPagesTrait
             'PageContent'      => $this->renderRecordPage($item, $current),
             'HeaderFields'     => $this->defineHeaderFields($item),
             'RecordImage'      => $this->defineRecordImage($item),
-            'ViewActions'      => $this->viewActionsOnPage($item, $current->getSegment()),
-            'RecordActions'    => $this->recordActionsFor($item, $current->getSegment()),
+            'ViewActions'      => $this->buttonViewActions($viewActions),
+            'RecordActions'    => $recordActions,
+            'MoreMenu'         => $this->recordMoreMenu($item, $viewActions, $recordActions),
             'SubControllerData' => ArrayList::create(),
             'TabsLayout'       => $pages->isTabs(),
         ];

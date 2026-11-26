@@ -1,5 +1,7 @@
 en:
   Atwx\SilverstripeFrontdeskKit\Controller\FrontdeskController:
+    HISTORY: 'History'
+    MORE_MENU: 'More'
     SEARCH_PLACEHOLDER: 'Search'
     SEARCH_SCOPE: 'Search in'
     SEARCH_SCOPE_ALL: 'All fields'

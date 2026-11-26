@@ -102,6 +102,40 @@ protected function defineTimeline(DataObject $record): ?ArrayList
 ```
 
 Override `timelineTitle()` to change the heading. `Includes/Timeline.ss` renders it.
+Entries taller than about five lines are closed with a button "mehr anzeigen".
+
+### History on a page of its own
+
+```yaml
+Atwx\SilverstripeFrontdeskKit\Controller\FrontdeskController:
+  timeline_page: true                 # for all lists (or per controller)
+  timeline_page_segment: 'history'    # default
+```
+
+The record header gets a "⋯" menu with **Verlauf** (when the record has a
+timeline). It opens `view/<ID>/history`: header like the record view, the whole
+timeline, a link back. It is no record page (no tab, no sidebar entry); a
+record page with the same segment wins. The view without record pages then
+leaves out its timeline below; `timeline()` blocks on record pages stay where
+they are, remove them there. Access as for the record view.
+
+### The "⋯" menu
+
+Rarely used entries move from the header buttons into the menu:
+
+```php
+RecordAction::create('print', 'Ausdruck erstellen')->menu();      // record action
+$actions->push(ArrayData::create(['Title' => 'PDF', 'Link' => $link, 'Menu' => 'more']));   // view action
+```
+
+```yaml
+App\Controllers\StudentController:
+  record_action_menu:                 # by name, e.g. actions of a parent class
+    flowdocument: more
+    pdf: more                         # a view action with 'Name' => 'pdf'
+```
+
+The menu is shown when it has entries.
 
 ## Column visibility per record
 

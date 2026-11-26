@@ -1,6 +1,6 @@
 <%-- Timeline of a record, newest first (see FrontdeskController::defineTimeline()). --%>
-<section class="fdk-timeline mt-8">
-    <h2 class="fdk-sublist-title">$TimelineTitle</h2>
+<section class="fdk-timeline<% if $TimelineTitle %> mt-8<% end_if %>">
+    <% if $TimelineTitle %><h2 class="fdk-sublist-title">$TimelineTitle</h2><% end_if %>
     <% if $Timeline.Count %>
     <ul class="fdk-timeline-list space-y-3">
         <% loop $Timeline %>
@@ -10,7 +10,7 @@
                 <% if $Author %><span>$Author</span><% end_if %>
             </div>
             <div class="font-medium">$Title</div>
-            <% if $Text %><div class="whitespace-pre-line">$Text</div><% end_if %>
+            <% if $Text %><div class="whitespace-pre-line fdk-clamp" data-fdk-clamp>$Text</div><% end_if %>
         </li>
         <% end_loop %>
     </ul>

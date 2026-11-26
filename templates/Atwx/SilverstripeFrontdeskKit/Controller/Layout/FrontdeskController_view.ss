@@ -1,5 +1,7 @@
 <div class="fdk-manager">
-<% if $RecordPages %>
+<% if $IsHistory %>
+    <% include Atwx\\SilverstripeFrontdeskKit\\Includes\\RecordHistory %>
+<% else_if $RecordPages %>
     <% include Atwx\\SilverstripeFrontdeskKit\\Includes\\RecordPageView %>
 <% else %>
     <div class="fdk-page-header">
