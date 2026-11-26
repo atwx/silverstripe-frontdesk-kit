@@ -180,6 +180,14 @@ details.fdk-collapse[open] > .collapse-content {
     overflow: visible !important;
 }
 
+/* ── Timeline: long entries closed, "Show more" (data-fdk-clamp) ─────────── */
+.fdk-clamp.is-clamped:not(.is-expanded) {
+    max-height: 7.5em;
+    overflow: hidden;
+    -webkit-mask-image: linear-gradient(to bottom, black 60%, transparent);
+    mask-image: linear-gradient(to bottom, black 60%, transparent);
+}
+
 /* ── List toolbar and filter panel (config filter_panel) ───────────────────── */
 .fdk-filter-panel {
     @apply p-4 bg-base-100 rounded-box shadow-sm;

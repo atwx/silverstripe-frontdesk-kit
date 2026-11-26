@@ -84,7 +84,11 @@ trait RecordActionsTrait
     {
         $result = ArrayList::create();
         $configured = (array) static::config()->get('record_action_pages');
+        $menus = (array) static::config()->get('record_action_menu');
         foreach ($this->defineRecordActions($record) as $action) {
+            if ($action->getMenu() === '' && isset($menus[$action->getName()])) {
+                $action->menu((string) $menus[$action->getName()]);
+            }
             if ($page !== null && !$action->getPages() && isset($configured[$action->getName()])) {
                 $action->pages(...array_map('strval', (array) $configured[$action->getName()]));
             }
@@ -153,6 +157,7 @@ trait RecordActionsTrait
                 'SubmitLabel'     => $action->getSubmitLabel(),
                 'Url'             => $this->recordActionUrl($record),
                 'RecordID'        => $record->ID,
+                'InMenu'          => $action->getMenu() !== '',
             ]));
         }
         return $result;

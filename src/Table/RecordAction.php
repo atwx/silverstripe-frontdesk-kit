@@ -75,6 +75,12 @@ class RecordAction
      */
     private array $pages = [];
 
+    /**
+     * Menu the action is shown in instead of as a button ('more': the "⋯"
+     * menu of the record header); '' = button.
+     */
+    private string $menu = '';
+
     public function __construct(private readonly string $name, private readonly string $label)
     {
         if (!preg_match('/^[A-Za-z0-9_-]+$/', $name)) {
@@ -217,6 +223,21 @@ class RecordAction
     {
         $this->pages = array_values(array_filter($segments, fn ($segment) => $segment !== ''));
         return $this;
+    }
+
+    /**
+     * Shows the action in the "⋯" menu of the record header instead of as a
+     * button (for actions used rarely).
+     */
+    public function menu(string $menu = 'more'): static
+    {
+        $this->menu = $menu;
+        return $this;
+    }
+
+    public function getMenu(): string
+    {
+        return $this->menu;
     }
 
     /**

@@ -307,6 +307,41 @@ function initFdkCharts(root = document) {
     });
 }
 
+// ─── Long timeline entries ([data-fdk-clamp]) ───────────────────────────────
+// Entries taller than about five lines are closed with a button "Show more".
+function initFdkClamp(root = document) {
+    const more = document.documentElement.lang === 'de' ? 'mehr anzeigen' : 'show more';
+    const less = document.documentElement.lang === 'de' ? 'weniger anzeigen' : 'show less';
+    root.querySelectorAll('[data-fdk-clamp]').forEach((el) => {
+        if (el.__fdkClamp) {
+            return;
+        }
+        el.__fdkClamp = true;
+        const lineHeight = parseFloat(getComputedStyle(el).lineHeight) || 20;
+        if (el.scrollHeight <= lineHeight * 7) {
+            return;
+        }
+        el.classList.add('is-clamped');
+        const button = document.createElement('button');
+        button.type = 'button';
+        button.className = 'btn btn-link btn-xs px-0 fdk-clamp-toggle';
+        button.textContent = more;
+        button.setAttribute('aria-expanded', 'false');
+        button.addEventListener('click', () => {
+            const open = el.classList.toggle('is-expanded');
+            button.textContent = open ? less : more;
+            button.setAttribute('aria-expanded', open ? 'true' : 'false');
+        });
+        el.after(button);
+    });
+}
+
+document.addEventListener('htmx:afterSwap', (e) => {
+    if (e.detail && e.detail.target instanceof Element) {
+        initFdkClamp(e.detail.target);
+    }
+});
+
 // ─── Record cards ([data-fdk-card], layout 'tabs') ──────────────────────────
 // The browser remembers per card whether the member opened or closed it.
 function initFdkCards(root = document) {
@@ -455,6 +490,7 @@ document.addEventListener('change', (e) => {
 
 document.addEventListener('DOMContentLoaded', () => {
     initFdkCards();
+    initFdkClamp();
     Alpine.start();
     createIcons({ icons: fdkIcons });
     initFdkCharts();

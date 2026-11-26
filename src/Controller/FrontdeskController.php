@@ -54,6 +54,7 @@ class FrontdeskController extends Controller implements PermissionProvider
     use RecordPagesTrait;
     use ListViewsTrait;
     use ListSearchTrait;
+    use RecordMoreMenuTrait;
 
     private static $managed_model = null;
     private static $url_segment = null;
@@ -83,6 +84,23 @@ class FrontdeskController extends Controller implements PermissionProvider
      * "All" is then reached with ?view=all. See docs/list-views.md.
      */
     private static string $default_list_view = '';
+
+    /**
+     * The timeline on a page of its own (view/<ID>/<timeline_page_segment>),
+     * reached through "History" in the "⋯" menu of the record header; the
+     * record view without record pages then leaves out its timeline.
+     */
+    private static bool $timeline_page = false;
+
+    private static string $timeline_page_segment = 'history';
+
+    /**
+     * Record actions and view actions (by name) shown in the "⋯" menu of the
+     * record header instead of as buttons, e.g. ['flowdocument' => 'more'].
+     *
+     * @var array<string, string>
+     */
+    private static array $record_action_menu = [];
 
     /**
      * Request var of the free-text search (defineSearch()); the search area
@@ -541,17 +559,24 @@ class FrontdeskController extends Controller implements PermissionProvider
         $this->noteRecentView($item);
         $title = $item->hasMethod('Title') ? $item->Title() : ($item->getTitle() ?: $item->singular_name() . ' #' . $item->ID);
         $pages = $this->defineRecordPages($item);
-        if ($pages) {
-            return $this->recordPageView($item, $pages, (string) $request->param('OtherID'), $title);
+        $segment = (string) $request->param('OtherID');
+        if ($this->timelinePageEnabled() && $segment === $this->timelinePageSegment() && !$pages?->find($segment)) {
+            return $this->historyView($item, $title);
         }
+        if ($pages) {
+            return $this->recordPageView($item, $pages, $segment, $title);
+        }
+        $viewActions = $this->defineViewActions($item);
+        $recordActions = $this->recordActionsFor($item);
         return [
             'Item'              => $item,
             'Title'             => $title,
             'ViewFields'        => $this->defineViewFields($item),
-            'ViewActions'       => $this->defineViewActions($item),
+            'ViewActions'       => $this->buttonViewActions($viewActions),
             'ViewContent'       => $this->defineViewContent($item),
-            'RecordActions'     => $this->recordActionsFor($item),
-            'Timeline'          => $this->timelineFor($item),
+            'RecordActions'     => $recordActions,
+            'MoreMenu'          => $this->recordMoreMenu($item, $viewActions, $recordActions),
+            'Timeline'          => $this->timelinePageEnabled() ? null : $this->timelineFor($item),
             'TimelineTitle'     => $this->timelineTitle(),
             'SubControllerData' => $this->getSubControllerData($item),
         ];
