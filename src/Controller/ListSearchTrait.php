@@ -96,6 +96,44 @@ trait ListSearchTrait
         return $this->defineSearch() !== null;
     }
 
+    /**
+     * Search field (and search area) at the start of the classic filter bar,
+     * for a list with defineSearch() and without filter_panel; none when a
+     * filter of that name exists.
+     *
+     * @return array<int, \SilverStripe\Forms\FormField>
+     */
+    protected function classicSearchFields(): array
+    {
+        $box = $this->SearchBox();
+        if (!$box) {
+            return [];
+        }
+        foreach ($this->defineFilters()->getFilters() as $filter) {
+            if ($filter->getName() === $box->Name) {
+                return [];
+            }
+        }
+        $label = _t(FrontdeskController::class . '.SEARCH_PLACEHOLDER', 'Search');
+        $fields = [
+            \SilverStripe\Forms\TextField::create($box->Name, $label)
+                ->setInputType('search')
+                ->setAttribute('autocomplete', 'off'),
+        ];
+        if ($box->Scopes->count()) {
+            $options = [];
+            foreach ($box->Scopes as $scope) {
+                $options[$scope->Key] = $scope->Title;
+            }
+            $fields[] = \SilverStripe\Forms\DropdownField::create(
+                $box->ScopeName,
+                _t(FrontdeskController::class . '.SEARCH_SCOPE', 'Search in'),
+                $options
+            );
+        }
+        return $fields;
+    }
+
     // ─── Global search ───────────────────────────────────────────────────────
 
     /**
