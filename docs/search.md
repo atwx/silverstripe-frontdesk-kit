@@ -37,7 +37,9 @@ protected function defineSearch(): ?SearchDefinition
   (`?sort=` wins); equal scores in the model's `default_sort`. The order is
   done in SQL, so paging and export work as usual.
 - **Rules:** a rule returns the fields to search instead (with weights), or
-  `null`. A key with a modifier (`InDate:StartsWith`) matches only that way
+  `null`. To search for a changed word, it returns
+  `['word' => str_replace('-', '', $word), 'fields' => ['Number:ExactMatch' => 10]]`
+  ("12-345" finds 12345). Fields with the weight `null` are left out. A key with a modifier (`InDate:StartsWith`) matches only that way
   and counts as exact. Rules apply when searching all fields;
   `rule($callback, ['city'])` also in search areas.
 - **Parameters:** `?Query=<text>` and `?Query_Scope=<area>` (config
@@ -70,8 +72,10 @@ Instead of the view chips and the bar with all filters, the list gets:
   `filtered=1` keeps a removed preset removed). Views with own logic keep
   `ListView::query()`.
 
-Without `filter_panel` the list looks as before. All request parameters of
-filters and views are unchanged.
+Without `filter_panel` the list looks as before, and a list with
+`defineSearch()` gets the search field (and the search area, if there are
+scopes) at the start of the classic filter bar – unless it has an own filter
+of that name. All request parameters of filters and views are unchanged.
 
 ## Global search
 

@@ -96,6 +96,24 @@ class SearchTestController extends FrontdeskController implements TestOnly
 }
 
 /**
+ * The same list with the classic filter bar and a rule that changes the word.
+ */
+class SearchTestClassicController extends SearchTestController implements TestOnly
+{
+    private static string $url_segment = 'search-people-classic';
+    private static bool $filter_panel = false;
+
+    protected function defineSearch(): ?SearchDefinition
+    {
+        return parent::defineSearch()->rule(
+            fn (string $word) => preg_match('/^\d+-\d+$/', $word)
+                ? ['word' => str_replace('-', '', $word), 'fields' => ['Number:ExactMatch' => 10]]
+                : null
+        );
+    }
+}
+
+/**
  * A second list of the same model (e.g. another layout): not twice in the global search.
  */
 class SearchTestSubclassController extends SearchTestController implements TestOnly
@@ -264,6 +282,30 @@ class SearchTest extends SapphireTest
         $this->assertSame([], GlobalSearch::singleton()->search('berg'));
         Config::modify()->set(FrontdeskController::class, 'search_overlay', true);
         $this->assertFalse(\Atwx\SilverstripeFrontdeskKit\Controller\FrontdeskTemplateProvider::FrontdeskSearchOverlay());
+    }
+
+    public function testClassicBarGetsTheSearchField(): void
+    {
+        $controller = SearchTestClassicController::create();
+        $request = new HTTPRequest('GET', 'search-people-classic', ['Query' => 'berg', 'Query_Scope' => 'name']);
+        $request->setSession(new Session([]));
+        $controller->setRequest($request);
+        $fields = $controller->FilterForm()->Fields();
+        $this->assertSame('berg', $fields->dataFieldByName('Query')?->getValue(), 'kept without a filter value');
+        $this->assertSame('name', $fields->dataFieldByName('Query_Scope')?->getValue());
+        $this->assertSame(['Query', 'Query_Scope', 'Status'], array_slice(array_map(fn ($f) => $f->getName(), $fields->toArray()), 0, 3));
+        $this->assertSame(['Carl Berg', 'Berg Schulz', 'Anna Bergmann'], $controller->titles());
+
+        $this->assertNull($this->controller()->FilterForm()->Fields()->dataFieldByName('Query'), 'the toolbar has its own field');
+    }
+
+    public function testRuleMayChangeTheWord(): void
+    {
+        $controller = SearchTestClassicController::create();
+        $request = new HTTPRequest('GET', 'search-people-classic', ['Query' => '20-26']);
+        $request->setSession(new Session([]));
+        $controller->setRequest($request);
+        $this->assertSame(['Fritz Hamburger'], $controller->titles(), '"20-26" finds the number 2026');
     }
 
     public function testWordsAreLimited(): void

@@ -1289,6 +1289,11 @@ class FrontdeskController extends Controller implements PermissionProvider
     {
         $filterCollection = $this->defineFilters();
         $fields = $filterCollection->toFieldList();
+        if (!$this->FilterPanelEnabled()) {
+            foreach (array_reverse($this->classicSearchFields()) as $field) {
+                $fields->unshift($field);
+            }
+        }
         if($fields->count() === 0) {
             return null;
         }
@@ -1315,6 +1320,10 @@ class FrontdeskController extends Controller implements PermissionProvider
         } else {
             $defaults = $filterCollection->getDefaults();
             $form->loadDataFrom($defaults);
+        }
+        // The search is no filter: its fields keep their value either way.
+        foreach ([$this->searchParam(), $this->searchParam() . '_Scope'] as $name) {
+            $fields->dataFieldByName($name)?->setValue($this->getRequest()->getVar($name));
         }
         return $form;
     }
