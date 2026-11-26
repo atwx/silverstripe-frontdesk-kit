@@ -6,6 +6,7 @@ use Atwx\SilverstripeFrontdeskKit\Filter\DateRangeFilter;
 use Atwx\SilverstripeFrontdeskKit\Filter\SelectFilter;
 use Atwx\SilverstripeFrontdeskKit\Filter\TextFilter;
 use SilverStripe\Dev\SapphireTest;
+use SilverStripe\i18n\i18n;
 use SilverStripe\ORM\DataList;
 
 class FilterTest extends SapphireTest
@@ -117,6 +118,19 @@ class FilterTest extends SapphireTest
 
         $this->assertInstanceOf(\SilverStripe\Forms\DropdownField::class, $field);
         $this->assertEquals('Status', $field->getName());
+    }
+
+    public function testSelectFilterEmptyOptionIsTranslated(): void
+    {
+        $locale = i18n::get_locale();
+        try {
+            i18n::set_locale('en_US');
+            $this->assertSame('All', SelectFilter::create('S', 'S')->options(['a' => 'A'])->renderField()->getEmptyString());
+            i18n::set_locale('de_DE');
+            $this->assertSame('Alle', SelectFilter::create('S', 'S')->options(['a' => 'A'])->renderField()->getEmptyString());
+        } finally {
+            i18n::set_locale($locale);
+        }
     }
 
     public function testSelectFilterOptionsArrayPassedToField(): void
