@@ -44,7 +44,7 @@
             <% end_if %>
         <% end_loop %>
         <% loop $RecordCards %>
-        <details class="fdk-record-card group collapse collapse-arrow bg-base-100 border border-base-300 rounded-box" data-fdk-card="{$Up.CardStateKey}{$Key}" data-card-key="$Key"<% if $Open %> open<% end_if %>>
+        <details id="card-$Key.ATT" class="fdk-record-card group collapse collapse-arrow bg-base-100 border border-base-300 rounded-box" data-fdk-card="{$Up.CardStateKey}{$Key}" data-card-key="$Key"<% if $Open || $Up.FocusCard == $Key %> open<% end_if %><% if $Up.FocusCard == $Key %> data-fdk-card-focus<% end_if %>>
             <summary class="collapse-title min-h-0 py-3 pe-10">
                 <span class="flex items-center gap-2">
                     <span class="font-semibold">$Title</span>

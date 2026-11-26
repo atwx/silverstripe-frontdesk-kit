@@ -39,7 +39,16 @@ protected function defineSearch(): ?SearchDefinition
 - **Rules:** a rule returns the fields to search instead (with weights), or
   `null`. To search for a changed word, it returns
   `['word' => str_replace('-', '', $word), 'fields' => ['Number:ExactMatch' => 10]]`
-  ("12-345" finds 12345). Fields with the weight `null` are left out. A key with a modifier (`InDate:StartsWith`) matches only that way
+  ("12-345" finds 12345). Fields with the weight `null` are left out.
+  A rule may also return a list of such entries; they are searched as
+  alternatives (OR), the best match counts:
+
+  ```php
+  ->rule(fn (string $w) => preg_match('/^\d+(-\d+)+$/', $w) ? [
+      ['word' => str_replace('-', '', $w), 'fields' => ['Number:ExactMatch' => 10]],   // school number
+      ['word' => $w, 'fields' => ['ContactChannels.Value' => 3]],                       // phone as typed
+  ] : null)
+  ``` A key with a modifier (`InDate:StartsWith`) matches only that way
   and counts as exact. Rules apply when searching all fields;
   `rule($callback, ['city'])` also in search areas.
 - **Parameters:** `?Query=<text>` and `?Query_Scope=<area>` (config
