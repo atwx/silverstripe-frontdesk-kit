@@ -40,6 +40,16 @@ class SelectFilter extends Filter
         return $this->optionSource;
     }
 
+    public function describe(mixed $value): string
+    {
+        $options = $this->resolveOptions();
+        if (is_object($options) && method_exists($options, 'toArray')) {
+            $options = $options->toArray();
+        }
+        $options = (array) $options;
+        return isset($options[(string) $value]) ? (string) $options[(string) $value] : parent::describe($value);
+    }
+
     public function renderField(): FormField
     {
         $class = $this->searchable ? SearchableDropdownField::class : DropdownField::class;

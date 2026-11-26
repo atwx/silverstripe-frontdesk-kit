@@ -117,7 +117,8 @@ trait ListViewsTrait
     {
         $request = $this->getRequest();
         $view = $this->currentListView();
-        if (!$view || !$view->getFilters() || $this->defineFilters()->hasAnyRequestParam($request)) {
+        if (!$view || !$view->getFilters() || $this->defineFilters()->hasAnyRequestParam($request)
+            || $request->getVar('filtered')) {
             return $request;
         }
         $listRequest = new HTTPRequest(

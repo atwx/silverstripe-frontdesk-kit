@@ -81,6 +81,36 @@ class TreeFilter extends Filter
     }
 
     /**
+     * Titles of the chosen entries (found in the option tree).
+     */
+    public function describe(mixed $value): string
+    {
+        $ids = static::values($value);
+        $titles = [];
+        $walk = function (iterable $items) use (&$walk, &$titles, $ids): void {
+            foreach ($items as $item) {
+                $id = (string) (is_object($item) ? ($item->ID ?? '') : '');
+                if (in_array($id, $ids, true)) {
+                    $titles[$id] = (string) $item->{$this->titleField};
+                }
+                $children = is_object($item) ? $item->{$this->childrenField} : null;
+                if (is_iterable($children)) {
+                    $walk($children);
+                }
+            }
+        };
+        $options = $this->resolveOptions();
+        if (is_iterable($options)) {
+            $walk($options);
+        }
+        $result = [];
+        foreach ($ids as $id) {
+            $result[] = $titles[$id] ?? $id;
+        }
+        return implode(', ', $result);
+    }
+
+    /**
      * Decode the JSON value and skip empty selections — note that the
      * field posts the truthy string "[]" when nothing is selected.
      */

@@ -65,6 +65,14 @@ abstract class Filter
     }
 
     /**
+     * The value as text for the chip of an active filter ("Status: open").
+     */
+    public function describe(mixed $value): string
+    {
+        return is_array($value) ? implode(', ', array_map('strval', $value)) : trim((string) $value);
+    }
+
+    /**
      * Return a Silverstripe FormField for this filter.
      */
     abstract public function renderField(): FormField;

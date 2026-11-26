@@ -25,6 +25,8 @@ use SilverStripe\Security\Security;
  *   - badge_secondary: optional second counter (same form), shown next to
  *     the badge in another color (e.g. the to-do basket next to own to-dos)
  *   - icon: optional Lucide icon name (kebab case, see the kit's icon set)
+ *   - open_search: true opens the overlay of the global search instead of
+ *     a link (config FrontdeskController.search_overlay)
  *   - icon_only: true shows only the icon in the horizontal navigation (the
  *     title becomes its tooltip and label; the burger menu shows the title)
  *   - default: active on the start page
@@ -89,6 +91,7 @@ class FrontdeskNavigation
                 'BadgeSecondary' => $this->badge($entry['badge_secondary'] ?? null),
                 'Icon' => (string) ($entry['icon'] ?? ''),
                 'IconOnly' => !empty($entry['icon_only']) && !empty($entry['icon']),
+                'OpenSearch' => !empty($entry['open_search']),
                 'Children' => null,
             ]));
         }

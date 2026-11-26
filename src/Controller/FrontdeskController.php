@@ -53,6 +53,7 @@ class FrontdeskController extends Controller implements PermissionProvider
     use RecordActionsTrait;
     use RecordPagesTrait;
     use ListViewsTrait;
+    use ListSearchTrait;
 
     private static $managed_model = null;
     private static $url_segment = null;
@@ -82,6 +83,48 @@ class FrontdeskController extends Controller implements PermissionProvider
      * "All" is then reached with ?view=all. See docs/list-views.md.
      */
     private static string $default_list_view = '';
+
+    /**
+     * Request var of the free-text search (defineSearch()); the search area
+     * is <search_param>_Scope.
+     */
+    private static string $search_param = 'Query';
+
+    /**
+     * Compact list toolbar: search field, view select, button "Filter (n)"
+     * and a filter panel (a drawer on phones) with the active and suggested
+     * filters and "Add filter". Off: the filter bar with all filters.
+     */
+    private static bool $filter_panel = false;
+
+    /**
+     * Filters shown in the panel even without a value (filter names).
+     *
+     * @var array<int, string>
+     */
+    private static array $suggested_filters = [];
+
+    /**
+     * Global search (GlobalSearch): this list takes part when it has a
+     * search (false: never); groups with lower numbers come first.
+     */
+    private static bool $global_search = true;
+
+    private static int $global_search_sort = 100;
+
+    /**
+     * The overlay of the global search in the header (Includes/SearchOverlay),
+     * opened by a navigation entry with open_search: true and the key "/".
+     */
+    private static bool $search_overlay = false;
+
+    /**
+     * Template of a hit of this list in the global search (default
+     * Includes/SearchHit) and of its group (Includes/SearchGroup).
+     */
+    private static string $search_hit_template = '';
+
+    private static string $search_group_template = '';
 
     /**
      * Main navigation entries, keyed by arbitrary identifier, in the header
@@ -1263,6 +1306,10 @@ class FrontdeskController extends Controller implements PermissionProvider
         } elseif ($this->defaultListViewKey() !== '') {
             $fields->push(HiddenField::create('view', 'view', 'all'));
         }
+        if ($this->FilterPanelEnabled()) {
+            // Submitting the panel means the filters were chosen (a view's presets are not merged again).
+            $fields->push(HiddenField::create('filtered', 'filtered', '1'));
+        }
         if ($filterCollection->hasAnyRequestParam($request)) {
             $form->loadDataFrom($requestVars);
         } else {
@@ -1556,6 +1603,7 @@ class FrontdeskController extends Controller implements PermissionProvider
     {
         $list = $this->defineFilters()->applyAll($this->getBaseList(), $this->listRequest());
         $list = $this->currentListView()?->applyTo($list) ?? $list;
+        $list = $this->applySearch($list);
         return $this->applyGroupSort($this->applyColumnSort($list));
     }
 
@@ -1596,7 +1644,7 @@ class FrontdeskController extends Controller implements PermissionProvider
     {
         $name = (string) $this->getRequest()->getVar('sort');
         if ($name === '') {
-            return $this->applyRecentFirst($list);
+            return $this->applySearchOrder($list) ?? $this->applyRecentFirst($list);
         }
         foreach ($this->Columns() as $column) {
             if ($column->getName() === $name && $column->isSortable()) {

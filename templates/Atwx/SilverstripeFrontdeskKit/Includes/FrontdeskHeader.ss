@@ -74,3 +74,4 @@
         <% end_if %>
     </div>
 </header>
+<% if $FrontdeskSearchOverlay %><% include Atwx\\SilverstripeFrontdeskKit\\Includes\\SearchOverlay %><% end_if %>

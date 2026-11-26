@@ -6,6 +6,7 @@ After:
 ---
 SilverStripe\Control\Director:
   rules:
+    'fdk-search': 'Atwx\SilverstripeFrontdeskKit\Search\SearchController'
     'profile//$Action/$ID': 'Atwx\SilverstripeFrontdeskKit\Controller\ProfileController'
     'users//$Action/$ID':   'Atwx\SilverstripeFrontdeskKit\Controller\UserManageController'
     'groups//$Action/$ID':  'Atwx\SilverstripeFrontdeskKit\Controller\GroupManageController'
