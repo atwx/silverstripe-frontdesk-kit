@@ -193,6 +193,46 @@ protected function defineExports(): array
 Each export runs on the filtered list (filters, view, column sort), then its own
 `query()`. Without `columns()` it uses the list's columns.
 
+### Exports set up by members
+
+With more than one export (exports in code, saved ones) or the right to set
+them up, the page actions show one menu **Export ▾** instead of several
+buttons:
+
+- above: the default export and the exports in code (`defineExports()`, for
+  special formats such as title rows),
+- below: the exports members set up (own ones and those shared with everyone,
+  only in their views),
+- at the end, with the permission `<prefix>_EXPORT` ("Set up and share
+  exports of …", e.g. `FDK_STUDENTS_EXPORT`): **Export anlegen …** and
+  **Exporte verwalten**.
+
+Every export runs on the list as it is shown (search, filters, view, sort).
+
+**Setting one up** (`<segment>/savedexport/new`, from the menu): title, file
+name (the date and `.xlsx` are added), the columns in their order with an
+optional width (add from a select, move up/down or drag, remove), the views it
+is offered in (none: all), "Filter und Suche merken" and "Für alle".
+
+- **Columns to choose:** all columns of `defineColumns()`, also `optional()`
+  and `exportOnly()` ones. Offer more, e.g. fields of related records, as
+  `exportOnly()` columns, or override `exportableColumns()`:
+
+  ```php
+  ->make('Child.Family.Email', 'E-Mail Eltern')->exportOnly()->end()
+  ```
+
+- **Kept filters:** when set up from a filtered list, the export may keep its
+  filters and search. They apply when the export runs on a list that is
+  neither filtered nor searched; a filtered list is exported as shown. (The
+  export does not change the list on screen.)
+- **Managing** (`<segment>/savedexports`): own and shared exports; own ones
+  are edited and deleted by their owner (and admins), every export can be
+  duplicated into an own one.
+
+Exports are `SavedExport` records per list (`url_segment`); run `dev/build`.
+Switch them off with config `saved_exports: false` on the controller.
+
 ## Columns that depend on the filters
 
 `filterValue('<filter name>')` returns a filter's value as the list is filtered

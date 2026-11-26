@@ -55,6 +55,7 @@ class FrontdeskController extends Controller implements PermissionProvider
     use ListViewsTrait;
     use ListSearchTrait;
     use RecordMoreMenuTrait;
+    use SavedExportsTrait;
 
     private static $managed_model = null;
     private static $url_segment = null;
@@ -91,6 +92,12 @@ class FrontdeskController extends Controller implements PermissionProvider
      * record view without record pages then leaves out its timeline.
      */
     private static bool $timeline_page = false;
+
+    /**
+     * Exports set up by members (menu "Export ▾", page savedexports), for
+     * members with the permission <prefix>_EXPORT.
+     */
+    private static bool $saved_exports = true;
 
     private static string $timeline_page_segment = 'history';
 
@@ -218,6 +225,12 @@ class FrontdeskController extends Controller implements PermissionProvider
         'deleteview',
         'choosecolumns',
         'file',
+        // Exports set up by members; the permission is checked in the actions
+        'savedexports',
+        'savedexport',
+        'SavedExportForm',
+        'savedexportdelete',
+        'savedexportcopy',
     ];
 
     public function init()
@@ -1060,7 +1073,8 @@ class FrontdeskController extends Controller implements PermissionProvider
 
     public function export(HTTPRequest $request)
     {
-        $data = $this->exportData((string) $request->getVar('export'));
+        $saved = (int) $request->getVar('saved');
+        $data = $saved ? $this->savedExportData($saved) : $this->exportData((string) $request->getVar('export'));
         if (!$data) {
             return $this->httpError(404);
         }
@@ -1368,30 +1382,7 @@ class FrontdeskController extends Controller implements PermissionProvider
                 'Link' => $this->Link('add') . '?BackURL=' . urlencode($this->Link()),
             ]));
         }
-        $actions->push(ArrayData::create([
-            'Title' => _t(self::class . '.ACTION_EXPORT', 'Export'),
-            'Primary' => false,
-            'Link' => $this->Link('export') . '?' . $this->CurrentQuery(),
-            'Target' => '_blank',
-            'KeepQuery' => true,
-            'ExtraQuery' => '',
-        ]));
-        $view = $this->currentListView()?->getKey();
-        foreach ($this->defineExports() as $export) {
-            if (!$export->isAvailableIn($view)) {
-                continue;
-            }
-            $extra = http_build_query(['export' => $export->getKey()]);
-            $query = $this->CurrentQuery();
-            $actions->push(ArrayData::create([
-                'Title' => $export->getTitle(),
-                'Primary' => false,
-                'Link' => $this->Link('export') . '?' . ($query !== '' ? $query . '&' : '') . $extra,
-                'Target' => '_blank',
-                'KeepQuery' => true,
-                'ExtraQuery' => $extra,
-            ]));
-        }
+        $actions->push($this->exportAction());
         return $actions;
     }
 
@@ -1590,6 +1581,10 @@ class FrontdeskController extends Controller implements PermissionProvider
             ];
             $perms[$prefix . '_EDIT'] = [
                 'name' => _t(self::class . '.PERMISSION_EDIT', "Edit '{name}' (includes add/delete)", ['name' => $title]),
+                'category' => $category,
+            ];
+            $perms[$prefix . '_EXPORT'] = [
+                'name' => _t(self::class . '.PERMISSION_EXPORT', "Set up and share exports of '{name}'", ['name' => $title]),
                 'category' => $category,
             ];
         }

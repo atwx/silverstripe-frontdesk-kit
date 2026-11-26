@@ -307,6 +307,123 @@ function initFdkCharts(root = document) {
     });
 }
 
+// ─── Columns of an export ([data-fdk-export-columns], ExportColumnsField) ────
+function initFdkExportColumns(root = document) {
+    root.querySelectorAll('[data-fdk-export-columns]').forEach((box) => {
+        if (box.__fdkExport) {
+            return;
+        }
+        box.__fdkExport = true;
+        const choices = JSON.parse(box.dataset.choices || '[]');
+        const titles = Object.fromEntries(choices.map((c) => [c.name, c.title]));
+        const input = box.querySelector('[data-fdk-export-value]');
+        const list = box.querySelector('[data-fdk-export-chosen]');
+        const add = box.querySelector('[data-fdk-export-add]');
+        let chosen = [];
+        try {
+            chosen = JSON.parse(input.value || '[]').filter((c) => titles[c.name] !== undefined);
+        } catch (e) {
+            chosen = [];
+        }
+        let dragged = null;
+        const save = () => {
+            input.value = JSON.stringify(chosen);
+        };
+        const button = (label, text, handler) => {
+            const b = document.createElement('button');
+            b.type = 'button';
+            b.className = 'btn btn-ghost btn-xs';
+            b.textContent = text;
+            b.title = label;
+            b.setAttribute('aria-label', label + ': ' + text);
+            b.addEventListener('click', handler);
+            return b;
+        };
+        const render = () => {
+            list.replaceChildren();
+            chosen.forEach((column, index) => {
+                const li = document.createElement('li');
+                li.className = 'flex items-center gap-2 bg-base-200 rounded px-2 py-1';
+                li.draggable = true;
+                li.dataset.name = column.name;
+                const name = document.createElement('span');
+                name.className = 'flex-1 cursor-move';
+                name.textContent = titles[column.name];
+                const width = document.createElement('input');
+                width.type = 'number';
+                width.min = '0';
+                width.className = 'input input-xs w-20';
+                width.placeholder = box.dataset.labelWidth;
+                width.setAttribute('aria-label', box.dataset.labelWidth + ': ' + titles[column.name]);
+                width.value = column.width || '';
+                width.addEventListener('input', () => {
+                    column.width = parseInt(width.value, 10) || null;
+                    save();
+                });
+                li.append(
+                    name,
+                    width,
+                    button(box.dataset.labelUp, '↑', () => {
+                        if (index > 0) {
+                            [chosen[index - 1], chosen[index]] = [chosen[index], chosen[index - 1]];
+                            render();
+                        }
+                    }),
+                    button(box.dataset.labelDown, '↓', () => {
+                        if (index < chosen.length - 1) {
+                            [chosen[index + 1], chosen[index]] = [chosen[index], chosen[index + 1]];
+                            render();
+                        }
+                    }),
+                    button(box.dataset.labelRemove, '✕', () => {
+                        chosen.splice(index, 1);
+                        render();
+                    }),
+                );
+                li.addEventListener('dragstart', () => {
+                    dragged = index;
+                });
+                li.addEventListener('dragover', (e) => e.preventDefault());
+                li.addEventListener('drop', (e) => {
+                    e.preventDefault();
+                    if (dragged === null || dragged === index) {
+                        return;
+                    }
+                    const [moved] = chosen.splice(dragged, 1);
+                    chosen.splice(index, 0, moved);
+                    dragged = null;
+                    render();
+                });
+                list.append(li);
+            });
+            add.querySelectorAll('option[value]:not([value=""])').forEach((o) => o.remove());
+            choices.filter((c) => !chosen.some((x) => x.name === c.name)).forEach((c) => {
+                const option = document.createElement('option');
+                option.value = c.name;
+                option.textContent = c.title;
+                add.append(option);
+            });
+            save();
+        };
+        add.addEventListener('change', () => {
+            if (add.value) {
+                chosen.push({ name: add.value, width: null });
+                add.value = '';
+                render();
+            }
+        });
+        render();
+    });
+}
+
+// "Set up export …" keeps the filters of the list as they are now.
+document.addEventListener('click', (e) => {
+    const link = e.target instanceof Element ? e.target.closest('a[data-fdk-export-create]') : null;
+    if (link) {
+        link.href = link.href.split('?')[0] + '?from=' + encodeURIComponent(window.location.search.substring(1));
+    }
+});
+
 // ─── Long timeline entries ([data-fdk-clamp]) ───────────────────────────────
 // Entries taller than about five lines are closed with a button "Show more".
 function initFdkClamp(root = document) {
@@ -491,6 +608,7 @@ document.addEventListener('change', (e) => {
 document.addEventListener('DOMContentLoaded', () => {
     initFdkCards();
     initFdkClamp();
+    initFdkExportColumns();
     Alpine.start();
     createIcons({ icons: fdkIcons });
     initFdkCharts();
