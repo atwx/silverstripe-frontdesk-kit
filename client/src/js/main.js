@@ -605,8 +605,19 @@ document.addEventListener('change', (e) => {
     }
 });
 
+// A card that an old link to a page leads to (or #card-<key>): open and in view.
+function focusFdkCard() {
+    const hash = window.location.hash.startsWith('#card-') ? document.getElementById(window.location.hash.substring(1)) : null;
+    const card = document.querySelector('details[data-fdk-card-focus]') || hash;
+    if (card instanceof HTMLDetailsElement) {
+        card.open = true;
+        card.scrollIntoView({ block: 'start' });
+    }
+}
+
 document.addEventListener('DOMContentLoaded', () => {
     initFdkCards();
+    focusFdkCard();
     initFdkClamp();
     initFdkExportColumns();
     Alpine.start();

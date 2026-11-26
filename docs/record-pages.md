@@ -128,6 +128,9 @@ return RecordPages::create()
   default in this layout; `display('menu')` keeps the dropdown menu). The add
   link is a button next to the select field.
 - **Image:** `defineRecordImage()` is shown at the top of the card column.
+- **Old links:** `view/<ID>/<key>` with the key of a card (e.g. a former page
+  that became a card) shows the start page with that card open and scrolled
+  into view (`#card-<key>` does the same); unknown keys answer 404.
 
 ## Switcher
 

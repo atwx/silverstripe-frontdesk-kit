@@ -226,6 +226,19 @@ class RecordCardsTest extends SapphireTest
         $this->assertSame('old', $record->Note);
     }
 
+    public function testOldLinkToACardShowsTheStartPageWithTheCard(): void
+    {
+        $data = $this->view($this->record(), 'basics');
+        $this->assertSame('comments', $data['CurrentPage']->Segment, 'the start page');
+        $this->assertSame('basics', $data['FocusCard']);
+        $html = (string) $this->controller('GET')->customise($data)
+            ->renderWith('Atwx\\SilverstripeFrontdeskKit\\Includes\\RecordPageView');
+        $this->assertMatchesRegularExpression('#<details id="card-basics"[^>]* open data-fdk-card-focus>#', $html);
+
+        $this->expectException(\SilverStripe\Control\HTTPResponse_Exception::class);
+        $this->view($this->record(), 'no-such-key');
+    }
+
     public function testUnknownLayoutIsRejected(): void
     {
         $this->expectException(\InvalidArgumentException::class);

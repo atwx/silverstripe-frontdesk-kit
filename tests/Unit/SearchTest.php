@@ -107,7 +107,11 @@ class SearchTestClassicController extends SearchTestController implements TestOn
     {
         return parent::defineSearch()->rule(
             fn (string $word) => preg_match('/^\d+-\d+$/', $word)
-                ? ['word' => str_replace('-', '', $word), 'fields' => ['Number:ExactMatch' => 10]]
+                ? [
+                    // the number without dashes, and as typed in the street (e.g. a phone number)
+                    ['word' => str_replace('-', '', $word), 'fields' => ['Number:ExactMatch' => 10]],
+                    ['word' => $word, 'fields' => ['Street' => 3]],
+                ]
                 : null
         );
     }
@@ -306,6 +310,16 @@ class SearchTest extends SapphireTest
         $request->setSession(new Session([]));
         $controller->setRequest($request);
         $this->assertSame(['Fritz Hamburger'], $controller->titles(), '"20-26" finds the number 2026');
+    }
+
+    public function testRuleAlternativesAreOred(): void
+    {
+        SearchTestPerson::create(['FirstName' => 'Gina', 'Surname' => 'Tel', 'Street' => 'Phone 0044-20-26 99'])->write();
+        $controller = SearchTestClassicController::create();
+        $request = new HTTPRequest('GET', 'search-people-classic', ['Query' => '20-26']);
+        $request->setSession(new Session([]));
+        $controller->setRequest($request);
+        $this->assertSame(['Fritz Hamburger', 'Gina Tel'], $controller->titles(), 'number exact (30) before the street (3)');
     }
 
     public function testWordsAreLimited(): void

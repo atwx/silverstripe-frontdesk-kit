@@ -72,7 +72,9 @@ class SearchDefinition
      * A rule for words of a special form: the callable gets the word and
      * returns null (no rule) or the fields to search instead, with weights;
      * or ['word' => …, 'fields' => […]] to search for a changed word, e.g.
-     * "12-345" as 12345. Fields with the weight null are left out.
+     * "12-345" as 12345; or a list of such entries, searched as
+     * alternatives (OR, the best counts). Fields with the weight null are
+     * left out.
      * A key may carry an ORM modifier ("InDate:StartsWith"); such a field
      * only matches with that modifier (counted as exact). By default the rule
      * applies when searching all fields; $scopes lists further search areas.
@@ -129,23 +131,33 @@ class SearchDefinition
         $candidates = null;
         $scores = [];
         foreach ($words as $word) {
-            [$fields, $word] = $this->fieldsFor($word, $scope);
-            if (!$fields || $word === '') {
+            // Alternatives of the word (a rule may give several), OR-ed: the best one counts.
+            $alternatives = array_values(array_filter(
+                $this->alternativesFor($word, $scope),
+                fn (array $alternative) => $alternative[0] && $alternative[1] !== ''
+            ));
+            if (!$alternatives) {
                 return [];
             }
-            $matching = $this->matchingIDs($list, $fields, $word, self::CONTAINS, $candidates);
+            $matching = [];
+            foreach ($alternatives as [$fields, $search]) {
+                $matching = array_merge($matching, $this->matchingIDs($list, $fields, $search, self::CONTAINS, $candidates));
+            }
+            $matching = array_values(array_unique($matching));
             $candidates = $candidates === null ? $matching : array_values(array_intersect($candidates, $matching));
             if (!$candidates) {
                 return [];
             }
             $best = array_fill_keys($candidates, 0);
-            foreach ($fields as $path => $weight) {
-                foreach ([self::EXACT, self::WORD_START, self::CONTAINS] as $tier) {
-                    if (str_contains($path, ':') && $tier !== self::EXACT) {
-                        continue;
-                    }
-                    foreach ($this->matchingIDs($list, [$path => $weight], $word, $tier, $candidates) as $id) {
-                        $best[$id] = max($best[$id], $tier * $weight);
+            foreach ($alternatives as [$fields, $search]) {
+                foreach ($fields as $path => $weight) {
+                    foreach ([self::EXACT, self::WORD_START, self::CONTAINS] as $tier) {
+                        if (str_contains($path, ':') && $tier !== self::EXACT) {
+                            continue;
+                        }
+                        foreach ($this->matchingIDs($list, [$path => $weight], $search, $tier, $candidates) as $id) {
+                            $best[$id] = max($best[$id], $tier * $weight);
+                        }
                     }
                 }
             }
@@ -201,12 +213,14 @@ class SearchDefinition
     }
 
     /**
-     * Fields to search a word in (a rule's fields, else the scope's or all)
-     * and the word to search for (a rule may change it).
+     * Alternatives to search a word with: [fields, word] each. A rule may
+     * return fields (searched for the word), ['word' => …, 'fields' => […]]
+     * (a changed word) or a list of such entries (all of them, OR-ed);
+     * without a rule the scope's or all fields.
      *
-     * @return array{0: array<string, int>, 1: string}
+     * @return array<int, array{0: array<string, int>, 1: string}>
      */
-    private function fieldsFor(string $word, string $scope): array
+    private function alternativesFor(string $word, string $scope): array
     {
         foreach ($this->rules as $rule) {
             if ($scope !== '' && !in_array($scope, $rule['scopes'], true)) {
@@ -216,20 +230,26 @@ class SearchDefinition
             if (!is_array($result) || !$result) {
                 continue;
             }
-            // ['word' => …, 'fields' => […]]: the rule also changes the word
-            $fields = isset($result['fields']) && is_array($result['fields']) ? $result['fields'] : $result;
-            $search = isset($result['fields']) && is_array($result['fields'])
-                ? trim((string) ($result['word'] ?? $word))
-                : $word;
-            $fields = array_filter($fields, fn ($weight) => $weight !== null);
-            if ($fields) {
-                return [array_map(fn ($weight) => max(1, (int) $weight), $fields), $search];
+            $entries = array_is_list($result) && is_array($result[0] ?? null) ? $result : [$result];
+            $alternatives = [];
+            foreach ($entries as $entry) {
+                $changed = isset($entry['fields']) && is_array($entry['fields']);
+                $fields = array_filter($changed ? $entry['fields'] : $entry, fn ($weight) => $weight !== null);
+                if ($fields) {
+                    $alternatives[] = [
+                        array_map(fn ($weight) => max(1, (int) $weight), $fields),
+                        $changed ? trim((string) ($entry['word'] ?? $word)) : $word,
+                    ];
+                }
+            }
+            if ($alternatives) {
+                return $alternatives;
             }
         }
         if ($scope !== '' && isset($this->scopes[$scope])) {
-            return [array_intersect_key($this->fields, array_flip($this->scopes[$scope]['fields'])), $word];
+            return [[array_intersect_key($this->fields, array_flip($this->scopes[$scope]['fields'])), $word]];
         }
-        return [$this->fields, $word];
+        return [[$this->fields, $word]];
     }
 
     /**

@@ -135,11 +135,21 @@ trait RecordPagesTrait
             fn (RecordPage $page) => $this->recordPageIsVisible($item, $page)
         ));
         $current = $visible[0] ?? null;
+        $focusCard = null;
         if ($segment !== '') {
             $current = null;
             foreach ($visible as $page) {
                 if ($page->getSegment() === $segment) {
                     $current = $page;
+                }
+            }
+            // A key that is a card now (old links to a page): the start page, the card open and in view.
+            if (!$current && $pages->isTabs()) {
+                foreach ($pages->getCards($this->defineFieldLayout($item)) as $card) {
+                    if ($card->getSegment() === $segment && $this->recordBlocksAreVisible($item, $card->getBlocks())) {
+                        $current = $visible[0] ?? null;
+                        $focusCard = $segment;
+                    }
                 }
             }
         }
@@ -198,6 +208,7 @@ trait RecordPagesTrait
             $data['RecordCards'] = $this->recordCards($item, $pages, $this->recordPageLink($item, $current));
             $data['HeaderStatus'] = $this->defineHeaderStatus($item);
             $data['CardStateKey'] = 'fdk-card:' . static::config()->get('url_segment') . ':';
+            $data['FocusCard'] = $focusCard;
         }
         return $data;
     }
