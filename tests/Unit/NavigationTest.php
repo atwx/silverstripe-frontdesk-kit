@@ -30,6 +30,11 @@ class NavigationBadges implements TestOnly
     {
         return self::$count;
     }
+
+    public static function basket(): int
+    {
+        return 7;
+    }
 }
 
 class NavigationTest extends SapphireTest
@@ -161,5 +166,27 @@ class NavigationTest extends SapphireTest
         $this->assertStringContainsString('href="https://example.org/help" target="_blank"', $html);
         $this->assertStringContainsString('class="max-lg:hidden"><a href="https://example.org/help"', $html, 'user menu');
         $this->assertStringContainsString('Security/logout', $html);
+    }
+
+    public function testIconOnlyEntryWithSecondBadge(): void
+    {
+        Config::modify()->set(FrontdeskController::class, 'main_navigation', [
+            'todos' => ['title' => 'To-dos', 'segment' => 'followups', 'icon' => 'square-check', 'icon_only' => true,
+                'badge' => NavigationBadges::class . '::open', 'badge_secondary' => NavigationBadges::class . '::basket'],
+        ]);
+        $this->logInWithPermission('SOMETHING');
+        $main = $this->entries('main_navigation', '');
+        $this->assertSame('square-check', $main[0]['Icon']);
+        $this->assertTrue($main[0]['IconOnly']);
+        $this->assertSame('3', $main[0]['Badge']);
+        $this->assertSame('7', $main[0]['BadgeSecondary']);
+
+        $html = (string) SSViewer::create('Atwx\\SilverstripeFrontdeskKit\\Includes\\FrontdeskHeader')
+            ->process(Security::singleton());
+        $this->assertStringContainsString('title="To-dos"', $html);
+        $this->assertStringContainsString('<i data-lucide="square-check"', $html);
+        $this->assertStringContainsString('<span class="sr-only">To-dos</span>', $html, 'horizontal: icon only');
+        $this->assertMatchesRegularExpression('#</i>To-dos <span class="badge#', $html, 'burger: with title');
+        $this->assertStringContainsString('badge-neutral fdk-badge-secondary">7</span>', $html);
     }
 }

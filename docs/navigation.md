@@ -42,6 +42,34 @@ Atwx\SilverstripeFrontdeskKit\Controller\FrontdeskController:
       link: 'https://example.org/help'    # absolute: opens in a new tab
 ```
 
+### Icons and a second counter
+
+`icon` puts a Lucide icon before the title; with `icon_only: true` the
+horizontal navigation shows just the icon (the title is its tooltip and
+screen-reader label, the burger menu still shows it). `badge_secondary` is a
+second counter next to `badge`, in another color:
+
+```yaml
+  main_navigation:
+    todos:
+      title: 'To-dos'
+      segment: 'followups'
+      link: 'followups?view=mine-todos'
+      icon: 'square-check'
+      icon_only: true
+      badge: 'Atwx\Flow\Controller\FollowUpController::countTodos'
+      badge_secondary: 'Atwx\Flow\Controller\FollowUpController::countTodoBasket'
+```
+
+The kit bundles a set of Lucide icons (see `fdkIcons` in
+`client/src/js/main.js`: phone, mail, school, calendar, calendar-days, bell,
+square-check, message-square, users, user, alarm-clock, pin, reply, undo-2,
+star, paperclip, list-todo, inbox, clock, tag, info, triangle-alert,
+circle-check, sticky-note, house, building-2, graduation-cap, plane, euro,
+handshake, briefcase, flag, check, pencil, file-text, …). A project adds more
+by defining `window.fdkExtraIcons = { Name: iconNode }` before the kit's
+script loads.
+
 ### Submenus
 
 An entry with `children` is a group: a dropdown in the horizontal navigation

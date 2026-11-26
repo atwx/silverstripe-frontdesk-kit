@@ -133,8 +133,11 @@ de:
     LOGOUT: 'Abmelden'
     LOGIN: 'Anmelden'
   Atwx\SilverstripeFrontdeskKit\View\RecordSwitcher:
+    SWITCH: 'Datensatz wechseln'
     SEARCH: 'Suchen'
     NO_MATCH: 'Keine Treffer'
+  Atwx\SilverstripeFrontdeskKit\View\RecordCard:
+    EMPTY: 'Noch keine Angaben'
   Atwx\SilverstripeFrontdeskKit\Forms\CheckboxSetSelectAll:
     ALL: 'Alle auswählen'
     NONE: 'Keine'

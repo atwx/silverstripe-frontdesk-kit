@@ -111,8 +111,11 @@ en:
     LOGOUT: 'Log out'
     LOGIN: 'Log in'
   Atwx\SilverstripeFrontdeskKit\View\RecordSwitcher:
+    SWITCH: 'Switch record'
     SEARCH: 'Search'
     NO_MATCH: 'No matches'
+  Atwx\SilverstripeFrontdeskKit\View\RecordCard:
+    EMPTY: 'No details yet'
   Atwx\SilverstripeFrontdeskKit\Forms\CheckboxSetSelectAll:
     ALL: 'Select all'
     NONE: 'None'

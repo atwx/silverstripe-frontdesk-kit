@@ -3,6 +3,7 @@
 namespace Atwx\SilverstripeFrontdeskKit\Controller;
 
 use Atwx\SilverstripeFrontdeskKit\Forms\FieldLayout;
+use Atwx\SilverstripeFrontdeskKit\View\RecordCard;
 use Atwx\SilverstripeFrontdeskKit\View\RecordPage;
 use Atwx\SilverstripeFrontdeskKit\View\RecordPages;
 use Atwx\SilverstripeFrontdeskKit\View\RecordSwitcher;
@@ -39,6 +40,52 @@ trait RecordPagesTrait
     }
 
     /**
+     * Status entries shown on the right of the header in the layout 'tabs',
+     * one per row (several for records with phases): ArrayData with Title
+     * (label), Value and optional Color (a DaisyUI badge color such as
+     * 'primary', 'warning'). Null = none.
+     *
+     * @return ArrayList<ArrayData>|null
+     */
+    protected function defineHeaderStatus(DataObject $record): ?ArrayList
+    {
+        return null;
+    }
+
+    /**
+     * Rows of the compact view of a record, shown when another record's card
+     * holds it (RecordCard::related()): ArrayData with Label, Value and Type
+     * ('text' or 'html') as in the record view. Default: the first four
+     * visible rows with a value.
+     *
+     * @return ArrayList<ArrayData>
+     */
+    protected function defineCompactFields(DataObject $record): ArrayList
+    {
+        $layout = $this->defineFieldLayout($record);
+        $rows = [];
+        if ($layout) {
+            foreach ($layout->viewGroups($this->viewFieldRows($record)) as $group) {
+                array_push($rows, ...$group->Rows->toArray());
+            }
+        } else {
+            $rows = $this->defineViewFields($record)->toArray();
+        }
+        $rows = array_values(array_filter($rows, fn ($row) => self::rowHasValue($row)));
+        return ArrayList::create(array_slice($rows, 0, 4));
+    }
+
+    /**
+     * Whether a view row shows a value (empty strings and dashes do not).
+     */
+    protected static function rowHasValue(mixed $row): bool
+    {
+        $value = $row instanceof ArrayData ? $row->getField('Value') : null;
+        $text = trim(html_entity_decode(strip_tags(str_replace(['<br>', '<br/>', '<br />'], ' ', (string) $value))));
+        return $text !== '' && $text !== '-' && $text !== '–';
+    }
+
+    /**
      * URL of an image shown at the top of the record sidebar (e.g. a photo).
      */
     protected function defineRecordImage(DataObject $record): ?string
@@ -61,14 +108,17 @@ trait RecordPagesTrait
         return $layout;
     }
 
-    protected function requestedRecordPage(DataObject $record): ?RecordPage
+    /**
+     * The page or card whose groups the edit form holds (?page=<key>), if any.
+     */
+    protected function requestedRecordPage(DataObject $record): RecordPage|RecordCard|null
     {
         $request = $this->getRequest();
         $segment = (string) ($request->isPOST() ? $request->postVar('RecordPage') : $request->getVar('page'));
         if ($segment === '') {
             return null;
         }
-        $page = $this->defineRecordPages($record)?->find($segment);
+        $page = $this->defineRecordPages($record)?->findEditable($segment, $this->defineFieldLayout($record));
         return $page && $page->groupKeys() ? $page : null;
     }
 
@@ -116,7 +166,7 @@ trait RecordPagesTrait
             }
         }
 
-        return [
+        $data = [
             'Item'             => $item,
             'Title'            => $title,
             'RecordPages'      => $sidebar,
@@ -131,7 +181,22 @@ trait RecordPagesTrait
             'ViewActions'      => $this->viewActionsOnPage($item, $current->getSegment()),
             'RecordActions'    => $this->recordActionsFor($item, $current->getSegment()),
             'SubControllerData' => ArrayList::create(),
+            'TabsLayout'       => $pages->isTabs(),
         ];
+        if ($pages->isTabs()) {
+            $switchers = ArrayList::create();
+            foreach ($pages->getSwitchers() as $switcher) {
+                if ($switcher->getDisplay() === null) {
+                    $switcher->display('select');
+                }
+                $switchers->push($switcher);
+            }
+            $data['RecordSwitchers'] = $switchers;
+            $data['RecordCards'] = $this->recordCards($item, $pages, $this->recordPageLink($item, $current));
+            $data['HeaderStatus'] = $this->defineHeaderStatus($item);
+            $data['CardStateKey'] = 'fdk-card:' . static::config()->get('url_segment') . ':';
+        }
+        return $data;
     }
 
     /**
@@ -191,7 +256,17 @@ trait RecordPagesTrait
 
     protected function recordPageIsVisible(DataObject $record, RecordPage $page): bool
     {
-        foreach ($page->getBlocks() as $block) {
+        return $this->recordBlocksAreVisible($record, $page->getBlocks());
+    }
+
+    /**
+     * Whether any of the blocks shows something for the record (see RecordBlocks).
+     *
+     * @param array<int, array<string, mixed>> $blocks
+     */
+    protected function recordBlocksAreVisible(DataObject $record, array $blocks): bool
+    {
+        foreach ($blocks as $block) {
             switch ($block['type']) {
                 case RecordPage::GROUPS:
                     $layout = $this->defineFieldLayout($record);
@@ -227,12 +302,31 @@ trait RecordPagesTrait
 
     protected function renderRecordPage(DataObject $record, RecordPage $page): DBHTMLText
     {
+        return $this->renderRecordBlocks($record, $page->getBlocks(), $this->recordPageLink($record, $page), false);
+    }
+
+    /**
+     * HTML of blocks; $compact for a card: groups as a short list without
+     * empty values, related records compact, sub-lists without a heading.
+     *
+     * @param array<int, array<string, mixed>> $blocks
+     */
+    protected function renderRecordBlocks(DataObject $record, array $blocks, string $backUrl, bool $compact): DBHTMLText
+    {
         $html = '';
         $layout = $this->defineFieldLayout($record);
-        foreach ($page->getBlocks() as $block) {
+        foreach ($blocks as $block) {
             switch ($block['type']) {
                 case RecordPage::GROUPS:
-                    if ($layout) {
+                    if ($compact) {
+                        $rows = $this->cardRows($record, $block['keys']);
+                        if ($rows->count()) {
+                            $html .= $this->renderWith(
+                                'Atwx\\SilverstripeFrontdeskKit\\Includes\\CardFields',
+                                ['Rows' => $rows]
+                            )->forTemplate();
+                        }
+                    } elseif ($layout) {
                         $html .= $this->renderWith(
                             'Atwx\\SilverstripeFrontdeskKit\\Includes\\ViewGroups',
                             ['ViewGroups' => $layout->onlyGroups($block['keys'])->viewGroups($this->viewFieldRows($record))]
@@ -251,19 +345,19 @@ trait RecordPagesTrait
                     $sub = singleton($block['class']);
                     $segment = (string) $sub->config()->get('url_segment');
                     $html .= $this->renderWith('Atwx\\SilverstripeFrontdeskKit\\Includes\\SubListBlock', [
-                        'Title' => $block['title'] ?? $sub->config()->get('title'),
+                        'Title' => $compact ? '' : ($block['title'] ?? $sub->config()->get('title')),
                         'Segment' => $segment,
                         'Url' => $this->Link($segment . '/' . $record->ID),
+                        'Compact' => $compact,
                     ])->forTemplate();
                     break;
                 case RecordPage::RELATED:
                     $related = ($block['resolver'])($record);
                     if ($related instanceof DataObject && $related->exists()) {
-                        $html .= (string) $this->embeddedController($block['class'])->embeddedView(
-                            (int) $related->ID,
-                            $this->recordPageLink($record, $page),
-                            (bool) $block['sublists']
-                        );
+                        $controller = $this->embeddedController($block['class']);
+                        $html .= (string) ($compact
+                            ? $controller->compactView((int) $related->ID, $backUrl)
+                            : $controller->embeddedView((int) $related->ID, $backUrl, (bool) $block['sublists']));
                     }
                     break;
                 case RecordPage::TIMELINE:
@@ -281,6 +375,111 @@ trait RecordPagesTrait
             }
         }
         return DBHTMLText::create()->setValue($html);
+    }
+
+    /**
+     * The visible cards of a record view in the layout 'tabs': key, title,
+     * content, edit link, open state and the summary shown while closed.
+     *
+     * @return ArrayList<ArrayData>
+     */
+    protected function recordCards(DataObject $record, RecordPages $pages, string $backUrl): ArrayList
+    {
+        $cards = ArrayList::create();
+        foreach ($pages->getCards($this->defineFieldLayout($record)) as $card) {
+            if (!$this->recordBlocksAreVisible($record, $card->getBlocks())) {
+                continue;
+            }
+            $content = $this->renderRecordBlocks($record, $card->getBlocks(), $backUrl, true);
+            $editLink = $this->recordCardEditLink($record, $card, $backUrl);
+            $empty = trim(strip_tags((string) $content, '<img><iframe><input>')) === ''
+                && !str_contains((string) $content, 'hx-get');
+            if ($empty && !$editLink) {
+                continue;
+            }
+            $summary = $card->summaryFor($record);
+            if ($summary === '' && $card->groupKeys()) {
+                $values = [];
+                foreach ($this->cardRows($record, $card->groupKeys()) as $row) {
+                    $values[] = trim(html_entity_decode(strip_tags(str_replace('<br>', ' ', (string) $row->Value))));
+                }
+                $summary = implode(' · ', array_slice($values, 0, 3));
+            }
+            $cards->push(ArrayData::create([
+                'Key' => $card->getSegment(),
+                'Title' => $card->getTitle(),
+                'Content' => $empty ? null : $content,
+                'EditLink' => $editLink,
+                'Open' => $card->isOpenFor($record),
+                'Summary' => $summary,
+            ]));
+        }
+        return $cards;
+    }
+
+    /**
+     * Visible rows of the given groups that have a value.
+     *
+     * @param array<int, string> $keys
+     * @return ArrayList<ArrayData>
+     */
+    protected function cardRows(DataObject $record, array $keys): ArrayList
+    {
+        $layout = $this->defineFieldLayout($record);
+        $rows = ArrayList::create();
+        if (!$layout) {
+            return $rows;
+        }
+        foreach ($layout->onlyGroups($keys)->viewGroups($this->viewFieldRows($record)) as $group) {
+            foreach ($group->Rows as $row) {
+                if (self::rowHasValue($row)) {
+                    $rows->push($row);
+                }
+            }
+        }
+        return $rows;
+    }
+
+    /**
+     * Link to edit the groups of a card (back to the current tab), null when
+     * it has none the member may write.
+     */
+    protected function recordCardEditLink(DataObject $record, RecordCard $card, string $backUrl): ?string
+    {
+        $keys = $card->groupKeys();
+        if (!$keys || !$this->canEdit()) {
+            return null;
+        }
+        $layout = $this->defineFieldLayout($record);
+        if ($layout && !$layout->hasFieldsIn($keys, true)) {
+            return null;
+        }
+        return $this->Link('edit/' . $record->ID) . '?page=' . rawurlencode($card->getSegment())
+            . '&BackURL=' . rawurlencode($backUrl);
+    }
+
+    /**
+     * Compact view of one of this controller's records on another record's
+     * card: title with a link, defineCompactFields() and an edit link (back to
+     * $backUrl). Null when the member may not view it.
+     */
+    public function compactView(int $id, string $backUrl): ?DBHTMLText
+    {
+        if (!$this->canView()) {
+            return null;
+        }
+        $record = $this->findRecord($id, 'canView');
+        if (!$record) {
+            return null;
+        }
+        return $this->renderWith('Atwx\\SilverstripeFrontdeskKit\\Includes\\CompactRecord', [
+            'Record' => $record,
+            'ViewLink' => $this->Link('view/' . $record->ID),
+            'EditLink' => $this->canEdit()
+                ? $this->Link('edit/' . $record->ID) . '?BackURL=' . rawurlencode($backUrl)
+                : null,
+            'Rows' => $this->defineCompactFields($record),
+        ]);
     }
 
     /**
