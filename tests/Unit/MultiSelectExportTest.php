@@ -184,10 +184,11 @@ class MultiSelectExportTest extends SapphireTest
     public function testAdditionalExportsWithOwnColumnsFileNameAndViews(): void
     {
         $controller = $this->controller();
-        $titles = $controller->Actions()->column('Title');
+        // More exports: one menu "Export" with an entry each
+        $titles = $controller->Actions()->last()->MenuItems->column('Title');
         $this->assertContains('Fees 2027', $titles);
         $this->assertNotContains('Nur günstige', $titles, 'only in the view cheap');
-        $this->assertContains('Nur günstige', $this->controller(['view' => 'cheap'])->Actions()->column('Title'));
+        $this->assertContains('Nur günstige', $this->controller(['view' => 'cheap'])->Actions()->last()->MenuItems->column('Title'));
         $this->assertNull($controller->data('cheap-only'));
         $this->assertNull($controller->data('unknown'));
 
