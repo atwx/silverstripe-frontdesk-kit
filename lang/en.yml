@@ -1,5 +1,12 @@
 en:
   Atwx\SilverstripeFrontdeskKit\Controller\FrontdeskController:
+    SEARCH_PLACEHOLDER: 'Search'
+    SEARCH_SCOPE: 'Search in'
+    SEARCH_SCOPE_ALL: 'All fields'
+    FILTER_ADD: 'Add filter'
+    FILTER_REMOVE: 'Remove filter'
+    VIEW: 'View'
+    ACTION_CLOSE: 'Close'
     VIEW_ALL: 'All'
     VIEW_SAVE: 'Save view'
     RECENT_VIEWS: 'Recently viewed'
@@ -121,3 +128,11 @@ en:
   Atwx\SilverstripeFrontdeskKit\Forms\CheckboxSetSelectAll:
     ALL: 'Select all'
     NONE: 'None'
+  Atwx\SilverstripeFrontdeskKit\Search\SearchController:
+    TITLE: 'Global search'
+    PLACEHOLDER: 'Search everything'
+    NOTHING: 'Nothing found.'
+    MORE: 'More results ({count})'
+  Atwx\SilverstripeFrontdeskKit\Filter\DateRangeFilter:
+    FROM_DATE: 'from {date}'
+    TO_DATE: 'to {date}'

@@ -180,6 +180,60 @@ details.fdk-collapse[open] > .collapse-content {
     overflow: visible !important;
 }
 
+/* ── List toolbar and filter panel (config filter_panel) ───────────────────── */
+.fdk-filter-panel {
+    @apply p-4 bg-base-100 rounded-box shadow-sm;
+}
+
+.fdk-filter-panel-fields {
+    @apply grid gap-3 items-end;
+    grid-template-columns: repeat(auto-fill, minmax(14rem, 1fr));
+}
+
+.fdk-filter-panel .fdk-filter-field[hidden] {
+    display: none;
+}
+
+/* Large screens: below the toolbar, opened with "Filter" (open while filters are active). */
+@media (min-width: 1024px) {
+    .fdk-filter-panel:not(.lg-open) {
+        display: none;
+    }
+
+    .fdk-filter-backdrop {
+        display: none !important;
+    }
+}
+
+/* Smaller screens: a drawer from the right. */
+@media (max-width: 1023px) {
+    .fdk-filter-panel {
+        position: fixed;
+        inset: 0 0 0 auto;
+        z-index: 60;
+        width: min(22rem, 90vw);
+        overflow-y: auto;
+        border-radius: 0;
+        transform: translateX(100%);
+        transition: transform 0.2s ease;
+    }
+
+    .fdk-filter-panel.is-open {
+        transform: none;
+    }
+
+    .fdk-filter-panel-fields {
+        grid-template-columns: 1fr;
+    }
+
+    .fdk-filter-backdrop:not([hidden]) {
+        position: fixed;
+        inset: 0;
+        z-index: 59;
+        background: rgb(0 0 0 / 0.35);
+    }
+}
+
 /* ── Phones ───────────────────────────────────────────────────────────────── */
 @media (max-width: 767px) {
     .fdk-main {

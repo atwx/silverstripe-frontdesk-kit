@@ -1,3 +1,13 @@
+<% if $Top.FilterPanelEnabled %>
+<%-- Active filters as chips with a link that removes them; the count updates the button "Filter (n)". --%>
+<div class="fdk-filter-chips flex flex-wrap gap-2 mb-2" data-fdk-active-filters="$Top.ActiveFilterCount">
+    <% loop $Top.ActiveFilterChips %>
+    <a href="$RemoveLink" class="badge badge-outline gap-1 py-3" title="<%t Atwx\SilverstripeFrontdeskKit\Controller\FrontdeskController.FILTER_REMOVE 'Remove filter' %>">
+        <span class="text-base-content/60">$Label:</span> $Value <span aria-hidden="true">×</span>
+    </a>
+    <% end_loop %>
+</div>
+<% end_if %>
 <p class="fdk-count">
     <% if $FilterIsActive %>
         $Items.TotalItems <%t Atwx\SilverstripeFrontdeskKit\Controller\FrontdeskController.LABEL_RECORDS_FOUND 'records found' %> –

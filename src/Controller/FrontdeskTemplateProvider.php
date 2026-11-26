@@ -25,7 +25,17 @@ class FrontdeskTemplateProvider implements TemplateGlobalProvider
             'FrontdeskSecondaryNavigation',
             'FrontdeskUserInitials',
             'FrontdeskUserName',
+            'FrontdeskSearchOverlay',
         ];
+    }
+
+    /**
+     * Whether the header renders the overlay of the global search (config
+     * FrontdeskController.search_overlay, logged-in members only).
+     */
+    public static function FrontdeskSearchOverlay(): bool
+    {
+        return (bool) FrontdeskController::config()->get('search_overlay') && Security::getCurrentUser() !== null;
     }
 
     public static function FrontdeskLogo(): ?string

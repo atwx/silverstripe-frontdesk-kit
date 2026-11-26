@@ -70,6 +70,9 @@ handshake, briefcase, flag, check, pencil, file-text, …). A project adds more
 by defining `window.fdkExtraIcons = { Name: iconNode }` before the kit's
 script loads.
 
+An entry with `open_search: true` opens the overlay of the global search
+instead of a link (config `search_overlay: true`, see [search.md](search.md)).
+
 ### Submenus
 
 An entry with `children` is a group: a dropdown in the horizontal navigation

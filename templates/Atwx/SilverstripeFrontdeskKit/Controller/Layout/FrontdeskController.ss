@@ -15,6 +15,9 @@
         <% include Atwx\\SilverstripeFrontdeskKit\\Includes\\Tabs %>
     <% end_if %>
 
+    <% if $FilterPanelEnabled %>
+    <% include Atwx\\SilverstripeFrontdeskKit\\Includes\\ListToolbar %>
+    <% else %>
     <% include Atwx\\SilverstripeFrontdeskKit\\Includes\\ListViews %>
 
     <% if $FilterForm %>
@@ -37,6 +40,7 @@
             </div>
         <% end_loop %>
     </form>
+    <% end_if %>
     <% end_if %>
 
     <% if $BulkMessage %>

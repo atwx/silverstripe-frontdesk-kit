@@ -99,6 +99,42 @@ class FilterCollection
     }
 
     /**
+     * The filters with a value in the request: name => [filter, value,
+     * text, params (request vars of the filter)].
+     *
+     * @return array<string, array{filter: Filter, value: mixed, text: string, params: array<int, string>}>
+     */
+    public function activeValues(HTTPRequest $request): array
+    {
+        $active = [];
+        foreach ($this->filters as $filter) {
+            $name = $filter->getName();
+            if ($filter instanceof DateRangeFilter) {
+                $value = ['from' => $request->getVar($name . '_From'), 'to' => $request->getVar($name . '_To')];
+                if (!$value['from'] && !$value['to']) {
+                    continue;
+                }
+                $params = [$name . '_From', $name . '_To'];
+            } else {
+                $value = $request->getVar($name);
+                if ($filter instanceof TreeFilter) {
+                    if (TreeFilter::values($value) === []) {
+                        continue;
+                    }
+                } elseif ($value === null || $value === '' || $value === []) {
+                    continue;
+                }
+                $params = [$name];
+                if ($filter instanceof MultiSelectFilter && $filter->hasChoosableMatch()) {
+                    $params[] = $filter->matchParamName();
+                }
+            }
+            $active[$name] = ['filter' => $filter, 'value' => $value, 'text' => $filter->describe($value), 'params' => $params];
+        }
+        return $active;
+    }
+
+    /**
      * Check if any filter value is set in the request.
      */
     public function isActive(HTTPRequest $request): bool

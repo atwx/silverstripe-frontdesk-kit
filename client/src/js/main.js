@@ -6,7 +6,7 @@ import {
     createIcons, Pencil, Trash2, ExternalLink, Github, KeyRound, Download, FileText, Printer, Minimize2, Maximize2,
     Phone, Mail, School, Calendar, CalendarDays, Bell, SquareCheck, Square, MessageSquare, MessageCircle, Users, User,
     AlarmClock, Pin, Reply, Undo2, Star, Paperclip, ListTodo, Inbox, Clock, Tag, Info, TriangleAlert, CircleCheck,
-    StickyNote, Plus, Filter, House, Building2, GraduationCap, Plane, Euro, Handshake, Briefcase, Flag, Check,
+    StickyNote, Plus, Filter, House, Building2, GraduationCap, Plane, Euro, Handshake, Briefcase, Flag, Check, Search,
 } from 'lucide';
 
 window.Alpine = Alpine;
@@ -59,7 +59,7 @@ window.fdkSearchable = () => ({
 
 const fdkTypedFields = 'input[type=text], input[type=search], input:not([type]), textarea';
 
-window.fdkFilterChange = (el) => !(el instanceof Element && el.matches(fdkTypedFields));
+window.fdkFilterChange = (el) => !(el instanceof Element && (el.matches(fdkTypedFields) || el.closest('[data-fdk-no-submit]')));
 window.fdkFilterInput = (el) => el instanceof Element && el.matches(fdkTypedFields) && !el.closest('.fdk-searchable');
 
 // Icons usable as data-lucide="<kebab-name>" (navigation, row actions, comment types).
@@ -68,7 +68,7 @@ const fdkIcons = {
     Pencil, Trash2, ExternalLink, Github, KeyRound, Download, FileText, Printer, Minimize2, Maximize2,
     Phone, Mail, School, Calendar, CalendarDays, Bell, SquareCheck, Square, MessageSquare, MessageCircle, Users, User,
     AlarmClock, Pin, Reply, Undo2, Star, Paperclip, ListTodo, Inbox, Clock, Tag, Info, TriangleAlert, CircleCheck,
-    StickyNote, Plus, Filter, House, Building2, GraduationCap, Plane, Euro, Handshake, Briefcase, Flag, Check,
+    StickyNote, Plus, Filter, House, Building2, GraduationCap, Plane, Euro, Handshake, Briefcase, Flag, Check, Search,
     ...(window.fdkExtraIcons || {}),
 };
 window.fdkIcons = fdkIcons;
@@ -335,6 +335,115 @@ function initFdkCards(root = document) {
         });
     });
 }
+
+// ─── List toolbar and filter panel (config filter_panel) ────────────────────
+// "Filter" opens the panel (below the toolbar on large screens, a drawer on smaller ones).
+document.addEventListener('click', (e) => {
+    const toggle = e.target instanceof Element ? e.target.closest('[data-fdk-filter-toggle]') : null;
+    const panel = document.getElementById('fdk-filter-panel');
+    if (!toggle || !panel) {
+        return;
+    }
+    const backdrop = document.querySelector('.fdk-filter-backdrop');
+    let open;
+    if (window.matchMedia('(min-width: 1024px)').matches) {
+        open = panel.classList.toggle('lg-open');
+    } else {
+        open = panel.classList.toggle('is-open');
+        if (backdrop) {
+            backdrop.hidden = !open;
+        }
+    }
+    document.querySelectorAll('.fdk-filter-button').forEach((b) => b.setAttribute('aria-expanded', open ? 'true' : 'false'));
+    if (open) {
+        panel.querySelector('input, select, textarea')?.focus();
+    }
+});
+
+// "Add filter": shows the chosen filter in the panel.
+document.addEventListener('change', (e) => {
+    const select = e.target instanceof HTMLSelectElement ? e.target : null;
+    if (!select || !select.matches('[data-fdk-add-filter]') || !select.value) {
+        return;
+    }
+    const field = document.querySelector('[data-fdk-filter-name="' + CSS.escape(select.value) + '"]');
+    if (field) {
+        field.hidden = false;
+        field.querySelector('input:not([type=hidden]), select, textarea')?.focus();
+    }
+    select.querySelector('option[value="' + CSS.escape(select.value) + '"]')?.remove();
+    select.value = '';
+    if (select.options.length < 2) {
+        select.closest('.fdk-filter-add')?.setAttribute('hidden', '');
+    }
+});
+
+// The list was reloaded: update the count on "Filter (n)".
+document.addEventListener('htmx:afterSwap', (e) => {
+    const chips = e.detail && e.detail.target ? e.detail.target.querySelector('[data-fdk-active-filters]') : null;
+    if (!chips) {
+        return;
+    }
+    const count = parseInt(chips.getAttribute('data-fdk-active-filters'), 10) || 0;
+    document.querySelectorAll('[data-fdk-filter-count]').forEach((badge) => {
+        badge.textContent = String(count);
+        badge.hidden = count === 0;
+    });
+});
+
+// ─── Global search overlay (Includes/SearchOverlay) ─────────────────────────
+function fdkOpenSearch() {
+    const dialog = document.getElementById('fdk-search');
+    if (!dialog || dialog.open) {
+        return;
+    }
+    dialog.showModal();
+    const input = dialog.querySelector('[data-fdk-search-input]');
+    if (input) {
+        input.focus();
+        input.select();
+    }
+}
+window.fdkOpenSearch = fdkOpenSearch;
+
+document.addEventListener('click', (e) => {
+    const opener = e.target instanceof Element ? e.target.closest('[data-fdk-search-open]') : null;
+    if (opener && document.getElementById('fdk-search')) {
+        e.preventDefault();
+        opener.closest('details')?.removeAttribute('open');
+        fdkOpenSearch();
+    }
+});
+
+// "/" opens the search, unless one is typing; Escape closes it (also from the
+// search field, which would otherwise only clear its text).
+document.addEventListener('keydown', (e) => {
+    const dialog = document.getElementById('fdk-search');
+    if (e.key === 'Escape' && dialog && dialog.open) {
+        e.preventDefault();
+        dialog.close();
+        return;
+    }
+    if (e.key !== '/' || e.ctrlKey || e.metaKey || e.altKey) {
+        return;
+    }
+    const target = e.target instanceof Element ? e.target : null;
+    if (target && (target.closest('input, textarea, select, [contenteditable=""], [contenteditable="true"]'))) {
+        return;
+    }
+    if (document.getElementById('fdk-search')) {
+        e.preventDefault();
+        fdkOpenSearch();
+    }
+});
+
+// A select field that navigates (view select of the list toolbar).
+document.addEventListener('change', (e) => {
+    const select = e.target instanceof HTMLSelectElement ? e.target : null;
+    if (select && select.matches('[data-fdk-navigate]') && select.value) {
+        window.location.href = select.value;
+    }
+});
 
 // Switcher as a select field: go to the chosen record.
 document.addEventListener('change', (e) => {

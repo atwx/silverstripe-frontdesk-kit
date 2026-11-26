@@ -129,6 +129,7 @@ abstract class FrontdeskSubController extends FrontdeskController
     {
         $list = $this->defineFilters()->applyAll($this->getBaseList(), $this->listRequest());
         $list = $this->currentListView()?->applyTo($list) ?? $list;
+        $list = $this->applySearch($list);
         return $this->applyColumnSort($list);
     }
 
