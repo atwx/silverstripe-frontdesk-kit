@@ -73,6 +73,34 @@ script loads.
 An entry with `open_search: true` opens the overlay of the global search
 instead of a link (config `search_overlay: true`, see [search.md](search.md)).
 
+### Entries on the right
+
+Entries with `align: 'end'` are shown on the right from `lg` up, before the
+user menu, in the order of the config (e.g. search and the icon entries with
+counters); the burger menu is unchanged.
+
+```yaml
+    search:
+      title: 'Suche'
+      icon: 'search'
+      open_search: true
+      align: 'end'
+    todos:
+      title: 'To-dos'
+      icon: 'square-check'
+      icon_only: true
+      align: 'end'
+```
+
+### Logo
+
+The logo link has the class `fdk-header-brand` (with some space to the first
+entry from `lg` up), the image `fdk-header-logo` (height `h-8`), e.g.
+
+```css
+.fdk-header-logo { height: 2.5rem; }
+```
+
 ### Submenus
 
 An entry with `children` is a group: a dropdown in the horizontal navigation

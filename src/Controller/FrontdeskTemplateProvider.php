@@ -22,6 +22,8 @@ class FrontdeskTemplateProvider implements TemplateGlobalProvider
             'FrontdeskRecentViews',
             'FrontdeskLang',
             'FrontdeskMainNavigation',
+            'FrontdeskMainNavigationStart',
+            'FrontdeskMainNavigationEnd',
             'FrontdeskSecondaryNavigation',
             'FrontdeskUserInitials',
             'FrontdeskUserName',
@@ -55,6 +57,26 @@ class FrontdeskTemplateProvider implements TemplateGlobalProvider
     public static function FrontdeskMainNavigation(): ArrayList
     {
         return FrontdeskNavigation::singleton()->main();
+    }
+
+    /**
+     * Main navigation entries on the left (horizontal navigation from lg up).
+     *
+     * @return ArrayList<\SilverStripe\Model\ArrayData>
+     */
+    public static function FrontdeskMainNavigationStart(): ArrayList
+    {
+        return FrontdeskNavigation::singleton()->mainAligned(false);
+    }
+
+    /**
+     * Main navigation entries with align: 'end', right before the user menu.
+     *
+     * @return ArrayList<\SilverStripe\Model\ArrayData>
+     */
+    public static function FrontdeskMainNavigationEnd(): ArrayList
+    {
+        return FrontdeskNavigation::singleton()->mainAligned(true);
     }
 
     /**

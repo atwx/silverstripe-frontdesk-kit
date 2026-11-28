@@ -82,15 +82,9 @@ class CatalogController extends FrontdeskController
             ->make('Code', $labels['Code'])->end()
             ->make('CatalogTitle', $labels['Catalog'])->end()
             ->make('Sort', $labels['Sort'])->end()
-            ->make('Active', $labels['Active'])
-                ->format(fn ($value) => $value
-                    ? '<span class="badge badge-success">' . _t(self::class . '.YES', 'yes') . '</span>'
-                    : '<span class="badge badge-ghost">' . _t(self::class . '.NO', 'no') . '</span>')
-                ->type('html')
-                ->end()
-            ->make('IsDefault', $labels['IsDefault'])
-                ->format(fn ($value) => $value ? '✓' : '')
-                ->end();
+            // Boolean fields: a check mark for yes (Column)
+            ->make('Active', $labels['Active'])->end()
+            ->make('IsDefault', $labels['IsDefault'])->end();
     }
 
     /**

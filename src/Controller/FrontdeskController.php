@@ -1184,9 +1184,7 @@ class FrontdeskController extends Controller implements PermissionProvider
         foreach ($items as $item) {
             $index = 1;
             foreach ($columns as $column) {
-                $value = $column->renderValue($item);
-                $text = $value instanceof DBHTMLText ? trim(strip_tags((string) $value)) : $value;
-                $sheet->setCellValue([$index, $row], $text);
+                $sheet->setCellValue([$index, $row], $column->exportValue($item));
                 $index++;
             }
             $row++;

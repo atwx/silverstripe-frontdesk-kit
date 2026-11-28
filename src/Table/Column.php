@@ -6,6 +6,7 @@ use Atwx\SilverstripeFrontdeskKit\Catalog\CatalogEntry;
 use SilverStripe\Model\List\SS_List;
 use SilverStripe\ORM\DataList;
 use SilverStripe\ORM\DataObject;
+use SilverStripe\ORM\FieldType\DBBoolean;
 use SilverStripe\ORM\FieldType\DBHTMLText;
 
 class Column
@@ -203,6 +204,12 @@ class Column
         if ($this->formatter) {
             $rawValue = $this->resolveField($record, $name);
             $result = (string) ($this->formatter)($rawValue, $record);
+        } elseif ($this->isBooleanField($record)) {
+            // Yes: a quiet check mark, no: empty (export: yes/no, see exportValue())
+            return DBHTMLText::create()->setValue($this->resolveField($record, $name)
+                ? '<i data-lucide="check" class="fdk-bool-check size-4 text-base-content" aria-hidden="true"></i>'
+                    . '<span class="sr-only">' . _t(self::class . '.YES', 'yes') . '</span>'
+                : '');
         } else {
             $value = $this->resolveField($record, $name);
             // Lists (e.g. many_many catalog fields) show the titles of their records.
@@ -219,6 +226,35 @@ class Column
         }
 
         return $result;
+    }
+
+    /**
+     * The value as plain text for exports: like renderValue() without HTML;
+     * boolean fields without a formatter as yes/no.
+     */
+    public function exportValue(DataObject $record): string
+    {
+        if (!$this->formatter && $this->isVisibleFor($record) && $this->isBooleanField($record)) {
+            return $this->resolveField($record, $this->name)
+                ? _t(self::class . '.YES', 'yes')
+                : _t(self::class . '.NO', 'no');
+        }
+        $value = $this->renderValue($record);
+        return $value instanceof DBHTMLText ? trim(html_entity_decode(strip_tags((string) $value))) : $value;
+    }
+
+    /**
+     * Whether the column shows a boolean database field (also on a has_one
+     * path like "School.Active").
+     */
+    protected function isBooleanField(DataObject $record): bool
+    {
+        try {
+            $object = str_contains($this->name, '.') ? $record->relObject($this->name) : $record->dbObject($this->name);
+        } catch (\Throwable) {
+            return false;
+        }
+        return $object instanceof DBBoolean;
     }
 
     protected function resolveField(DataObject $record, string $name): mixed

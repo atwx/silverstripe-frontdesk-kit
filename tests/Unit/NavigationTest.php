@@ -168,6 +168,34 @@ class NavigationTest extends SapphireTest
         $this->assertStringContainsString('Security/logout', $html);
     }
 
+    public function testEntriesAlignedToTheEnd(): void
+    {
+        Config::modify()->set(FrontdeskController::class, 'main_navigation', [
+            'students' => ['title' => 'Schüler', 'segment' => 'students'],
+            'search' => ['title' => 'Suche', 'segment' => 'search', 'align' => 'end'],
+            'families' => ['title' => 'Familien', 'segment' => 'families'],
+            'todos' => ['title' => 'To-do', 'segment' => 'todos', 'align' => 'end'],
+        ]);
+        $this->logInWithPermission('SOMETHING');
+        $this->assertSame(['Schüler', 'Familien'], FrontdeskTemplateProvider::FrontdeskMainNavigationStart()->column('Title'));
+        $this->assertSame(['Suche', 'To-do'], FrontdeskTemplateProvider::FrontdeskMainNavigationEnd()->column('Title'));
+
+        $html = (string) SSViewer::create('Atwx\\SilverstripeFrontdeskKit\\Includes\\FrontdeskHeader')
+            ->process(Security::singleton());
+        $centerAt = (int) strpos($html, 'navbar-center');
+        $endAt = (int) strpos($html, 'navbar-end');
+        $end = substr($html, $endAt);
+        $center = substr($html, $centerAt, $endAt - $centerAt);
+        $this->assertStringContainsString('href="families"', $center);
+        $this->assertStringNotContainsString('href="todos"', $center);
+        $this->assertLessThan(strpos($end, 'href="todos"'), strpos($end, 'href="search"'), 'order of the config');
+        $this->assertLessThan(strpos($end, 'Security/logout'), strpos($end, 'href="todos"'), 'before the user menu');
+        $burger = substr($html, 0, (int) strpos($html, 'navbar-center'));
+        foreach (['students', 'search', 'families', 'todos'] as $link) {
+            $this->assertStringContainsString('href="' . $link . '"', $burger, 'burger menu unchanged');
+        }
+    }
+
     public function testIconOnlyEntryWithSecondBadge(): void
     {
         Config::modify()->set(FrontdeskController::class, 'main_navigation', [

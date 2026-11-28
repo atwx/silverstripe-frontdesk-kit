@@ -29,6 +29,9 @@ use SilverStripe\Security\Security;
  *     a link (config FrontdeskController.search_overlay)
  *   - icon_only: true shows only the icon in the horizontal navigation (the
  *     title becomes its tooltip and label; the burger menu shows the title)
+ *   - align: 'end' shows the entry (main navigation only) on the right from
+ *     lg up, before the user menu, in the order of the config; the burger
+ *     menu is unchanged
  *   - default: active on the start page
  *   - children: optional entries of a submenu (one level, same keys); the
  *     group is a dropdown in the horizontal navigation and a titled section
@@ -46,7 +49,28 @@ class FrontdeskNavigation
      */
     public function main(): ArrayList
     {
-        return $this->entries((array) FrontdeskController::config()->get('main_navigation'));
+        // Built once per member and page (header and burger menu use it several times; badges query)
+        $config = (array) FrontdeskController::config()->get('main_navigation');
+        $key = (int) Security::getCurrentUser()?->ID . ' ' . $this->currentURL() . ' ' . md5(serialize($config));
+        if ($this->mainCache === null || $this->mainCache[0] !== $key) {
+            $this->mainCache = [$key, $this->entries($config)];
+        }
+        return $this->mainCache[1];
+    }
+
+    /**
+     * @var array{0: string, 1: ArrayList<ArrayData>}|null
+     */
+    private ?array $mainCache = null;
+
+    /**
+     * Entries of the main navigation on the left (false) or right (true).
+     *
+     * @return ArrayList<ArrayData>
+     */
+    public function mainAligned(bool $end): ArrayList
+    {
+        return $this->main()->filterByCallback(fn (ArrayData $entry) => (bool) $entry->AlignEnd === $end);
     }
 
     /**
@@ -92,6 +116,7 @@ class FrontdeskNavigation
                 'Icon' => (string) ($entry['icon'] ?? ''),
                 'IconOnly' => !empty($entry['icon_only']) && !empty($entry['icon']),
                 'OpenSearch' => !empty($entry['open_search']),
+                'AlignEnd' => ($entry['align'] ?? '') === 'end',
                 'Children' => null,
             ]));
         }
@@ -131,6 +156,7 @@ class FrontdeskNavigation
             'BadgeSecondary' => $this->badge($entry['badge_secondary'] ?? null),
             'Icon' => (string) ($entry['icon'] ?? ''),
             'IconOnly' => !empty($entry['icon_only']) && !empty($entry['icon']),
+            'AlignEnd' => ($entry['align'] ?? '') === 'end',
             'Children' => $items,
         ]);
     }

@@ -227,3 +227,6 @@ de:
     REMOVE: 'Entfernen'
     WIDTH: 'Breite'
     ADD: 'Spalte hinzufügen'
+  Atwx\SilverstripeFrontdeskKit\Table\Column:
+    YES: 'ja'
+    NO: 'nein'

@@ -205,3 +205,6 @@ en:
     REMOVE: 'Remove'
     WIDTH: 'Width'
     ADD: 'Add column'
+  Atwx\SilverstripeFrontdeskKit\Table\Column:
+    YES: 'yes'
+    NO: 'no'
