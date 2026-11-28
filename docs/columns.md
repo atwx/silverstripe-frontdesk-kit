@@ -105,6 +105,12 @@ Custom value renderer. The callable receives `($value, $record)` and must return
     ->end()
 ```
 
+### Boolean fields
+
+Columns on a `Boolean` database field (also on a has_one path) without
+`format()` show a quiet check mark for yes and nothing for no; the export
+writes yes/no ("ja"/"nein"). `format()` replaces this.
+
 ### `->visibleInExport(bool $v)`
 
 Controls whether the column appears in the XLSX export. Defaults to `true`.

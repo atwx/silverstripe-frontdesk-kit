@@ -214,7 +214,7 @@ trait ListViewsTrait
                 return $columns->groupBy(
                     $name,
                     '–',
-                    fn ($record) => trim(html_entity_decode(strip_tags((string) $column->renderValue($record)))),
+                    fn ($record) => $column->exportValue($record),
                     $isField
                 );
             }

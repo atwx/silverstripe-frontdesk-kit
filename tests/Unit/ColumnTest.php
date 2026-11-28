@@ -35,6 +35,24 @@ class ColumnTest extends SapphireTest
         $this->assertEquals('Title', $col->Field());
     }
 
+    // ─── Boolean fields ───────────────────────────────────────────────────────
+
+    public function testBooleanFieldsShowACheckMarkAndExportYesNo(): void
+    {
+        $yes = \Atwx\SilverstripeFrontdeskKit\Catalog\CatalogEntry::create(['Active' => true, 'Title' => 'A & B']);
+        $no = \Atwx\SilverstripeFrontdeskKit\Catalog\CatalogEntry::create(['Active' => false]);
+        $col = Column::create('Active');
+        $this->assertStringContainsString('data-lucide="check"', (string) $col->renderValue($yes));
+        $this->assertSame('', trim(strip_tags((string) $col->renderValue($no))), 'no: empty');
+        $this->assertSame('yes', $col->exportValue($yes));
+        $this->assertSame('no', $col->exportValue($no));
+
+        $formatted = Column::create('Active')->format(fn ($value) => $value ? 'on' : 'off');
+        $this->assertSame('on', (string) $formatted->renderValue($yes), 'own format wins');
+        $this->assertSame('off', $formatted->exportValue($no));
+        $this->assertSame('A & B', Column::create('Title')->exportValue($yes), 'other fields as before');
+    }
+
     // ─── Fluent setters ───────────────────────────────────────────────────────
 
     public function testLabelIsFluent(): void

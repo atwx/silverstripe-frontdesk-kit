@@ -1,7 +1,8 @@
 <%-- Header with main navigation (FrontdeskController.main_navigation):
      horizontal from lg up (groups with children as dropdowns), in a burger
      menu below (groups as titled sections). secondary_navigation is in
-     the user menu from lg up and in the burger menu below. --%>
+     the user menu from lg up and in the burger menu below. Entries with
+     align: 'end' are on the right, before the user menu. --%>
 <header class="fdk-header navbar px-2 sm:px-4 gap-2">
     <div class="navbar-start w-auto flex-1 lg:flex-none gap-1 min-w-0">
         <% if $CurrentMember %><% if $FrontdeskMainNavigation || $FrontdeskSecondaryNavigation %>
@@ -22,24 +23,31 @@
             </ul>
         </div>
         <% end_if %><% end_if %>
-        <a href="$BaseHref" class="flex items-center gap-2 font-bold text-lg px-2 truncate">
+        <a href="$BaseHref" class="fdk-header-brand flex items-center gap-2 font-bold text-lg px-2 lg:me-4 truncate">
             <% if $FrontdeskLogo %>
-                <img src="$FrontdeskLogo" alt="$SiteConfig.Title" class="h-8">
+                <img src="$FrontdeskLogo" alt="$SiteConfig.Title" class="fdk-header-logo h-8">
             <% else %>
                 <% if $SiteConfig.Title %>$SiteConfig.Title<% else %>Home<% end_if %>
             <% end_if %>
         </a>
     </div>
     <div class="navbar-center hidden lg:flex flex-1 min-w-0">
-        <% if $CurrentMember && $FrontdeskMainNavigation %>
+        <% if $CurrentMember && $FrontdeskMainNavigationStart %>
         <ul class="menu menu-horizontal flex-nowrap px-1">
-            <% loop $FrontdeskMainNavigation %>
+            <% loop $FrontdeskMainNavigationStart %>
                 <% include Atwx\SilverstripeFrontdeskKit\Includes\FrontdeskNavEntry %>
             <% end_loop %>
         </ul>
         <% end_if %>
     </div>
     <div class="navbar-end w-auto flex-none">
+        <% if $CurrentMember && $FrontdeskMainNavigationEnd %>
+        <ul class="fdk-nav-end menu menu-horizontal flex-nowrap px-1 hidden lg:flex">
+            <% loop $FrontdeskMainNavigationEnd %>
+                <% include Atwx\SilverstripeFrontdeskKit\Includes\FrontdeskNavEntry %>
+            <% end_loop %>
+        </ul>
+        <% end_if %>
         <% if $CurrentMember %>
         <div class="dropdown dropdown-end">
             <div tabindex="0" role="button" class="btn btn-ghost gap-2">
