@@ -1,5 +1,5 @@
 <%-- View bar of a list: views defined in code and saved views, save dialog. --%>
-<% if $ListViews.Count || $CanSaveListViews || $CanChooseColumns %>
+<% if $ListViews.Count || $CanSaveListViews || $CanChooseColumns || $ListReports.Count %>
 <div class="fdk-list-views flex flex-wrap items-center gap-2 mb-4">
     <% loop $ListViews %>
         <span class="inline-flex items-center">
@@ -13,6 +13,7 @@
             <% end_if %>
         </span>
     <% end_loop %>
+    <% include Atwx\\SilverstripeFrontdeskKit\\Includes\\ReportsMenu %>
     <% if $CanSaveListViews %>
         <button type="button" class="btn btn-sm btn-ghost"
                 onclick="var d=document.getElementById('fdk-save-view'); var box=d.querySelector('.modal-box'); box.replaceChildren(document.getElementById('fdk-save-view-form').content.cloneNode(true)); box.querySelector('[name=Query]').value=window.location.search.substring(1); d.showModal()">
@@ -23,6 +24,7 @@
         <% include Atwx\\SilverstripeFrontdeskKit\\Includes\\ColumnChoice %>
     <% end_if %>
 </div>
+<% include Atwx\\SilverstripeFrontdeskKit\\Includes\\ListViewDescription %>
 
 <% include Atwx\\SilverstripeFrontdeskKit\\Includes\\SaveViewDialog %>
 <% end_if %>

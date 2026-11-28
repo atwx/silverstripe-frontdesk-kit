@@ -12,7 +12,7 @@ use SilverStripe\ORM\DataObject;
 class ColumnCollection extends ArrayList
 {
     /**
-     * @var array{field: string, empty: string, value: callable|null}|null
+     * @var array{field: string, empty: string, value: callable|null, sort: bool}|null
      */
     private ?array $grouping = null;
 
@@ -22,16 +22,18 @@ class ColumnCollection extends ArrayList
      * "Region.Title"); records without a value go under $emptyLabel. A database
      * field of the model itself also sorts the list by it first; for other
      * paths sort the list yourself (default_sort). $value(record) may compute
-     * the group title instead.
+     * the group title instead; with $sortByField the list is still sorted by
+     * the database field (for titles computed from its value, e.g. labels).
+     * For database fields the group rows also show the number of records.
      */
-    public function groupBy(string $field, string $emptyLabel = '–', ?callable $value = null): static
+    public function groupBy(string $field, string $emptyLabel = '–', ?callable $value = null, ?bool $sortByField = null): static
     {
-        $this->grouping = ['field' => $field, 'empty' => $emptyLabel, 'value' => $value];
+        $this->grouping = ['field' => $field, 'empty' => $emptyLabel, 'value' => $value, 'sort' => $sortByField ?? $value === null];
         return $this;
     }
 
     /**
-     * @return array{field: string, empty: string, value: callable|null}|null
+     * @return array{field: string, empty: string, value: callable|null, sort: bool}|null
      */
     public function getGrouping(): ?array
     {

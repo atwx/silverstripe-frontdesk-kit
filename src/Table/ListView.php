@@ -16,6 +16,15 @@ use SilverStripe\ORM\DataList;
  *       ->query(fn (DataList $list) => $list->filter('InDate:LessThanOrEqual', date('Y-m-d')))
  *       ->sort('InDate DESC')
  *       ->columns(['Title', 'InDate', 'PlacementSchool.Name']);
+ *
+ * A view marked as report() is not shown in the view bar but in the menu
+ * "Reports" (and on the reports page), grouped:
+ *
+ *   ListView::create('returners', 'Rückkehrer')
+ *       ->report('Nach der Vermittlung')
+ *       ->description('Austritt in den letzten 12 Wochen')
+ *       ->filters(['OutDate_Rel' => '-12w..1w'])
+ *       ->groupBy('CurrentForm');
  */
 class ListView
 {
@@ -46,6 +55,24 @@ class ListView
     private ?int $savedID = null;
 
     private bool $deletable = false;
+
+    private bool $report = false;
+
+    private ?bool $pinned = null;
+
+    private string $reportGroup = '';
+
+    private string $description = '';
+
+    private ?string $groupBy = null;
+
+    private string $search = '';
+
+    private string $searchScope = '';
+
+    private ?string $columnSort = null;
+
+    private string $columnSortDir = 'asc';
 
     public function __construct(private string $key, private string $title)
     {
@@ -165,5 +192,135 @@ class ListView
     public function isDeletable(): bool
     {
         return $this->deletable;
+    }
+
+    /**
+     * A report: shown in the menu "Reports" (grouped by $group) and on the
+     * reports page instead of the view bar. The bar still shows it while it
+     * is the current view.
+     */
+    public function report(?string $group = null): static
+    {
+        $this->report = true;
+        $this->reportGroup = (string) $group;
+        return $this;
+    }
+
+    public function isReport(): bool
+    {
+        return $this->report;
+    }
+
+    /**
+     * Shown in the view bar (default: views that are no reports).
+     */
+    public function pinned(bool $pinned = true): static
+    {
+        $this->pinned = $pinned;
+        return $this;
+    }
+
+    public function isPinned(): bool
+    {
+        return $this->pinned ?? !$this->report;
+    }
+
+    public function getReportGroup(): string
+    {
+        return $this->reportGroup;
+    }
+
+    /**
+     * Short text shown in the reports menu, on the reports page and above
+     * the list.
+     */
+    public function description(string $text): static
+    {
+        $this->description = $text;
+        return $this;
+    }
+
+    public function getDescription(): string
+    {
+        return $this->description;
+    }
+
+    /**
+     * Groups the rows by a column (its name): sorted by it first, a heading
+     * row with value and count per group. The export stays ungrouped.
+     */
+    public function groupBy(?string $column): static
+    {
+        $this->groupBy = $column !== '' ? $column : null;
+        return $this;
+    }
+
+    public function getGroupBy(): ?string
+    {
+        return $this->groupBy;
+    }
+
+    /**
+     * Search text (and search area) the view starts with; the search field
+     * of the list can change it.
+     */
+    public function search(string $text, string $scope = ''): static
+    {
+        $this->search = $text;
+        $this->searchScope = $scope;
+        return $this;
+    }
+
+    public function getSearch(): string
+    {
+        return $this->search;
+    }
+
+    public function getSearchScope(): string
+    {
+        return $this->searchScope;
+    }
+
+    /**
+     * Sort by a sortable column as in the list header (?sort=&dir=); a click
+     * on a header changes it. sort() instead sorts in SQL.
+     */
+    public function columnSort(?string $column, string $dir = 'asc'): static
+    {
+        $this->columnSort = $column !== '' ? $column : null;
+        $this->columnSortDir = strtolower($dir) === 'desc' ? 'desc' : 'asc';
+        return $this;
+    }
+
+    public function getColumnSort(): ?string
+    {
+        return $this->columnSort;
+    }
+
+    public function getColumnSortDir(): string
+    {
+        return $this->columnSortDir;
+    }
+
+    /**
+     * Request values the view starts with apart from the filters: search
+     * and column sort (values in the request win).
+     *
+     * @return array<string, string>
+     */
+    public function presetParams(string $searchParam): array
+    {
+        $params = [];
+        if ($this->search !== '') {
+            $params[$searchParam] = $this->search;
+            if ($this->searchScope !== '') {
+                $params[$searchParam . '_Scope'] = $this->searchScope;
+            }
+        }
+        if ($this->columnSort !== null) {
+            $params['sort'] = $this->columnSort;
+            $params['dir'] = $this->columnSortDir;
+        }
+        return $params;
     }
 }

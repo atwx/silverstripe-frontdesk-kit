@@ -69,6 +69,7 @@
     </form>
     <% end_if %>
     <% end_if %>
+    <% include Atwx\\SilverstripeFrontdeskKit\\Includes\\ReportsMenu %>
     <% if $CanSaveListViews %>
     <button type="button" class="btn btn-sm btn-ghost"
             onclick="var d=document.getElementById('fdk-save-view'); var box=d.querySelector('.modal-box'); box.replaceChildren(document.getElementById('fdk-save-view-form').content.cloneNode(true)); box.querySelector('[name=Query]').value=window.location.search.substring(1); d.showModal()">
@@ -80,4 +81,5 @@
     <% end_if %>
 </div>
 <div class="fdk-filter-backdrop" data-fdk-filter-toggle hidden></div>
+<% include Atwx\\SilverstripeFrontdeskKit\\Includes\\ListViewDescription %>
 <% include Atwx\\SilverstripeFrontdeskKit\\Includes\\SaveViewDialog %>

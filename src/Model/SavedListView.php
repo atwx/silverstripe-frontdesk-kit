@@ -7,14 +7,23 @@ use SilverStripe\Security\Member;
 use SilverStripe\Security\Security;
 
 /**
- * A list view saved by a member: filter values and columns of one list,
- * personal or shared with everyone who may see the list.
+ * A list view saved by a member ("report"): filter values, search, column
+ * sort, grouping and columns of one list, personal or shared with everyone
+ * who may see the list. Pinned ones are shown in the view bar; all are in
+ * the menu "Reports" and on the reports page.
  *
  * @property ?string $ListKey
  * @property ?string $Title
  * @property ?string $FilterQuery
  * @property ?string $Columns
  * @property bool $Shared
+ * @property bool $Pinned
+ * @property ?string $Description
+ * @property ?string $Search
+ * @property ?string $SearchScope
+ * @property ?string $SortColumn
+ * @property ?string $SortDir
+ * @property ?string $GroupBy
  * @property int $OwnerID
  * @method Member Owner()
  */
@@ -28,6 +37,14 @@ class SavedListView extends DataObject
         'FilterQuery' => 'Text',
         'Columns' => 'Text',
         'Shared' => 'Boolean',
+        // Views saved before reports existed stay in the view bar
+        'Pinned' => 'Boolean(1)',
+        'Description' => 'Text',
+        'Search' => 'Varchar(255)',
+        'SearchScope' => 'Varchar(100)',
+        'SortColumn' => 'Varchar(100)',
+        'SortDir' => 'Varchar(4)',
+        'GroupBy' => 'Varchar(100)',
     ];
 
     private static array $has_one = [
@@ -52,6 +69,16 @@ class SavedListView extends DataObject
             'OwnerID' => $memberID ?: -1,
             'Shared' => true,
         ]);
+    }
+
+    /**
+     * Changed (updated, deleted) by its owner, shared ones also by members
+     * who may edit the list.
+     */
+    public function canManageIn(bool $canEditList): bool
+    {
+        $memberID = (int) Security::getCurrentUser()?->ID;
+        return $memberID > 0 && ((int) $this->OwnerID === $memberID || ($this->Shared && $canEditList));
     }
 
     /**

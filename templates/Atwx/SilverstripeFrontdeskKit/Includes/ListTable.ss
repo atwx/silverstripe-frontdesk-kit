@@ -49,7 +49,7 @@
             <% if $ItemRows.Count %>
                 <% loop $ItemRows %>
                     <% if $GroupTitle %>
-                    <tr class="fdk-group-row"><th colspan="99" class="bg-base-200">$GroupTitle</th></tr>
+                    <tr class="fdk-group-row"><th colspan="99" class="bg-base-200">$GroupTitle<% if $GroupCount %> <span class="badge badge-sm badge-ghost ms-1 fdk-group-count">$GroupCount</span><% end_if %></th></tr>
                     <% end_if %>
                     <tr id="fdk-row-$ID">
                         <% if $Top.BulkActions.Count %>
