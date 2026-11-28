@@ -56,15 +56,19 @@ trait ListViewsTrait
                 _t(FrontdeskController::class . '.RECENT_VIEWS', 'Recently viewed')
             )->query(fn ($list) => RecentView::applyTo($list)));
         }
-        $memberID = (int) Security::getCurrentUser()?->ID;
         foreach (SavedListView::forList($this->listKey()) as $saved) {
             $views[] = ListView::create('saved-' . $saved->ID, (string) $saved->Title)
                 ->filters($saved->filterValues())
                 ->columns($saved->columnNames() ?? [])
-                ->setSaved(
-                    (int) $saved->ID,
-                    (int) $saved->OwnerID === $memberID || ($saved->Shared && $this->canEdit())
-                );
+                ->search((string) $saved->Search, (string) $saved->SearchScope)
+                ->columnSort($saved->SortColumn, (string) $saved->SortDir)
+                ->groupBy($saved->GroupBy)
+                ->description((string) $saved->Description)
+                ->report($saved->Shared
+                    ? _t(FrontdeskController::class . '.REPORTS_SHARED', 'Shared reports')
+                    : _t(FrontdeskController::class . '.REPORTS_OWN', 'My reports'))
+                ->pinned((bool) $saved->Pinned)
+                ->setSaved((int) $saved->ID, $saved->canManageIn($this->canEdit()));
         }
         return $views;
     }
@@ -116,18 +120,54 @@ trait ListViewsTrait
     protected function listRequest(): HTTPRequest
     {
         $request = $this->getRequest();
-        $view = $this->currentListView();
-        if (!$view || !$view->getFilters() || $this->defineFilters()->hasAnyRequestParam($request)
-            || $request->getVar('filtered')) {
+        $vars = $request->getVars();
+        $merged = $this->listVarsWithView($vars, $this->currentListView());
+        if ($merged === $vars) {
             return $request;
         }
-        $listRequest = new HTTPRequest(
-            $request->httpMethod(),
-            $request->getURL(),
-            array_merge($request->getVars(), $view->getFilters())
-        );
+        $listRequest = new HTTPRequest($request->httpMethod(), $request->getURL(), $merged);
         $listRequest->setSession($request->getSession());
         return $listRequest;
+    }
+
+    /**
+     * Request values with those of the view: its filter values when none are
+     * given (and the filters were not just chosen), its search and column
+     * sort unless given.
+     *
+     * @param array<string, mixed> $vars
+     * @return array<string, mixed>
+     */
+    protected function listVarsWithView(array $vars, ?ListView $view): array
+    {
+        if (!$view) {
+            return $vars;
+        }
+        $preset = [];
+        if ($view->getFilters() && empty($vars['filtered'])
+            && !$this->defineFilters()->hasAnyRequestParam(new HTTPRequest('GET', '', $vars))) {
+            $preset = $view->getFilters();
+        }
+        foreach ($view->presetParams($this->searchParam()) as $name => $value) {
+            if (!array_key_exists($name, $vars)) {
+                $preset[$name] = $value;
+            }
+        }
+        return $preset ? array_merge($vars, $preset) : $vars;
+    }
+
+    /**
+     * The view of the key ('' = the default view, 'all' = none).
+     */
+    protected function listViewByKey(string $key): ?ListView
+    {
+        $key = $key === '' ? $this->defaultListViewKey() : ($key === 'all' ? '' : $key);
+        foreach ($key !== '' ? $this->allListViews() : [] as $view) {
+            if ($view->getKey() === $key) {
+                return $view;
+            }
+        }
+        return null;
     }
 
     /**
@@ -147,7 +187,7 @@ trait ListViewsTrait
         $selected = ColumnCollection::create();
         $grouping = $columns->getGrouping();
         if ($grouping) {
-            $selected->groupBy($grouping['field'], $grouping['empty'], $grouping['value']);
+            $selected->groupBy($grouping['field'], $grouping['empty'], $grouping['value'], $grouping['sort']);
         }
         foreach ($names as $name) {
             if (isset($byName[$name])) {
@@ -158,7 +198,33 @@ trait ListViewsTrait
     }
 
     /**
-     * Views for the view bar: "All" first, then the views of the list.
+     * Groups the columns by the column the current view groups by (its
+     * rendered value as title; sorted by it if it is a database field).
+     */
+    protected function applyListViewGrouping(ColumnCollection $columns): ColumnCollection
+    {
+        $name = $this->currentListView()?->getGroupBy();
+        if (!$name) {
+            return $columns;
+        }
+        foreach ($this->defineColumns() as $column) {
+            if ($column->getName() === $name) {
+                $isField = (bool) \SilverStripe\ORM\DataObject::getSchema()
+                    ->fieldSpec($this->getManagedModel(), $name);
+                return $columns->groupBy(
+                    $name,
+                    '–',
+                    fn ($record) => trim(html_entity_decode(strip_tags((string) $column->renderValue($record)))),
+                    $isField
+                );
+            }
+        }
+        return $columns;
+    }
+
+    /**
+     * Views for the view bar: "All" first, then the pinned views of the list,
+     * and the current view if it is a report (so the bar shows where one is).
      */
     public function ListViews(): ArrayList
     {
@@ -173,16 +239,90 @@ trait ListViewsTrait
             'Link' => $this->defaultListViewKey() !== '' ? $this->Link() . '?view=all' : $this->Link(),
             'Active' => $current === '',
             'Saved' => false,
+            'Report' => false,
             'DeleteLink' => null,
         ]));
         foreach ($views as $view) {
-            $result->push(ArrayData::create([
-                'Title' => $view->getTitle(),
-                'Link' => $this->Link() . '?view=' . rawurlencode($view->getKey()),
-                'Active' => $current === $view->getKey(),
-                'Saved' => $view->getSavedID() !== null,
-                'DeleteLink' => $view->isDeletable() ? $this->Link('deleteview/' . $view->getSavedID()) : null,
-            ]));
+            $active = $current === $view->getKey();
+            if (!$view->isPinned() && !$active) {
+                continue;
+            }
+            $result->push($this->listViewEntry($view, $active));
+        }
+        return $result;
+    }
+
+    private function listViewEntry(ListView $view, bool $active): ArrayData
+    {
+        return ArrayData::create([
+            'Key' => $view->getKey(),
+            'Title' => $view->getTitle(),
+            'Description' => $view->getDescription(),
+            'Link' => $this->Link() . '?view=' . rawurlencode($view->getKey()),
+            'Active' => $active,
+            'Saved' => $view->getSavedID() !== null,
+            'Report' => $view->isReport(),
+            'DeleteLink' => $view->isDeletable() ? $this->Link('deleteview/' . $view->getSavedID()) : null,
+        ]);
+    }
+
+    /**
+     * Reports of the list for the menu "Reports": groups (Title, Reports)
+     * of views marked report() and saved views; empty without reports.
+     *
+     * @return ArrayList<ArrayData>
+     */
+    public function ListReports(): ArrayList
+    {
+        $current = $this->currentListViewKey();
+        $groups = [];
+        foreach ($this->allListViews() as $view) {
+            if ($view->isReport()) {
+                $groups[$view->getReportGroup()][] = $this->listViewEntry($view, $current === $view->getKey());
+            }
+        }
+        $result = ArrayList::create();
+        foreach ($groups as $title => $entries) {
+            $result->push(ArrayData::create(['Title' => (string) $title, 'Reports' => ArrayList::create($entries)]));
+        }
+        return $result;
+    }
+
+    /**
+     * Description of the current view, shown above the list.
+     */
+    public function CurrentListViewDescription(): string
+    {
+        return $this->currentListView()?->getDescription() ?? '';
+    }
+
+    /**
+     * The current view if it is a saved one the member may update.
+     */
+    public function UpdatableListView(): ?SavedListView
+    {
+        $id = $this->currentListView()?->getSavedID();
+        $saved = $id ? SavedListView::get()->filter(['ID' => $id, 'ListKey' => $this->listKey()])->first() : null;
+        return $saved && $saved->canManageIn($this->canEdit()) ? $saved : null;
+    }
+
+    /**
+     * Columns to group by when saving a view (selected: the current grouping).
+     *
+     * @return ArrayList<ArrayData>
+     */
+    public function ListViewGroupColumns(): ArrayList
+    {
+        $current = $this->currentListView()?->getGroupBy();
+        $result = ArrayList::create();
+        foreach ($this->defineColumns() as $column) {
+            if (!$column->isExportOnly()) {
+                $result->push(ArrayData::create([
+                    'Name' => $column->getName(),
+                    'Title' => $column->getLabel(),
+                    'Selected' => $current === $column->getName(),
+                ]));
+            }
         }
         return $result;
     }
@@ -359,8 +499,7 @@ trait ListViewsTrait
         $names = [];
         foreach ($this->defineFilters()->getFilters() as $filter) {
             if ($filter instanceof DateRangeFilter) {
-                $names[] = $filter->getName() . '_From';
-                $names[] = $filter->getName() . '_To';
+                array_push($names, ...$filter->paramNames());
             } else {
                 $names[] = $filter->getName();
             }
@@ -372,12 +511,25 @@ trait ListViewsTrait
     }
 
     /**
-     * Saves the current filter values and the chosen columns as a view (POST).
+     * Saves the current state of the list as a view (POST): filter values,
+     * search, column sort (from Query), columns, grouping, name, description,
+     * shared, pinned. With UpdateID the saved view is overwritten instead
+     * (own views, shared ones by members who may edit).
      */
     public function saveview(HTTPRequest $request)
     {
         if (!$request->isPOST() || !SecurityToken::inst()->checkRequest($request) || !$this->canSaveListViews()) {
             return $this->httpError(400);
+        }
+        $view = null;
+        if ($request->postVar('UpdateID')) {
+            $view = SavedListView::get()->filter([
+                'ID' => (int) $request->postVar('UpdateID'),
+                'ListKey' => $this->listKey(),
+            ])->first();
+            if (!$view || !$view->canManageIn($this->canEdit())) {
+                return $this->httpError(404);
+            }
         }
         $title = trim((string) $request->postVar('Title'));
         if ($title === '') {
@@ -385,17 +537,38 @@ trait ListViewsTrait
             return $this->redirect($this->Link());
         }
         parse_str((string) $request->postVar('Query'), $vars);
+        // Saved from a view: with the values the view applies
+        $vars = $this->listVarsWithView($vars, $this->listViewByKey(is_scalar($vars['view'] ?? null) ? (string) $vars['view'] : ''));
         $filters = array_intersect_key($vars, array_flip($this->filterParamNames()));
         $filters = array_filter($filters, fn ($value) => $value !== '' && $value !== null && $value !== []);
-        $known = array_map(fn ($column) => $column->getName(), $this->defineColumns()->toArray());
-        $columns = array_values(array_intersect((array) $request->postVar('Columns'), $known));
-        $view = SavedListView::create([
+        $columns = $this->defineColumns();
+        $known = array_map(fn ($column) => $column->getName(), $columns->toArray());
+        $chosen = array_values(array_intersect((array) $request->postVar('Columns'), $known));
+        $sortColumn = is_scalar($vars['sort'] ?? null) ? (string) $vars['sort'] : '';
+        $sortable = false;
+        foreach ($columns as $column) {
+            $sortable = $sortable || ($column->getName() === $sortColumn && $column->isSortable());
+        }
+        $groupBy = (string) $request->postVar('GroupBy');
+        $search = is_scalar($vars[$this->searchParam()] ?? null) ? trim((string) $vars[$this->searchParam()]) : '';
+        $scope = is_scalar($vars[$this->searchParam() . '_Scope'] ?? null)
+            ? (string) $vars[$this->searchParam() . '_Scope'] : '';
+        $view ??= SavedListView::create([
             'ListKey' => $this->listKey(),
-            'Title' => $title,
-            'FilterQuery' => http_build_query($filters),
-            'Columns' => $columns && count($columns) < count($known) ? json_encode($columns) : null,
-            'Shared' => $this->CanShareListViews() && $request->postVar('Shared'),
             'OwnerID' => (int) Security::getCurrentUser()?->ID,
+        ]);
+        $view->update([
+            'Title' => $title,
+            'Description' => trim((string) $request->postVar('Description')),
+            'FilterQuery' => http_build_query($filters),
+            'Columns' => $chosen && count($chosen) < count($known) ? json_encode($chosen) : null,
+            'Search' => $this->hasSearch() ? $search : '',
+            'SearchScope' => $this->hasSearch() && $search !== '' ? $scope : '',
+            'SortColumn' => $sortable ? $sortColumn : '',
+            'SortDir' => $sortable && strtolower((string) ($vars['dir'] ?? '')) === 'desc' ? 'desc' : 'asc',
+            'GroupBy' => in_array($groupBy, $known, true) ? $groupBy : '',
+            'Shared' => $this->CanShareListViews() && $request->postVar('Shared'),
+            'Pinned' => (bool) $request->postVar('Pinned'),
         ]);
         $view->write();
         return $this->redirect($this->Link() . '?view=saved-' . $view->ID);
@@ -413,8 +586,7 @@ trait ListViewsTrait
             'ID' => (int) $request->param('ID'),
             'ListKey' => $this->listKey(),
         ])->first();
-        $memberID = (int) Security::getCurrentUser()?->ID;
-        if (!$view || !((int) $view->OwnerID === $memberID || ($view->Shared && $this->canEdit()))) {
+        if (!$view || !$view->canManageIn($this->canEdit())) {
             return $this->httpError(404);
         }
         $view->delete();

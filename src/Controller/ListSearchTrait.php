@@ -45,13 +45,13 @@ trait ListSearchTrait
 
     public function searchText(): string
     {
-        return trim((string) $this->getRequest()->getVar($this->searchParam()));
+        return trim((string) $this->listRequest()->getVar($this->searchParam()));
     }
 
     public function searchScope(): string
     {
         $search = $this->defineSearch();
-        $scope = (string) $this->getRequest()->getVar($this->searchParam() . '_Scope');
+        $scope = (string) $this->listRequest()->getVar($this->searchParam() . '_Scope');
         return $search && isset($search->getScopes()[$scope]) ? $scope : '';
     }
 
@@ -85,7 +85,7 @@ trait ListSearchTrait
      */
     protected function applySearchOrder(DataList $list): ?DataList
     {
-        if (!$this->searchScores || (string) $this->getRequest()->getVar('sort') !== '') {
+        if (!$this->searchScores || (string) $this->listRequest()->getVar('sort') !== '') {
             return null;
         }
         return SearchDefinition::orderByScore($list, $this->searchScores);

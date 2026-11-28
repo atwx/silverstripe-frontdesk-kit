@@ -1321,7 +1321,8 @@ class FrontdeskController extends Controller implements PermissionProvider
     public function Columns(): ColumnCollection
     {
         $names = $this->currentListView()?->getColumns() ?: $this->chosenColumnNames();
-        return $names ? $this->selectColumns($this->defineColumns(), $names) : $this->defineColumns()->forList();
+        $columns = $names ? $this->selectColumns($this->defineColumns(), $names) : $this->defineColumns()->forList();
+        return $this->applyListViewGrouping($columns);
     }
 
     public function FilterForm(): ?Form
@@ -1428,10 +1429,16 @@ class FrontdeskController extends Controller implements PermissionProvider
         $columns = $this->Columns();
         $baseUrl = $this->Link();
         $group = null;
-        foreach ($this->getItems() as $record) {
+        $items = $this->getItems();
+        $counts = $this->groupCounts($columns, $items->getList());
+        foreach ($items as $record) {
             $title = $columns->getGrouping() ? $columns->groupTitle($record) : null;
+            $newGroup = $title !== null && $title !== $group;
             $rows->push(ArrayData::create([
-                'GroupTitle' => $title !== null && $title !== $group ? $title : null,
+                'GroupTitle' => $newGroup ? $title : null,
+                'GroupCount' => $newGroup && $counts !== null
+                    ? ($counts[$this->groupKey($record->getField($columns->getGrouping()['field']))] ?? null)
+                    : null,
                 'Record'     => $record,
                 'Cells'      => $columns->renderFor($record, $baseUrl),
                 'RowActions' => $this->RowActionsFor($record),
@@ -1440,6 +1447,32 @@ class FrontdeskController extends Controller implements PermissionProvider
             $group = $title;
         }
         return $rows;
+    }
+
+    /**
+     * Records per value of the grouping field over the whole list (not only
+     * the page), null when the list is not grouped by a database field.
+     *
+     * @return array<string, int>|null
+     */
+    protected function groupCounts(ColumnCollection $columns, \SilverStripe\Model\List\SS_List $list): ?array
+    {
+        $grouping = $columns->getGrouping();
+        if (!$grouping || !$grouping['sort'] || !$list instanceof DataList
+            || !DataObject::getSchema()->tableForField($list->dataClass(), $grouping['field'])) {
+            return null;
+        }
+        $counts = [];
+        foreach ($list->column($grouping['field']) as $value) {
+            $key = $this->groupKey($value);
+            $counts[$key] = ($counts[$key] ?? 0) + 1;
+        }
+        return $counts;
+    }
+
+    private function groupKey(mixed $value): string
+    {
+        return is_scalar($value) ? trim((string) $value) : '';
     }
 
     public function FilterIsActive(): bool
@@ -1647,7 +1680,7 @@ class FrontdeskController extends Controller implements PermissionProvider
     protected function applyGroupSort(DataList $list): DataList
     {
         $grouping = $this->Columns()->getGrouping();
-        if (!$grouping || $grouping['value']) {
+        if (!$grouping || !$grouping['sort']) {
             return $list;
         }
         $field = $grouping['field'];
@@ -1671,13 +1704,14 @@ class FrontdeskController extends Controller implements PermissionProvider
      */
     protected function applyColumnSort(DataList $list): DataList
     {
-        $name = (string) $this->getRequest()->getVar('sort');
+        $request = $this->listRequest();
+        $name = (string) $request->getVar('sort');
         if ($name === '') {
             return $this->applySearchOrder($list) ?? $this->applyRecentFirst($list);
         }
         foreach ($this->Columns() as $column) {
             if ($column->getName() === $name && $column->isSortable()) {
-                return $column->applySort($list, (string) $this->getRequest()->getVar('dir'));
+                return $column->applySort($list, (string) $request->getVar('dir'));
             }
         }
         return $list;
@@ -1719,8 +1753,8 @@ class FrontdeskController extends Controller implements PermissionProvider
     public function ColumnHeaders(): ArrayList
     {
         $request = $this->getRequest();
-        $current = (string) $request->getVar('sort');
-        $dir = strtolower((string) $request->getVar('dir')) === 'desc' ? 'desc' : 'asc';
+        $current = (string) $this->listRequest()->getVar('sort');
+        $dir = strtolower((string) $this->listRequest()->getVar('dir')) === 'desc' ? 'desc' : 'asc';
         $vars = $request->getVars();
         unset($vars['url'], $vars['start']);
         foreach (array_keys($vars) as $key) {

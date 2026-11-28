@@ -33,12 +33,91 @@ protected function defineListViews(): array
 - `query()` runs after the filters, e.g. for dates relative to today or
   conditions on related records the filter bar does not offer.
 
+## Reports
+
+A view marked as `report()` is not shown in the view bar but in the menu
+"Berichte ▾" next to it, grouped. While it is the current view, the bar shows
+it too, so one sees where one is. Without `report()` everything stays as
+before (the view is in the bar).
+
+```php
+ListView::create('returners', 'Rückkehrer')
+    ->report('Nach der Vermittlung')                  // group in the menu
+    ->description('Austritt in den letzten 12 Wochen') // menu, reports page, above the list
+    ->filters(['Stay' => 'back', 'OutDate_Rel' => '-12w..1w'])
+    ->search('Hamburg')                               // search text (optional: scope)
+    ->columnSort('OutDate', 'desc')                   // like a click on the header
+    ->groupBy('CurrentForm')                          // column name
+    ->pinned();                                       // a report in the bar as well (optional)
+```
+
+- `search()` and `columnSort()` are request values the view starts with; the
+  search field and the column headers can change them.
+- `groupBy(<column>)`: rows grouped by the column's value with a heading row
+  per group. If the column is a database field of the model, the list is
+  sorted by it first and the heading shows the number of records of the whole
+  list. The export stays ungrouped.
+
+### Reports page
+
+`reports` (`ReportsController`) lists the reports of all lists the member
+may see: views with `report()` and saved views, by list and group, with
+their description. Add it to the navigation:
+
+```yaml
+Atwx\SilverstripeFrontdeskKit\Controller\FrontdeskController:
+  main_navigation:
+    reports:
+      title: 'Berichte'
+      segment: 'reports'
+      controller: 'Atwx\SilverstripeFrontdeskKit\Controller\ReportsController'
+```
+
+A list leaves the page with config `reports: false` on its controller.
+
 ## Saved views
 
-Members who can see a list can save the current filters and a column selection
-("Save view"); members who may edit can share a view with everyone. Saved views
-are `SavedListView` records keyed by the controller's `url_segment`
-(`listKey()`). Own views can be deleted, shared views by members who may edit.
+Members who can see a list save its current state as a report ("Save view"):
+filters, search, column sort, columns, grouping, name and description.
+"Show in the view bar" pins it to the bar (default: only in the menu
+"Berichte"); views saved before reports existed stay pinned. Members who may
+edit can share a report with everyone. With a saved report open, the dialog
+updates it ("Update …") instead of saving a new one.
+
+Saved views are `SavedListView` records keyed by the controller's
+`url_segment` (`listKey()`). Own reports can be updated and deleted, shared
+ones by members who may edit (run `dev/build` for the new fields).
+
+## Relative periods
+
+`DateRangeFilter::relative()` adds a select "Zeitraum" to the from/to dates.
+Its value (`<Name>_Rel`) stays relative in saved reports and views:
+
+| Value | Meaning |
+|---|---|
+| `-12w..1w` | today − 12 weeks to today + 1 week (units `d`, `w`, `m`, `y`) |
+| `-4w..0d`, `0d..13w` | last 4 weeks, next 13 weeks |
+| `..13w`, `-1y..` | open on one side |
+| `schoolyear`, `schoolyear-1` | this / last school year |
+| `year`, `year-1` | this / last calendar year |
+
+```php
+DateRangeFilter::create('OutDate', 'Austritt')
+    ->relative()                                    // default periods
+    // ->relative(['-12w..1w' => 'Rückkehrer-Zeitraum', 'schoolyear'])
+    ->apply(fn (DataList $list, array $range) => …); // $range['from'], $range['to'] as before
+```
+
+The school year starts in August; change it with
+
+```yaml
+Atwx\SilverstripeFrontdeskKit\Filter\DateRangeFilter:
+  school_year_start_month: 9
+```
+
+A period set by a view (e.g. `-12w..1w`) is added to the select if it is not
+among the offered ones. A valid period wins over dates entered; the chip
+describes it ("letzte 12 Wochen", "heute − 12 Wochen bis heute + 1 Woche").
 
 ## Columns
 

@@ -39,10 +39,9 @@ class FilterCollection
 
         foreach ($this->filters as $filter) {
             if ($filter instanceof DateRangeFilter) {
-                $from = $request->getVar($filter->getName() . '_From');
-                $to = $request->getVar($filter->getName() . '_To');
-                if ($from || $to) {
-                    $list = $filter->applyRange($list, $from, $to);
+                $range = $filter->rangeFrom(fn (string $name) => $request->getVar($name));
+                if ($range) {
+                    $list = $filter->applyRange($list, $range['from'], $range['to']);
                 }
             } else {
                 $value = $request->getVar($filter->getName());
@@ -73,9 +72,10 @@ class FilterCollection
     {
         foreach ($this->filters as $filter) {
             if ($filter instanceof DateRangeFilter) {
-                if ($request->getVar($filter->getName() . '_From') !== null
-                    || $request->getVar($filter->getName() . '_To') !== null) {
-                    return true;
+                foreach ($filter->paramNames() as $param) {
+                    if ($request->getVar($param) !== null) {
+                        return true;
+                    }
                 }
             } elseif ($request->getVar($filter->getName()) !== null) {
                 return true;
@@ -110,11 +110,11 @@ class FilterCollection
         foreach ($this->filters as $filter) {
             $name = $filter->getName();
             if ($filter instanceof DateRangeFilter) {
-                $value = ['from' => $request->getVar($name . '_From'), 'to' => $request->getVar($name . '_To')];
-                if (!$value['from'] && !$value['to']) {
+                $value = $filter->rangeFrom(fn (string $param) => $request->getVar($param));
+                if (!$value) {
                     continue;
                 }
-                $params = [$name . '_From', $name . '_To'];
+                $params = $filter->paramNames();
             } else {
                 $value = $request->getVar($name);
                 if ($filter instanceof TreeFilter) {
@@ -141,7 +141,7 @@ class FilterCollection
     {
         foreach ($this->filters as $filter) {
             if ($filter instanceof DateRangeFilter) {
-                if ($request->getVar($filter->getName() . '_From') || $request->getVar($filter->getName() . '_To')) {
+                if ($filter->rangeFrom(fn (string $param) => $request->getVar($param))) {
                     return true;
                 }
             } elseif ($request->getVar($filter->getName())) {
